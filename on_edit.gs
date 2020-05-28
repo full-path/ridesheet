@@ -32,7 +32,7 @@ function onEdit(e) {
     if (namedRange.getName().indexOf(triggerName) > -1) {
       //log("Triggering " + triggerName)
       triggers[triggerName](e)
-      log("Triggered " + triggerName)
+      //log("Triggered " + triggerName)
     }
     // log("Exiting triggerName " + triggerName)
     })
@@ -56,7 +56,6 @@ function fillRequestCells(e) {
   if (e.value) {
     const tripRow = getFullRow(e.range)
     const tripValues = getValuesByHeaderNames(["Customer Name and ID","PU Address","DO Address","Service ID"], tripRow)
-    if (tripValues["PU Address"] && tripValues["DO Address"] && tripValues["Service ID"]) { return }
     const customerRow = findFirstRowByHeaderNames({"Customer Name and ID": tripValues["Customer Name and ID"]}, e.source.getSheetByName("Customers"))
     const customerAddresses = getValuesByHeaderNames(["Customer ID","Home Address","Default Destination","Default Service ID"], customerRow)
     let valuesToChange = {}
@@ -64,10 +63,8 @@ function fillRequestCells(e) {
     if (tripValues["PU Address"] == '') { valuesToChange["PU Address"] = customerAddresses["Home Address"] }
     if (tripValues["DO Address"] == '') { valuesToChange["DO Address"] = customerAddresses["Default Destination"] }
     if (tripValues["Service ID"] == '') { valuesToChange["Service ID"] = customerAddresses["Default Service ID"] }
-    if (Object.keys(valuesToChange).length !== 0) {
-      setValuesByHeaderNames(valuesToChange, tripRow)
-      fillHoursAndMiles(e)
-    }
+    setValuesByHeaderNames(valuesToChange, tripRow)
+    fillHoursAndMiles(e)
   }
 }
 
