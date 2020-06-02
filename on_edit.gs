@@ -64,7 +64,7 @@ function fillRequestCells(e) {
     if (tripValues["DO Address"] == '') { valuesToChange["DO Address"] = customerAddresses["Default Destination"] }
     if (tripValues["Service ID"] == '') { valuesToChange["Service ID"] = customerAddresses["Default Service ID"] }
     setValuesByHeaderNames(valuesToChange, tripRow)
-    fillHoursAndMiles(e)
+    if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { fillHoursAndMiles(e) }
   }
 }
 
@@ -88,28 +88,28 @@ function fillHoursAndMiles(e) {
  */
 function setCustomerKey(e) {
   const customerRow = getFullRow(e.range)
-  const customerValues = getValuesByHeaderNames(["First Name", "Customer Last Name", "ID", "Customer Name and ID"], customerRow)
+  const customerValues = getValuesByHeaderNames(["Customer First Name", "Customer Last Name", "ID", "Customer Name and ID"], customerRow)
   let newCustomerValues = {}
-  if (customerValues["First Name"] && customerValues["Customer Last Name"]) {
+  if (customerValues["Customer First Name"] && customerValues["Customer Last Name"]) {
     const docProperties = PropertiesService.getDocumentProperties()
     const lastCustomerID = docProperties.getProperty("lastCustomerID")
     let nextCustomerID = ((lastCustomerID && (+lastCustomerID)) ? (Math.ceil(+lastCustomerID) + 1) : 1 )
-    if (!customerValues["ID"]) {
-      newCustomerValues["ID"] = nextCustomerID
-      newCustomerValues["First Name"] = customerValues["First Name"].trim()
-      newCustomerValues["Customer Last Name"] = customerValues["Last Name"].trim()
-      newCustomerValues["Customer Name and ID"] = newCustomerValues["Customer Last Name"] + ", " + newCustomerValues["Customer First Name"] + " (" + newCustomerValues["ID"] + ")"
-      docProperties.setProperty("lastCustomerID", nextCustomerID)
-    } else if (+customerValues["ID"]) { // There is an ID value, and it's numeric
-      newCustomerValues["ID"] = (+customerValues["ID"])
+    if (!customerValues["Customer ID"]) {
+      newCustomerValues["Customer ID"] = nextCustomerID
       newCustomerValues["Customer First Name"] = customerValues["Customer First Name"].trim()
       newCustomerValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
-      newCustomerValues["Customer Name and ID"] = newCustomerValues["Customer Last Name"] + ", " + newCustomerValues["Customer First Name"] + " (" + newCustomerValues["ID"] + ")"
-      if ((+customerValues["ID"]) >= nextCustomerID) { docProperties.setProperty("lastCustomerID", customerValues["ID"]) }
+      newCustomerValues["Customer Name and ID"] = newCustomerValues["Customer Last Name"] + ", " + newCustomerValues["Customer First Name"] + " (" + newCustomerValues["Customer ID"] + ")"
+      docProperties.setProperty("lastCustomerID", nextCustomerID)
+    } else if (+customerValues["Customer ID"]) { // There is an ID value, and it's numeric
+      newCustomerValues["Customer ID"] = (+customerValues["ID"])
+      newCustomerValues["Customer First Name"] = customerValues["Customer First Name"].trim()
+      newCustomerValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
+      newCustomerValues["Customer Name and ID"] = newCustomerValues["Customer Last Name"] + ", " + newCustomerValues["Customer First Name"] + " (" + newCustomerValues["Customer ID"] + ")"
+      if ((+customerValues["Customer ID"]) >= nextCustomerID) { docProperties.setProperty("lastCustomerID", customerValues["ID"]) }
     } else { // There is an ID value, and it's not numeric. Allow this, but don't track it as the lastCustomerID
       newCustomerValues["Customer First Name"] = customerValues["Customer First Name"].trim()
       newCustomerValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
-      newCustomerValues["Customer Name and ID"] = newCustomerValues["Customer Last Name"] + ", " + newCustomerValues["Customer First Name"] + " (" + customerValues["ID"] + ")"
+      newCustomerValues["Customer Name and ID"] = newCustomerValues["Customer Last Name"] + ", " + newCustomerValues["Customer First Name"] + " (" + customerValues["Customer ID"] + ")"
     }
     setValuesByHeaderNames(newCustomerValues, customerRow)
   }
