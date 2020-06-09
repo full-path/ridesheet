@@ -1,4 +1,4 @@
-const sheetsWithHeaders = ["Trips","Runs","Trip Review","Run Review","Recurring Trips","Customers","Trip Archive","Run Archive"]
+const sheetsWithHeaders = ["Trips","Runs","Trip Review","Run Review","Recurring Trips","Customers","Trip Archive","Run Archive","Drivers","Services"]
 const sheetPropertySuffix = " headers"
 
 /**
@@ -25,7 +25,6 @@ function isInRange(innerRange, outerRange) {
  * match the value in the headerNames parameter. Returns -1 if column cannot be found.
  * @param {string} headerName The header name
  * @param {range} range The range 
- * @param {number} headerRow The (1-based) number of the header row. Defaults to 1 if omitted.
  * @return {number}
  */
 function findFirstRowByHeaderNames(values, sheet) {
@@ -36,6 +35,7 @@ function findFirstRowByHeaderNames(values, sheet) {
   let isEqual
   let result
   
+  // Row loop
   for (r = 0, l = data.length; r < l; r++) {
     isEqual = true
     columnLoop:
@@ -70,10 +70,9 @@ function getFullRow(range) {
  * match the value in the headerNames parameter. Returns -1 if column cannot be found.
  * @param {string} headerName The header name
  * @param {range} range The range 
- * @param {number} headerRow The (1-based) number of the header row. Defaults to 1 if omitted.
  * @return {number}
  */
-function getColNumberByHeaderName(headerName, range, headerRow = 1) {
+function getColNumberByHeaderName(headerName, range) {
   return JSON.parse(PropertiesService.getDocumentProperties().getProperty(range.getSheet().getName() + sheetPropertySuffix))[headerName]
   //let headerValues = range.getSheet().getRange(headerRow, range.getColumn(), 1, range.getWidth()).getDisplayValues()[0]
   //return headerValues.indexOf(headerName)
@@ -85,13 +84,24 @@ function getColNumberByHeaderName(headerName, range, headerRow = 1) {
  * match each value in the headerNames array. Returns -1 for each column that cannot be found.
  * @param {array} headerNames The names of the headers
  * @param {range} range The range 
- * @param {number} headerRow The (1-based) number of the header row. Defaults to 1 if omitted.
  * @return {array}
  */
-function getColNumbersByHeaderNames(headerNames, range, headerRow = 1) {
+function getColNumbersByHeaderNames(headerNames, range) {
   //let headerValues = range.getSheet().getRange(headerRow, range.getColumn(), 1, range.getWidth()).getDisplayValues()[0]
   let headerValues = JSON.parse(PropertiesService.getDocumentProperties().getProperty(range.getSheet().getName() + sheetPropertySuffix))
-  return headerNames.map((i) => headerValues[i])
+  return headerNames.map(i => headerValues[i])
+}
+
+// Takes a data range with a first row header and turns it into an array of data objects that function as maps.
+function getDataRangeAsTable(range) {
+  let result = []
+  const headerNames = range.shift()
+  range.forEach(row => {
+    let rowMap = {}
+    headerNames.forEach((headerName, i) => rowMap[headerName] = row[i] )
+    result.push(rowMap)
+  })
+  return result            
 }
 
 /**
@@ -102,8 +112,8 @@ function getColNumbersByHeaderNames(headerNames, range, headerRow = 1) {
  * @param {range} range The range 
  * @return {object}
  */
-function getDisplayValuesByHeaderNames(headerNames, range, headerRow = 1) {
-  let columnNumbers = getColNumbersByHeaderNames(headerNames, range, headerRow)
+function getDisplayValuesByHeaderNames(headerNames, range) {
+  let columnNumbers = getColNumbersByHeaderNames(headerNames, range)
   result = {}
   displayValues = range.getDisplayValues()[0]
   columnNumbers.forEach((colNumber, i) => {
@@ -124,8 +134,8 @@ function getDisplayValuesByHeaderNames(headerNames, range, headerRow = 1) {
  * @param {range} range The range 
  * @return {object}
  */
-function getDisplayValueByHeaderName(headerName, range, headerRow = 1) {
-  let colNumber = getColNumberByHeaderName(headerName, range, headerRow)
+function getDisplayValueByHeaderName(headerName, range) {
+  let colNumber = getColNumberByHeaderName(headerName, range)
   if (colNumber == -1) {
     return null
   } else {
@@ -141,8 +151,8 @@ function getDisplayValueByHeaderName(headerName, range, headerRow = 1) {
  * @param {range} range The range 
  * @return {object}
  */
-function getValuesByHeaderNames(headerNames, range, headerRow = 1) {
-  let columnNumbers = getColNumbersByHeaderNames(headerNames, range, headerRow)
+function getValuesByHeaderNames(headerNames, range) {
+  let columnNumbers = getColNumbersByHeaderNames(headerNames, range)
   result = {}
   values = range.getValues()[0]
   columnNumbers.forEach((colNumber, i) => {
@@ -163,18 +173,18 @@ function getValuesByHeaderNames(headerNames, range, headerRow = 1) {
  * @param {range} range The range 
  * @return {object}
  */
-function getValueByHeaderName(headerName, range, headerRow = 1) {
-  let colNumber = getColNumberByHeaderName(headerName, range, headerRow)
+function getValueByHeaderName(headerName, range) {
+  let colNumber = getColNumberByHeaderName(headerName, range)
   if (colNumber > -1) {
-    return null
-  } else {
     return range.getValues()[0][colNumber]
+  } else {
+    return null
   }
 }
 
-function setValuesByHeaderNames(values, range, headerRow = 1) {
+function setValuesByHeaderNames(values, range) {
   const headerNames = Object.keys(values)
-  const columnNumbers = getColNumbersByHeaderNames(headerNames, range, headerRow)
+  const columnNumbers = getColNumbersByHeaderNames(headerNames, range)
   let rangeValues = range.getValues()
   columnNumbers.forEach((colNumber, i) => {
     if (colNumber > -1) {
@@ -190,14 +200,14 @@ function storeHeaderInformation(e) {
   let headerRange
   let headerValues
   let allProperties = {}
-  sheetsWithHeaders.forEach((sheetName) => {
+  sheetsWithHeaders.forEach(sheetName => {
     sheet = e.source.getSheetByName(sheetName)
     if (sheet) {
       headerRange = sheet.getRange("A1:1")
       headerValues = headerRange.getDisplayValues()[0]
       let headerHash = {}
       headerValues.forEach((colName, i) => {
-        headerHash[colName] = i
+        if (colName) { headerHash[colName] = i }
       })
       allProperties[sheetName + sheetPropertySuffix] = JSON.stringify(headerHash)
     }
