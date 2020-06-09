@@ -89,29 +89,29 @@ function fillHoursAndMiles(e) {
 function setCustomerKey(e) {
   const customerRow = getFullRow(e.range)
   const customerValues = getValuesByHeaderNames(["Customer First Name", "Customer Last Name", "ID", "Customer Name and ID"], customerRow)
-  let newCustomerValues = {}
+  let newValues = {}
   if (customerValues["Customer First Name"] && customerValues["Customer Last Name"]) {
     const docProperties = PropertiesService.getDocumentProperties()
     const lastCustomerID = docProperties.getProperty("lastCustomerID")
     let nextCustomerID = ((lastCustomerID && (+lastCustomerID)) ? (Math.ceil(+lastCustomerID) + 1) : 1 )
-    if (!customerValues["Customer ID"]) {
-      newCustomerValues["Customer ID"] = nextCustomerID
-      newCustomerValues["Customer First Name"] = customerValues["Customer First Name"].trim()
-      newCustomerValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
-      newCustomerValues["Customer Name and ID"] = newCustomerValues["Customer Last Name"] + ", " + newCustomerValues["Customer First Name"] + " (" + newCustomerValues["Customer ID"] + ")"
+    if (!customerValues["Customer ID"]) { // There is no ID. Set one and update the lastCustomerID property
+      newValues["Customer ID"] = nextCustomerID
+      newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
+      newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
+      newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
       docProperties.setProperty("lastCustomerID", nextCustomerID)
     } else if (+customerValues["Customer ID"]) { // There is an ID value, and it's numeric
-      newCustomerValues["Customer ID"] = (+customerValues["ID"])
-      newCustomerValues["Customer First Name"] = customerValues["Customer First Name"].trim()
-      newCustomerValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
-      newCustomerValues["Customer Name and ID"] = newCustomerValues["Customer Last Name"] + ", " + newCustomerValues["Customer First Name"] + " (" + newCustomerValues["Customer ID"] + ")"
+      newValues["Customer ID"] = (+customerValues["ID"])
+      newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
+      newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
+      newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
       if ((+customerValues["Customer ID"]) >= nextCustomerID) { docProperties.setProperty("lastCustomerID", customerValues["ID"]) }
     } else { // There is an ID value, and it's not numeric. Allow this, but don't track it as the lastCustomerID
-      newCustomerValues["Customer First Name"] = customerValues["Customer First Name"].trim()
-      newCustomerValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
-      newCustomerValues["Customer Name and ID"] = newCustomerValues["Customer Last Name"] + ", " + newCustomerValues["Customer First Name"] + " (" + customerValues["Customer ID"] + ")"
+      newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
+      newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
+      newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
     }
-    setValuesByHeaderNames(newCustomerValues, customerRow)
+    setValuesByHeaderNames(newValues, customerRow)
   }
 }
 
@@ -126,4 +126,8 @@ function scanForDuplicates(e) {
   if (duplicateRows.length == 1) { e.range.setNote("This value is already used in row " + duplicateRows[0]) }
   if (duplicateRows.length > 1) { e.range.setNote("This value is already used in rows " + duplicateRows.join(", ")) }
   if (duplicateRows.length == 0) { e.range.clearNote() }
+}
+
+function getCustomerNameAndId(first, last, id) {
+  return `${last}, ${first} (${id})`
 }
