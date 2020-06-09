@@ -4,6 +4,12 @@ function log(d, ...args) {
   logSheet.appendRow([new Date(), d].concat(args))
 }
 
+function clearLog() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet()
+  let logSheet = ss.getSheetByName("Debug Log")
+  logSheet.deleteRows(1,logSheet.getLastRow())
+}
+
 function makeBackup(destFolderId) {
   let startTime = new Date()
   const ss = SpreadsheetApp.getActiveSpreadsheet()
