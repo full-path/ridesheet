@@ -1,3 +1,96 @@
+function createManifests(date) {
+  let startTime = new Date()
+  if (!date) date = new Date(2020, 5, 1)
+  const templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
+  prepareTemplate(templateDoc)
+  log("Template prepared:",(new Date()) - startTime)
+  
+  let runs = getManifestData(date)
+  log("Data acquired:",(new Date()) - startTime)
+
+  runs.forEach((run, i) => {
+    let manifestDoc = createManifest(run)
+    log("Created manifest " + i + ":",(new Date()) - startTime)
+    populateManifest(manifestDoc, templateDoc, run)
+    log("Populated manifest " + i + ":",(new Date()) - startTime)
+  })
+}
+
+function createManifest(run) {
+  const manifestFileName = `${Utilities.formatDate(run["Trip Date"], timeZone, "yyyy-MM-dd")} manifest for ${run["Driver Name"]} on ${run["Vehicle Name"]}`
+  const manifestFolder   = DriveApp.getFolderById(driverManifestFolderId)
+  const manifestFile     = DriveApp.getFileById(driverManifestTemplateDocId).makeCopy(manifestFolder).setName(manifestFileName)
+  const manifestDoc      = DocumentApp.openById(manifestFile.getId())
+  emptyBody(manifestDoc.getBody())
+  return manifestDoc
+}
+                                                  
+function populateManifest(manifestDoc, templateDoc, run) {
+  templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
+  
+  const manifestBody   = manifestDoc.getBody()
+  const manifestParent = manifestBody.getParent()
+  
+  // Replace the fields in the document header and footer sections
+  // There may be up to four, if there are different headers or footers for the first page
+  for (let i = 0, c = manifestParent.getNumChildren(); i < c; i++) {
+    let section = manifestParent.getChild(i)
+    if (section.getType() === DocumentApp.ElementType.HEADER_SECTION) {
+      replaceText(section, run["Events"][0])
+    } else if (section.getType() === DocumentApp.ElementType.FOOTER_SECTION) {
+      replaceText(section, run["Events"][run["Events"].length - 1])
+    }  
+  }
+
+  // Add the header elements
+  //log ("Header")
+  replaceTextInRange(templateDoc.getNamedRanges("HEADER")[0].getRange(), manifestBody, run["Events"][0])
+  // Add all the PU and DO elements. Use the section name of each event to decide whether to add a PU or DO range.
+  run["Events"].forEach((event, i) => {
+    //log ("Event " + i)
+    replaceTextInRange(templateDoc.getNamedRanges(event["Section Name"])[0].getRange(), manifestBody, event)
+  })
+  // Add the footer elements
+ // log ("Footer")
+  replaceTextInRange(templateDoc.getNamedRanges("FOOTER")[0].getRange(), manifestBody, run["Events"][run["Events"].length - 1])
+}
+
+function replaceTextInRange(range, docSection, data) {
+  let elements = range.getRangeElements()
+  elements.forEach(element => {
+    newElement = element.getElement().copy()
+    replaceText(newElement, data)
+    appendElement(docSection, newElement)
+  })
+}
+
+function replaceText(element, data) {
+  let text = element.getText()
+  //text = "This is {a} test {with} words in {braces]"
+  let pattern = /{(.*?)}/g
+  let innerMatches = [...text.matchAll(pattern)].map(match => match[1])
+  innerMatches.forEach(field => {
+    if (isValidDate(data[field])) {
+      if (field.match(/\bdate\b/i)) {
+        datum = Utilities.formatDate(data[field], timeZone, "M/d/yy")
+      } else if (field.match(/\btime\b/i)) {
+        datum = Utilities.formatDate(data[field], timeZone, "hh:mm aa")
+      } else {
+        datum = Utilities.formatDate(data[field], timeZone, "hh:mm aa M/d/yy")
+      }
+    } else {
+      datum = data[field]
+    }
+    //log("Field: " + field, "Data: " + data[field], "Type: " + Object.prototype.toString.call(data[field]))
+    if (Object.keys(data).indexOf(field) != -1) element.replaceText("{" + field + "}", datum)
+  })
+}
+
+function emptyBody(body) {
+  body.appendParagraph('')
+  while (body.getNumChildren() > 1) body.removeChild(body.getChild(0))
+}
+
 function getManifestData(date) {
   if (!date) date = new Date(2020, 5, 1)
   const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -14,6 +107,8 @@ function getManifestData(date) {
     mergeAttributes(tripRow, drivers,   "Driver ID"  )
     mergeAttributes(tripRow, vehicles,  "Vehicle ID" )
     mergeAttributes(tripRow, customers, "Customer ID")
+    tripRow["Manifest Creation Time"] = Utilities.formatDate(new Date(), timeZone, "HH:mm")
+    tripRow["Manifest Creation Date"] = Utilities.formatDate(new Date(), timeZone, "M/d/yyyy")
   })
   
   // For events, create to rows for each trip -- one for PU, and one for DO
@@ -39,26 +134,28 @@ function getManifestData(date) {
     return 0
   })
   
-  // Group the trips into runs -- all the trips with the same driver and vehicle
-  let manifestRuns = manifestEvents.map(event => {
-    let runAttrs = {}
-    runAttrs["Driver ID"]    = event["Driver ID"]
-    runAttrs["Vehicle ID"]   = event["Vehicle ID"]
-    runAttrs["Driver Name"]  = event["Driver Name"]
-    runAttrs["Vehicle Name"] = event["Vehicle Name"]
-    runAttrs["Trip Date"]    = event["Trip Date"]
-    runAttrs["Trips"]        = []
-    runAttrs["Events"]       = []
-    return runAttrs
+  // Group the trips into runs -- A run is a collection of trips on the same day with the same driver and vehicle
+  let manifestRuns = []
+  manifestTrips.forEach(trip => {
+    let runIndex = manifestRuns.findIndex(r => r["Driver ID"] == trip["Driver ID"] && r["Vehicle ID"] == trip["Vehicle ID"])
+    if (runIndex == -1) {
+      let newRun = {}
+      newRun["Driver ID"]    = trip["Driver ID"]
+      newRun["Vehicle ID"]   = trip["Vehicle ID"]
+      newRun["Driver Name"]  = trip["Driver Name"]
+      newRun["Driver Email"]  = trip["Driver Email"]
+      newRun["Vehicle Name"] = trip["Vehicle Name"]
+      newRun["Trip Date"]    = trip["Trip Date"]
+      newRun["Trips"]        = [trip]
+      newRun["Events"]       = []
+      manifestRuns.push(newRun)
+    } else {
+      manifestRuns[runIndex]["Trips"].push(trip)
+    }
   })
-  manifestRuns.filter((v,i,a) => a.findIndex(t => (t["Driver ID"] === v["Driver ID"] && t["Vehicle ID"] === v["Vehicle ID"])) === i )
   manifestEvents.forEach(event => {
     let matchedRun = manifestRuns.find(run => run["Driver ID"] === event["Driver ID"] && run["Vehicle ID"] === event["Vehicle ID"])
     matchedRun["Events"].push(event)
-  })
-  manifestTrips.forEach(trip => {
-    let matchedRun = manifestRuns.find(run => run["Driver ID"] === trip["Driver ID"] && run["Vehicle ID"] === trip["Vehicle ID"])
-    matchedRun["Trips"].push(trip)
   })
   
   return manifestRuns
@@ -75,36 +172,10 @@ function createDriverManifest(manifestDate, driverId) {
   const manifestDoc = DocumentApp.openById(manifestFile.getId())
   deleteAllNamedRanges(templateDoc)
   const manifestSections = templateDoc.getBody().getParent()
-  for (let i = 0; i < manifestSections.getNumChildren(); i += 1) {
-    log(manifestSections.getChild(i).getText())
-  }
+  //for (let i = 0; i < manifestSections.getNumChildren(); i += 1) {
+  //  log(manifestSections.getChild(i).getText())
+  //}
 }
-
-function simpleDocTest() {
-  log("Getting Doc")
-  const templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
-  log("Got Doc")
-  const templateBody = templateDoc.getBody()
-  log("Got Body")
-  for (let i = 0; i < templateBody.getNumChildren(); i += 1) {
-    log(i, templateBody.getChild(i).getType(), elementHasText(templateBody.getChild(i)))
-  }
-}
-
-function testCreateDriverManifest() {
-  //log(PropertiesService.getDocumentProperties().getProperty("Drivers" + sheetPropertySuffix))
-  //log("Started")
-  //createDriverManifest(new Date(),"DD")
-  createNamedRanges()
-}
-
-function logProperties() {
-  docProps = PropertiesService.getDocumentProperties()
-  docProps.getKeys().forEach(prop => {
-    log(prop,docProps.getProperty(prop))
-  })
-}
-
 
 // All these element types support the getText() and editAsText() methods
 // Element types without text: COMMENT_SECTION, DOCUMENT, EQUATION_FUNCTION_ARGUMENT_SEPARATOR, EQUATION_SYMBOL, FOOTNOTE HORIZONTAL_RULE, 
@@ -124,9 +195,9 @@ function deleteAllNamedRanges(doc) {
   })
 }
 
-function createNamedRanges() {
-  clearLog()
-  let doc = DocumentApp.openById(driverManifestTemplateDocId)
+function prepareTemplate(doc) {
+  //clearLog()
+  //let doc = DocumentApp.openById(driverManifestTemplateDocId)
   deleteAllNamedRanges(doc)
   let body = doc.getBody()
   for (let i = 0, c = body.getNumChildren(); i < c; i++) {
@@ -169,7 +240,7 @@ function createNamedRanges() {
       }
     }
   }
-  log("End of document reached.")
+  //log("End of document reached.")
 }
 
 function copyNamedRanges(source, destination) {
@@ -187,13 +258,6 @@ function copyNamedRanges(source, destination) {
       //element = range.getRange().getRangeElements()[0]
       appendElement(manifestBody, element.getElement().copy())
     })
-  })
-}
-
-function verifyNamedRanges() {
-  let doc = DocumentApp.openById(driverManifestTemplateDocId)
-  doc.getNamedRanges().forEach(range => {
-    log(range.getName())                             
   })
 }
 
