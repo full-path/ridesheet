@@ -10,6 +10,13 @@ function clearLog() {
   logSheet.deleteRows(1,logSheet.getLastRow())
 }
 
+function logProperties() {
+  docProps = PropertiesService.getDocumentProperties()
+  docProps.getKeys().forEach(prop => {
+    log(prop,docProps.getProperty(prop))
+  })
+}
+
 function makeBackup(destFolderId) {
   let startTime = new Date()
   const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -39,4 +46,8 @@ function iterateTemplate() {
   paragraphs.forEach((paragraph) => {
     log(paragraph.getHeading())
   })
+}
+
+function isValidDate(date) {
+  return date && Object.prototype.toString.call(date) === "[object Date]" && !isNaN(date)
 }
