@@ -94,19 +94,23 @@ function setCustomerKey(e) {
     const docProperties = PropertiesService.getDocumentProperties()
     const lastCustomerID = docProperties.getProperty("lastCustomerID")
     let nextCustomerID = ((lastCustomerID && (+lastCustomerID)) ? (Math.ceil(+lastCustomerID) + 1) : 1 )
-    if (!customerValues["Customer ID"]) { // There is no ID. Set one and update the lastCustomerID property
+    // There is no ID. Set one and update the lastCustomerID property
+    if (!customerValues["Customer ID"]) {
       newValues["Customer ID"] = nextCustomerID
       newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
       newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
       newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
       docProperties.setProperty("lastCustomerID", nextCustomerID)
-    } else if (+customerValues["Customer ID"]) { // There is an ID value, and it's numeric
+    // There is an ID value present, and it's numeric. 
+    // Update the lastCustomerID property if the new ID is greater than the current lastCustomerID property
+    } else if (+customerValues["Customer ID"]) { 
       newValues["Customer ID"] = (+customerValues["ID"])
       newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
       newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
       newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
       if ((+customerValues["Customer ID"]) >= nextCustomerID) { docProperties.setProperty("lastCustomerID", customerValues["ID"]) }
-    } else { // There is an ID value, and it's not numeric. Allow this, but don't track it as the lastCustomerID
+    // There is an ID value, and it's not numeric. Allow this, but don't track it as the lastCustomerID
+    } else { 
       newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
       newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
       newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
@@ -121,11 +125,11 @@ function scanForDuplicates(e) {
   const values = range.getValues().map(row => row[0])
   let duplicateRows = []
   values.forEach((value, i) => {
-    if (value == e.value && (i + 1) != thisRowNumber) { duplicateRows.push(i + 1) }
+    if (value == e.value && (i + 1) != thisRowNumber) duplicateRows.push(i + 1)
   })
-  if (duplicateRows.length == 1) { e.range.setNote("This value is already used in row " + duplicateRows[0]) }
-  if (duplicateRows.length > 1) { e.range.setNote("This value is already used in rows " + duplicateRows.join(", ")) }
-  if (duplicateRows.length == 0) { e.range.clearNote() }
+  if (duplicateRows.length == 1) e.range.setNote("This value is already used in row "  + duplicateRows[0]) 
+  if (duplicateRows.length > 1)  e.range.setNote("This value is already used in rows " + duplicateRows.join(", ")) 
+  if (duplicateRows.length == 0) e.range.clearNote()
 }
 
 function getCustomerNameAndId(first, last, id) {
