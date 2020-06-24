@@ -23,18 +23,16 @@ function onEdit(e) {
     }
   })
 
-  involvedNamedRanges.forEach(
-    (namedRange) => {
+  involvedNamedRanges.forEach(namedRange => {
     // log("Entering namedRange " + namedRange.getName())
-    Object.keys(triggers).forEach(
-      (triggerName) => {
-    // log("Entering triggerName " + triggerName)
-    if (namedRange.getName().indexOf(triggerName) > -1) {
-      //log("Triggering " + triggerName)
-      triggers[triggerName](e)
-      //log("Triggered " + triggerName)
-    }
-    // log("Exiting triggerName " + triggerName)
+    Object.keys(triggers).forEach(triggerName => {
+        // log("Entering triggerName " + triggerName)
+      if (namedRange.getName().indexOf(triggerName) > -1) {
+        //log("Triggering " + triggerName)
+        triggers[triggerName](e)
+        //log("Triggered " + triggerName)
+      }
+      // log("Exiting triggerName " + triggerName)
     })
     // log("Exiting namedRange " + namedRange)
   })
