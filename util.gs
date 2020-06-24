@@ -20,7 +20,7 @@ function logProperties() {
 function makeBackup(destFolderId) {
   let startTime = new Date()
   const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const formattedDate = Utilities.formatDate(new Date(), timeZone, "yyyy-MM-dd HH:mm:ss ")
+  const formattedDate = Utilities.formatDate(new Date(), localTimeZone, "yyyy-MM-dd HH:mm:ss ")
   const newName = formattedDate + ss.getName()
   const destFolder = DriveApp.getFolderById(backupFolderId)
   const file = DriveApp.getFileById(ss.getId())
@@ -50,4 +50,11 @@ function iterateTemplate() {
 
 function isValidDate(date) {
   return date && Object.prototype.toString.call(date) === "[object Date]" && !isNaN(date)
+}
+
+function formatDate(date, localTimeZone, dateFormat) {
+  if (!timeZone) timeZone = localTimeZone
+  if (!dateFormat) dateFormat = "M/d/yy"
+  if (!isValidDate(date)) date = Date.parse(date) 
+  return Utilities.formatDate(date, timeZone, dateFormat)
 }

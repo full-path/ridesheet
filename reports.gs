@@ -1,6 +1,24 @@
-function createManifests(date) {
+function createManifests() {
   let startTime = new Date()
-  if (!date) date = new Date(2020, 5, 1)
+  ss = SpreadsheetApp.getActiveSpreadsheet()
+  activeSheet = ss.getActiveSheet()
+  ui = SpreadsheetApp.getUi()
+  let date
+  if (activeSheet.getName() == "Trips") {
+    tripRow = getFullRow(activeSheet.getActiveCell())
+    tripDate = getValueByHeaderName("Trip Date",tripRow)
+    if (isValidDate(tripDate)) {
+      date = tripDate
+    } else {
+      // tomorrow, at midnight
+      date = new Date(new Date(new Date().setDate(new Date().getDate() + 1)).setHours(0,0,0,0))
+    }
+  } else {
+    // tomorrow, at midnight
+    date = new Date(new Date(new Date().setDate(new Date().getDate() + 1)).setHours(0,0,0,0))
+  }
+  let promptResult = ui.prompt("Create Manifests", "Enter date for manifests. Leave blank for " + formatDate(date), ui.ButtonSet.OK_CANCEL) || date
+  ui.alert(result.getResponseText())
   const templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
   prepareTemplate(templateDoc)
   log("Template prepared:",(new Date()) - startTime)
@@ -17,7 +35,7 @@ function createManifests(date) {
 }
 
 function createManifest(run) {
-  const manifestFileName = `${Utilities.formatDate(run["Trip Date"], timeZone, "yyyy-MM-dd")} manifest for ${run["Driver Name"]} on ${run["Vehicle Name"]}`
+  const manifestFileName = `${Utilities.formatDate(run["Trip Date"], localTimeZone, "yyyy-MM-dd")} manifest for ${run["Driver Name"]} on ${run["Vehicle Name"]}`
   const manifestFolder   = DriveApp.getFolderById(driverManifestFolderId)
   const manifestFile     = DriveApp.getFileById(driverManifestTemplateDocId).makeCopy(manifestFolder).setName(manifestFileName)
   const manifestDoc      = DocumentApp.openById(manifestFile.getId())
@@ -72,11 +90,11 @@ function replaceText(element, data) {
   innerMatches.forEach(field => {
     if (isValidDate(data[field])) {
       if (field.match(/\bdate\b/i)) {
-        datum = Utilities.formatDate(data[field], timeZone, "M/d/yy")
+        datum = Utilities.formatDate(data[field], localTimeZone, "M/d/yy")
       } else if (field.match(/\btime\b/i)) {
-        datum = Utilities.formatDate(data[field], timeZone, "hh:mm aa")
+        datum = Utilities.formatDate(data[field], localTimeZone, "hh:mm aa")
       } else {
-        datum = Utilities.formatDate(data[field], timeZone, "hh:mm aa M/d/yy")
+        datum = Utilities.formatDate(data[field], localTimeZone, "hh:mm aa M/d/yy")
       }
     } else {
       datum = data[field]
@@ -107,8 +125,8 @@ function getManifestData(date) {
     mergeAttributes(tripRow, drivers,   "Driver ID"  )
     mergeAttributes(tripRow, vehicles,  "Vehicle ID" )
     mergeAttributes(tripRow, customers, "Customer ID")
-    tripRow["Manifest Creation Time"] = Utilities.formatDate(new Date(), timeZone, "HH:mm")
-    tripRow["Manifest Creation Date"] = Utilities.formatDate(new Date(), timeZone, "M/d/yyyy")
+    tripRow["Manifest Creation Time"] = new Date()
+    tripRow["Manifest Creation Date"] = new Date()
   })
   
   // For events, create to rows for each trip -- one for PU, and one for DO
@@ -117,7 +135,7 @@ function getManifestData(date) {
     newRow["Section Name"] = "PICKUP"
     newRow["Event Name"]   = "pickup"
     newRow["Event Time"]   = tripRow["PU Time"]
-    newRow["Sort Field"]   = Utilities.formatDate(new Date(tripRow["PU Time"]), timeZone, "HH:mm") + " PU"
+    newRow["Sort Field"]   = Utilities.formatDate(new Date(tripRow["PU Time"]), localTimeZone, "HH:mm") + " PU"
     return newRow
   })
   let dropOffs = manifestTrips.map(tripRow => {
@@ -125,7 +143,7 @@ function getManifestData(date) {
     newRow["Section Name"] = "DROP OFF"
     newRow["Event Name"]   = "drop off"
     newRow["Event Time"]   = tripRow["DO Time"]
-    newRow["Sort Field"]   = Utilities.formatDate(new Date(tripRow["DO Time"]), timeZone, "HH:mm") + " DO"
+    newRow["Sort Field"]   = Utilities.formatDate(new Date(tripRow["DO Time"]), localTimeZone, "HH:mm") + " DO"
     return newRow
   })
   let manifestEvents = pickups.concat(dropOffs).sort((a,b) => {
@@ -165,16 +183,13 @@ function createDriverManifest(manifestDate, driverId) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const driverRow = findFirstRowByHeaderNames({"Driver ID": driverId},ss.getSheetByName("Drivers"))
   const driverName = getValueByHeaderName("Driver Name",driverRow)
-  const manifestFileName = Utilities.formatDate(manifestDate, timeZone, "yyyy-MM-dd") + " Manifest for " + driverName
+  const manifestFileName = Utilities.formatDate(manifestDate, localTimeZone, "yyyy-MM-dd") + " Manifest for " + driverName
   const manifestFolder = DriveApp.getFolderById(driverManifestFolderId)
   const manifestFile = DriveApp.getFileById(driverManifestTemplateDocId).makeCopy(manifestFolder).setName(manifestFileName)
   const templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
   const manifestDoc = DocumentApp.openById(manifestFile.getId())
   deleteAllNamedRanges(templateDoc)
   const manifestSections = templateDoc.getBody().getParent()
-  //for (let i = 0; i < manifestSections.getNumChildren(); i += 1) {
-  //  log(manifestSections.getChild(i).getText())
-  //}
 }
 
 // All these element types support the getText() and editAsText() methods
@@ -245,7 +260,7 @@ function prepareTemplate(doc) {
 
 function copyNamedRanges(source, destination) {
   ss = SpreadsheetApp.getActiveSpreadsheet()
-  const manifestFileName = Utilities.formatDate(new Date(), timeZone, "yyyy-MM-dd") + " Test Manifest"
+  const manifestFileName = Utilities.formatDate(new Date(), localTimeZone, "yyyy-MM-dd") + " Test Manifest"
   const manifestFolder = DriveApp.getFolderById(driverManifestFolderId)
   const manifestFile = DriveApp.getFileById(driverManifestTemplateDocId).makeCopy(manifestFolder).setName(manifestFileName)
   const templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
