@@ -58,3 +58,25 @@ function formatDate(date, timeZone, dateFormat) {
   if (!isValidDate(date)) date = Date.parse(date) 
   return Utilities.formatDate(date, timeZone, dateFormat)
 }
+
+function dateAdd(date, days) {
+  if (!date) date = new Date()
+  let result = new Date(date)
+  result.setDate(result.getDate() + days)
+  return result
+}
+
+function dateOnly(dateTime) {
+  if (!dateOnly) dateTime = new Date()
+  return new Date(dateTime.setHours(0,0,0,0))
+}
+
+function parseDate(date, alternateValue) {
+  dateVal = Date.parse(date.toString())
+  return isNaN(dateVal) ? alternateValue : new Date(dateVal)
+}
+
+function testParseDate() {
+  log(dateOnly(dateAdd(new Date(), 1)))
+  
+}
