@@ -3,27 +3,39 @@ function createManifests() {
   ss = SpreadsheetApp.getActiveSpreadsheet()
   activeSheet = ss.getActiveSheet()
   ui = SpreadsheetApp.getUi()
-  let date
+  let defaultDate
+  let manifestDate
   if (activeSheet.getName() == "Trips") {
     tripRow = getFullRow(activeSheet.getActiveCell())
     tripDate = getValueByHeaderName("Trip Date",tripRow)
     if (isValidDate(tripDate)) {
-      date = tripDate
+      defaultDate = tripDate
     } else {
       // tomorrow, at midnight
-      date = new Date(new Date(new Date().setDate(new Date().getDate() + 1)).setHours(0,0,0,0))
+      defaultDate = dateOnly(dateAdd(new Date(), 1))
     }
   } else {
     // tomorrow, at midnight
-    date = new Date(new Date(new Date().setDate(new Date().getDate() + 1)).setHours(0,0,0,0))
+    defaultDate = dateOnly(dateAdd(new Date(), 1))
   }
-  let promptResult = ui.prompt("Create Manifests", "Enter date for manifests. Leave blank for " + formatDate(date), ui.ButtonSet.OK_CANCEL) || date
-  ui.alert(result.getResponseText())
+  let promptResult = ui.prompt("Create Manifests", "Enter date for manifests. Leave blank for " + formatDate(defaultDate), ui.ButtonSet.OK_CANCEL)
+  if (promptResult.getResponseText() == "") {
+    manifestDate = defaultDate
+  } else {
+    manifestDate = parseDate(promptResult.getResponseText(),"Invalid Date")
+  }
+  if (!isValidDate(manifestDate)) {
+    ui.alert("Invalid date, action cancelled.")
+    return
+  } else if (promptResult.getSelectedButton() !== ui.Button.OK) {
+    ui.alert("Action cancelled.")
+    return
+  }
   const templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
   prepareTemplate(templateDoc)
   log("Template prepared:",(new Date()) - startTime)
   
-  let runs = getManifestData(date)
+  let runs = getManifestData(manifestDate)
   log("Data acquired:",(new Date()) - startTime)
 
   runs.forEach((run, i) => {
