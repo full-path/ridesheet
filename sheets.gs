@@ -1,5 +1,4 @@
 const sheetsWithHeaders = ["Trips","Runs","Trip Review","Run Review","Recurring Trips","Customers","Trip Archive","Run Archive","Drivers","Services"]
-const sheetPropertySuffix = " headers"
 
 /**
  * Test whether a range is fully inside or matches another range. 
@@ -73,7 +72,7 @@ function getFullRow(range) {
  * @return {number}
  */
 function getColNumberByHeaderName(headerName, range) {
-  return JSON.parse(PropertiesService.getDocumentProperties().getProperty(range.getSheet().getName() + sheetPropertySuffix))[headerName]
+  return JSON.parse(PropertiesService.getDocumentProperties().getProperty(sheetHeaderPropertyName(range.getSheet().getName())))[headerName]
   //let headerValues = range.getSheet().getRange(headerRow, range.getColumn(), 1, range.getWidth()).getDisplayValues()[0]
   //return headerValues.indexOf(headerName)
 }
@@ -88,7 +87,7 @@ function getColNumberByHeaderName(headerName, range) {
  */
 function getColNumbersByHeaderNames(headerNames, range) {
   //let headerValues = range.getSheet().getRange(headerRow, range.getColumn(), 1, range.getWidth()).getDisplayValues()[0]
-  let headerValues = JSON.parse(PropertiesService.getDocumentProperties().getProperty(range.getSheet().getName() + sheetPropertySuffix))
+  let headerValues = JSON.parse(PropertiesService.getDocumentProperties().getProperty(sheetHeaderPropertyName(range.getSheet().getName())))
   return headerNames.map(i => headerValues[i])
 }
 
@@ -98,7 +97,7 @@ function getDataRangeAsTable(range) {
   const headerNames = range.shift()
   range.forEach(row => {
     let rowMap = {}
-    headerNames.forEach((headerName, i) => rowMap[headerName] = row[i] )
+    headerNames.forEach((headerName, i) => rowMap[headerName] = row[i])
     result.push(rowMap)
   })
   return result            
@@ -196,23 +195,27 @@ function setValuesByHeaderNames(values, range) {
 
 function storeHeaderInformation(e) {
   const docProperties = PropertiesService.getDocumentProperties()
-  let sheet
-  let headerRange
-  let headerValues
-  let allProperties = {}
+  let allProperties = []
   sheetsWithHeaders.forEach(sheetName => {
-    sheet = e.source.getSheetByName(sheetName)
+    let sheet = e.source.getSheetByName(sheetName)
     if (sheet) {
-      headerRange = sheet.getRange("A1:1")
-      headerValues = headerRange.getDisplayValues()[0]
+      let headerRange = sheet.getRange("A1:1")
+      let headerValues = headerRange.getDisplayValues()[0]
       let headerHash = {}
       headerValues.forEach((colName, i) => {
         if (colName) { headerHash[colName] = i }
       })
-      allProperties[sheetName + sheetPropertySuffix] = JSON.stringify(headerHash)
+      let propHash = {}
+      propHash.name = sheetHeaderPropertyName(sheetName)
+      propHash.value = headerHash
+      allProperties.push(propHash)
     }
   })
-  docProperties.setProperties(allProperties)
+  setDocProps(allProperties)
+}
+
+function sheetHeaderPropertyName(sheet) {
+  return `sheetHeaders["${sheet}"]_`
 }
 
 function testSetDisplayValueByHeaderName() {
