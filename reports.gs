@@ -47,16 +47,31 @@ function createManifests() {
 }
 
 function createManifest(run) {
+  const templateFileId         = getDocProp("driverManifestTemplateDocId")
+  const driverManifestFolderId = getDocProp("driverManifestFolderId")
   const manifestFileName = `${formatDate(run["Trip Date"], null, "yyyy-MM-dd")} manifest for ${run["Driver Name"]} on ${run["Vehicle Name"]}`
   const manifestFolder   = DriveApp.getFolderById(driverManifestFolderId)
-  const manifestFile     = DriveApp.getFileById(driverManifestTemplateDocId).makeCopy(manifestFolder).setName(manifestFileName)
+  const manifestFile     = DriveApp.getFileById(templateFileId).makeCopy(manifestFolder).setName(manifestFileName)
   const manifestDoc      = DocumentApp.openById(manifestFile.getId())
   emptyBody(manifestDoc.getBody())
   return manifestDoc
 }
                                                   
+function testCreateManifest() {
+  //const driverManifestTemplateDocId = "https://docs.google.com/document/d/1SPjf_8oVA2BM6wTzSf3Ww521Slet1p6NOorKtDn_HOQ/edit"
+  const driverManifestTemplateDocId = "1SPjf_8oVA2BM6wTzSf3Ww521Slet1p6NOorKtDn_HOQ"
+  //const driverManifestFolderId = "https://drive.google.com/drive/folders/1MuBNXLE-ziUEDY56gWR-OZ1Y9fKYild0"
+  const driverManifestFolderId = "1MuBNXLE-ziUEDY56gWR-OZ1Y9fKYild0"
+  //const manifestFileName = `${formatDate(run["Trip Date"], null, "yyyy-MM-dd")} manifest for ${run["Driver Name"]} on ${run["Vehicle Name"]}`
+  const manifestFileName = "Test Manifest"
+  const manifestFolder   = DriveApp.getFolderById(driverManifestFolderId)
+  const manifestFile     = DriveApp.getFileById(driverManifestTemplateDocId).makeCopy(manifestFolder).setName(manifestFileName)
+  const manifestDoc      = DocumentApp.openByUrl() (manifestFile.getId())
+  log(manifestDoc.getName())
+}
+                                                  
 function populateManifest(manifestDoc, templateDoc, run) {
-  templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
+  //templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
   
   const manifestBody   = manifestDoc.getBody()
   const manifestParent = manifestBody.getParent()
@@ -192,6 +207,8 @@ function getManifestData(date) {
 }
 
 function createDriverManifest(manifestDate, driverId) {
+  const driverManifestFolderId = getDocProp("driverManifestFolderId")
+  const driverManifestTemplateDocId = getDocProp("driverManifestTemplateDocId")
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const driverRow = findFirstRowByHeaderNames({"Driver ID": driverId},ss.getSheetByName("Drivers"))
   const driverName = getValueByHeaderName("Driver Name",driverRow)
@@ -272,6 +289,8 @@ function prepareTemplate(doc) {
 
 function copyNamedRanges(source, destination) {
   ss = SpreadsheetApp.getActiveSpreadsheet()
+  const driverManifestFolderId = getDocProp("driverManifestFolderId")
+  const driverManifestTemplateDocId = getDocProp("driverManifestTemplateDocId")
   const manifestFileName = formatDate(new Date(), null, "yyyy-MM-dd") + " Test Manifest"
   const manifestFolder = DriveApp.getFolderById(driverManifestFolderId)
   const manifestFile = DriveApp.getFileById(driverManifestTemplateDocId).makeCopy(manifestFolder).setName(manifestFileName)
