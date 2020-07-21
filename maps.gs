@@ -5,24 +5,32 @@
 * @customfunction
 */
 function getGeocode(address_to_code,return_type) {
-  let mapGeo = Maps.newGeocoder().setBounds(swLatitude, swLongitude, neLatitude, neLongitude)
+  const bounds = getDocProps([
+    "geocoderBoundSwLatitude",
+    "geocoderBoundSwLongitude",
+    "geocoderBoundNeLatitude",
+    "geocoderBoundNeLongitude"
+    ])
+  let mapGeo = Maps.newGeocoder().setBounds(
+    bounds["geocoderBoundSwLatitude"], 
+    bounds["geocoderBoundSwLongitude"], 
+    bounds["geocoderBoundNeLatitude"], 
+    bounds["geocoderBoundNeLongitude"]
+  )
+
   let result = mapGeo.geocode(address_to_code)
-  
-  if (result["status"] != "OK") {
+  if (return_type === "raw") {
+    return JSON.stringify(result).slice(0,50000)
+  } else if (result["status"] != "OK") {
     return "Error: " + result["status"]
-  } else {
-    switch(return_type){
-      case "lat":
-        return result["results"][0]["geometry"]["location"]["lat"]
-      case "lng":
-        return result["results"][0]["geometry"]["location"]["lng"]
-      case "formatted_address":
-        return result["results"][0]["formatted_address"]
-      case "raw":
-        return JSON.stringify(result).slice(0,50000)
-      default:
-        return "Error: Invalid Return Type"
-    }
+  } else if (result["results"][0]["partial_match"]) {
+    return "Error: PARTIAL_MATCH"
+  }
+  switch(return_type){
+    case "lat":               return result["results"][0]["geometry"]["location"]["lat"]
+    case "lng":               return result["results"][0]["geometry"]["location"]["lng"]
+    case "formatted_address": return result["results"][0]["formatted_address"]
+    default:                  return "Error: Invalid Return Type"
   }
 }
 
