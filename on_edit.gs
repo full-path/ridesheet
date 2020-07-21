@@ -1,8 +1,12 @@
-const triggers = {
-  "codeFillRequestCells": fillRequestCells,
-  "codeFormatAddress": formatAddress,
+const sheetTriggers = {
+  "Document Properties":   updatePropertiesOnEdit
+}
+
+const rangeTriggers = {
+  "codeFillRequestCells":  fillRequestCells,
+  "codeFormatAddress":     formatAddress,
   "codeFillHoursAndMiles": fillHoursAndMiles,
-  "codeSetCustomerKey": setCustomerKey,
+  "codeSetCustomerKey":    setCustomerKey,
   "codeScanForDuplicates": scanForDuplicates
 }
 
@@ -11,10 +15,19 @@ const triggers = {
  * @param {event} e The onEdit event.
  */
 function onEdit(e) {
-  let startTime = new Date()
-  let allNamedRanges = e.source.getNamedRanges()
+  const startTime = new Date()
+  const sheetName = e.range.getSheet().getName()
   let involvedNamedRanges = []
   
+  if (Object.keys(sheetTriggers).indexOf(sheetName) !== -1) {
+    sheetTriggers[sheetName](e)
+  }
+  if (e.range.getRow() === 1 && sheetsWithHeaders.indexOf(sheetName) !== -1) {
+    storeHeaderInformation(e)
+    return
+  }
+  
+  const allNamedRanges = e.source.getNamedRanges()
   allNamedRanges.forEach((namedRange) => {
     if (namedRange.getName().indexOf("code") === 0) {
       if (isInRange(e.range, namedRange.getRange())) {
@@ -25,11 +38,11 @@ function onEdit(e) {
 
   involvedNamedRanges.forEach(namedRange => {
     // log("Entering namedRange " + namedRange.getName())
-    Object.keys(triggers).forEach(triggerName => {
+    Object.keys(rangeTriggers).forEach(triggerName => {
         // log("Entering triggerName " + triggerName)
       if (namedRange.getName().indexOf(triggerName) > -1) {
         //log("Triggering " + triggerName)
-        triggers[triggerName](e)
+        rangeTriggers[triggerName](e)
         //log("Triggered " + triggerName)
       }
       // log("Exiting triggerName " + triggerName)
@@ -41,12 +54,17 @@ function onEdit(e) {
 
 function formatAddress(e) {
   if (e.value) {
-    let formattedAddress = getGeocode(e.value,"formatted_address")
+    const formattedAddress = getGeocode(e.value,"formatted_address")
+    let backgroundColor = SpreadsheetApp.newColor()
     if (formattedAddress.includes("Error")) {
       e.range.setNote("Address " + formattedAddress)
+      backgroundColor.setRgbColor(errorBackgroundColor)
     } else {
       e.range.setValue(formattedAddress)
+      e.range.setNote("")
+      backgroundColor.setRgbColor(defaultBackgroundColor)
     } 
+    e.range.setBackgroundObject(backgroundColor.build())
   }
 }
 
@@ -90,7 +108,7 @@ function setCustomerKey(e) {
   let newValues = {}
   if (customerValues["Customer First Name"] && customerValues["Customer Last Name"]) {
     const docProperties = PropertiesService.getDocumentProperties()
-    const lastCustomerID = docProperties.getProperty("lastCustomerID")
+    const lastCustomerID = getDocProp("lastCustomerID_")
     let nextCustomerID = ((lastCustomerID && (+lastCustomerID)) ? (Math.ceil(+lastCustomerID) + 1) : 1 )
     // There is no ID. Set one and update the lastCustomerID property
     if (!customerValues["Customer ID"]) {
@@ -98,7 +116,7 @@ function setCustomerKey(e) {
       newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
       newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
       newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
-      docProperties.setProperty("lastCustomerID", nextCustomerID)
+      setDocProp("lastCustomerID_", nextCustomerID)
     // There is an ID value present, and it's numeric. 
     // Update the lastCustomerID property if the new ID is greater than the current lastCustomerID property
     } else if (+customerValues["Customer ID"]) { 
@@ -106,7 +124,7 @@ function setCustomerKey(e) {
       newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
       newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
       newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
-      if ((+customerValues["Customer ID"]) >= nextCustomerID) { docProperties.setProperty("lastCustomerID", customerValues["ID"]) }
+      if ((+customerValues["Customer ID"]) >= nextCustomerID) { setDocProp("lastCustomerID_", customerValues["ID"]) }
     // There is an ID value, and it's not numeric. Allow this, but don't track it as the lastCustomerID
     } else { 
       newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
@@ -132,4 +150,8 @@ function scanForDuplicates(e) {
 
 function getCustomerNameAndId(first, last, id) {
   return `${last}, ${first} (${id})`
+}
+
+function updatePropertiesOnEdit(e) {
+  updateProperties(e)
 }
