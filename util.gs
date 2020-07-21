@@ -11,7 +11,7 @@ function clearLog() {
 }
 
 function logProperties() {
-  docProps = PropertiesService.getDocumentProperties()
+  let docProps = PropertiesService.getDocumentProperties()
   docProps.getKeys().forEach(prop => {
     log(prop,docProps.getProperty(prop))
   })
@@ -53,7 +53,7 @@ function isValidDate(date) {
 
 function formatDate(date, timeZone, dateFormat) {
   if (!date) date = new Date()
-  if (!timeZone) timeZone = localTimeZone
+  if (!timeZone) timeZone = getDocProp("localTimeZone","America/Los_Angeles")
   if (!dateFormat) dateFormat = "M/d/yy"
   if (!isValidDate(date)) date = Date.parse(date) 
   return Utilities.formatDate(date, timeZone, dateFormat)
@@ -74,6 +74,30 @@ function dateOnly(dateTime) {
 function parseDate(date, alternateValue) {
   dateVal = Date.parse(date.toString())
   return isNaN(dateVal) ? alternateValue : new Date(dateVal)
+}
+
+function getType(value) {
+  let objectClass = Object.prototype.toString.call(value)
+  let classes = {
+    "[object Array]":      "array",
+    "[object BigInt]":     "bigint",
+    "[object Boolean]":    "boolean",
+    "[object Date]":       "date",
+    "[object Map]":        "map",
+    "[object Null]":       "null",
+    "[object Number]":     "number",
+    "[object Object]":     "object",
+    "[object RegExp]":     "regexp",
+    "[object Set]":        "set",
+    "[object String]":     "string",
+    "[object Symbol]":     "symbol",
+    "[object Undefined]":  "undefined"
+  }
+  if (objectClass in classes) {
+    return classes[objectClass]
+  } else {
+    return "string"
+  }
 }
 
 function testParseDate() {
