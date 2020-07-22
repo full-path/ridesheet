@@ -18,14 +18,16 @@ function logProperties() {
 }
 
 function makeBackup(destFolderId) {
-  let startTime = new Date()
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const newName = formattedDate + ss.getName()
-  const destFolder = DriveApp.getFolderById(backupFolderId)
-  const file = DriveApp.getFileById(ss.getId())
-  
-  file.makeCopy(newName, destFolder);
-  log("onEdit duration:",(new Date()) - startTime)
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const file = DriveApp.getFileById(ss.getId())
+    const newName = formatDate(null,null,"yyyy-MM-dd") + "_" + ss.getName()
+    const destFolder = DriveApp.getFolderById(destFolderId)
+    file.makeCopy(newName, destFolder)
+    return true
+  } catch(e) {
+    return false
+  }
 }
 
 function rotateBackups(folderId, retentionInDays) {
@@ -38,25 +40,22 @@ function rotateBackups(folderId, retentionInDays) {
   }
 }
 
-function iterateTemplate() {
-  const doc = DocumentApp.openById("1SPjf_8oVA2BM6wTzSf3Ww521Slet1p6NOorKtDn_HOQ")
-  const body = doc.getBody()
-  const paragraphs = body.getParagraphs()
-  paragraphs.forEach((paragraph) => {
-    log(paragraph.getHeading())
-  })
-}
-
 function isValidDate(date) {
   return date && Object.prototype.toString.call(date) === "[object Date]" && !isNaN(date)
 }
 
 function formatDate(date, timeZone, dateFormat) {
-  if (!date) date = new Date()
-  if (!timeZone) timeZone = getDocProp("localTimeZone","America/Los_Angeles")
+  let thisDate
+  if (!timeZone) timeZone = getDocProp("localTimeZone",defaultLocalTimeZone)
   if (!dateFormat) dateFormat = "M/d/yy"
-  if (!isValidDate(date)) date = Date.parse(date) 
-  return Utilities.formatDate(date, timeZone, dateFormat)
+  if (!date) {
+    thisDate = new Date()
+  } else if (isValidDate(date)) {
+    thisDate = Date.parse(date)
+  } else {
+    thisDate = date
+  }
+  if (thisDate) return Utilities.formatDate(thisDate, timeZone, dateFormat)
 }
 
 function dateAdd(date, days) {
@@ -98,9 +97,4 @@ function getType(value) {
   } else {
     return "string"
   }
-}
-
-function testParseDate() {
-  log(dateOnly(dateAdd(new Date(), 1)))
-  
 }
