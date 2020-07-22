@@ -6,10 +6,10 @@
 */
 function getGeocode(address_to_code,return_type) {
   const bounds = getDocProps([
-    "geocoderBoundSwLatitude",
-    "geocoderBoundSwLongitude",
-    "geocoderBoundNeLatitude",
-    "geocoderBoundNeLongitude"
+    {name: "geocoderBoundSwLatitude",  altValue: defaultGeocoderBoundSwLatitude},
+    {name: "geocoderBoundSwLongitude", altValue: defaultGeocoderBoundSwLongitude},
+    {name: "geocoderBoundNeLatitude",  altValue: defaultGeocoderBoundNeLatitude},
+    {name: "geocoderBoundNeLongitude", altValue: defaultGeocoderBoundNeLongitude}
     ])
   let mapGeo = Maps.newGeocoder().setBounds(
     bounds["geocoderBoundSwLatitude"], 

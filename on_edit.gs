@@ -53,10 +53,18 @@ function onEdit(e) {
 }
 
 function formatAddress(e) {
+  let addr
+  let backgroundColor = SpreadsheetApp.newColor()
   if (e.value) {
-    const formattedAddress = getGeocode(e.value,"formatted_address")
-    let backgroundColor = SpreadsheetApp.newColor()
-    if (formattedAddress.includes("Error")) {
+    parenText = e.value.match(/\([^)]*\)/)
+    if (parenText) {
+      addr = e.value.replace(parenText[0],"")
+    } else {
+      addr = e.value
+    }
+    let formattedAddress = getGeocode(addr,"formatted_address")
+    if (parenText) formattedAddress = formattedAddress + " " + parenText[0]
+    if (formattedAddress.startsWith("Error")) {
       e.range.setNote("Address " + formattedAddress)
       backgroundColor.setRgbColor(errorBackgroundColor)
     } else {
@@ -64,8 +72,11 @@ function formatAddress(e) {
       e.range.setNote("")
       backgroundColor.setRgbColor(defaultBackgroundColor)
     } 
-    e.range.setBackgroundObject(backgroundColor.build())
+  } else {
+    e.range.setNote("")
+    backgroundColor.setRgbColor(defaultBackgroundColor)
   }
+  e.range.setBackgroundObject(backgroundColor.build())
 }
 
 function fillRequestCells(e) {
