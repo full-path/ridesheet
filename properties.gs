@@ -90,10 +90,10 @@ function getDocProps(props) {
   let result = {}
   props.forEach(prop => {
     if (getType(prop) === "object") {
-      if (prop.name in docProps === false) {
-        result[prop.name] = prop.altValue
-      } else {
+      if (prop.name in docProps) {
         result[prop.name] = deserializeProp(docProps[prop.name])
+      } else {
+        result[prop.name] = prop.altValue
       }
     } else {
       result[prop] = deserializeProp(docProps[prop])
