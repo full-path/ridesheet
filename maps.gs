@@ -24,7 +24,7 @@ function getGeocode(address_to_code,return_type) {
   } else if (result["status"] != "OK") {
     return "Error: " + result["status"]
   } else if (result["results"][0]["partial_match"]) {
-    return "Error: PARTIAL_MATCH"
+    return "Error: partial match: " + result["results"][0]["formatted_address"]
   }
   switch(return_type){
     case "lat":               return result["results"][0]["geometry"]["location"]["lat"]
@@ -68,4 +68,24 @@ function getTripEstimate(origin, destination, returnType) {
         return "Error: Invalid Unit Type"
     }
   }
+}
+
+function parseAddress(rawAddress) {
+  result = {}
+  parenText = rawAddress.match(/\([^)]*\)/)
+  if (parenText) {
+    result.parenText      = parenText[0]
+    result.geocodeAddress = rawAddress.replace(parenText[0],"")
+  } else {
+    result.geocodeAddress = rawAddress
+  }
+  return result
+}
+
+function createGoogleMapsDirectionsURL(address) {
+  const baseURL  = "https://www.google.com/maps/dir/?api=1"
+  const travelMode  = "&travelmode=driving"
+  const destAddress = parseAddress(address).geocodeAddress
+  const destination = "&destination=" + encodeURIComponent(destAddress)
+  return baseURL + travelMode + destination
 }

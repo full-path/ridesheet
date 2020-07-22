@@ -53,19 +53,16 @@ function onEdit(e) {
 }
 
 function formatAddress(e) {
-  let addr
-  let backgroundColor = SpreadsheetApp.newColor()
+  const app = SpreadsheetApp
+  let backgroundColor = app.newColor()
   if (e.value) {
-    parenText = e.value.match(/\([^)]*\)/)
-    if (parenText) {
-      addr = e.value.replace(parenText[0],"")
-    } else {
-      addr = e.value
-    }
-    let formattedAddress = getGeocode(addr,"formatted_address")
-    if (parenText) formattedAddress = formattedAddress + " " + parenText[0]
+    addressParts = parseAddress(e.value)
+    let formattedAddress = getGeocode(addressParts.geocodeAddress, "formatted_address")
+    if (addressParts.parenText) formattedAddress = formattedAddress + " " + addressParts.parenText
     if (formattedAddress.startsWith("Error")) {
-      e.range.setNote("Address " + formattedAddress)
+      const msg = "Address " + formattedAddress
+      e.range.setNote(msg)
+      app.getActiveSpreadsheet().toast(msg)
       backgroundColor.setRgbColor(errorBackgroundColor)
     } else {
       e.range.setValue(formattedAddress)
