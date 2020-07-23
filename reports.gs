@@ -127,12 +127,22 @@ function replaceText(element, data) {
       datum = data[field]
     }
     //log("Field: " + field, "Data: " + data[field], "Type: " + Object.prototype.toString.call(data[field]))
-    if (Object.keys(data).indexOf(field) != -1) element.replaceText("{" + field + "}", datum)
+    if (Object.keys(data).indexOf(field) != -1) {
+      element.replaceText("{" + field + "}", datum)
+      if (field.match(/\baddress\b/i)) {
+        let url = createGoogleMapsDirectionsURL(datum)
+        let addressRange = findText(datum)
+        do {
+          element.asText().setLinkUrl(addressRange.getStartOffset(), addressRange.getEndOffsetInclusive, url)
+          addressRange = findText(datum, addressRange.getStartOffset() + datum.length)
+        } while (addressRange)
+      } 
+    }
   })
 }
 
 function emptyBody(body) {
-  body.appendParagraph('')
+  body.appendParagraph('temp')
   while (body.getNumChildren() > 1) body.removeChild(body.getChild(0))
 }
 
