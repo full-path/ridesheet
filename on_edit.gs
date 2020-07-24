@@ -16,71 +16,90 @@ const rangeTriggers = {
  */
 function onEdit(e) {
   const startTime = new Date()
+  const spreadsheet = e.source
   const sheetName = e.range.getSheet().getName()
-  let involvedNamedRanges = []
-  
+  const sheet = e.range.getSheet()
   if (Object.keys(sheetTriggers).indexOf(sheetName) !== -1) {
     sheetTriggers[sheetName](e)
   }
-  if (e.range.getRow() === 1 && sheetsWithHeaders.indexOf(sheetName) !== -1) {
+  if (e.range.getRow() === 1 && e.range.getLastRow() === 1 && sheetsWithHeaders.indexOf(sheetName) !== -1) {
     storeHeaderInformation(e)
     return
   }
   
-  const allNamedRanges = e.source.getNamedRanges()
-  allNamedRanges.forEach((namedRange) => {
-    if (namedRange.getName().indexOf("code") === 0) {
-      if (isInRange(e.range, namedRange.getRange())) {
-        involvedNamedRanges.push(namedRange)
+  const allNamedRanges = spreadsheet.getNamedRanges()
+  let ranges = []
+  log(e.range.getHeight(), e.range.getWidth())
+  if (e.range.getHeight() > 1 || e.range.getWidth() > 1) {
+    //log("Rows:", e.range.getRow(), e.range.getLastRow())
+    //log("Columns:", e.range.getColumn(), e.range.getLastColumn())
+    for (let y = e.range.getColumn(); y <= e.range.getLastColumn(); y++) {
+      for (let x = e.range.getRow(); x <= e.range.getLastRow(); x++) {
+        //log("Added",x,y)
+        ranges.push(sheet.getRange(x,y))
       }
     }
-  })
-
-  involvedNamedRanges.forEach(namedRange => {
-    // log("Entering namedRange " + namedRange.getName())
-    Object.keys(rangeTriggers).forEach(triggerName => {
-        // log("Entering triggerName " + triggerName)
-      if (namedRange.getName().indexOf(triggerName) > -1) {
-        //log("Triggering " + triggerName)
-        rangeTriggers[triggerName](e)
-        //log("Triggered " + triggerName)
+  } else {
+    ranges.push(e.range)
+  }
+  
+  ranges.forEach(range => {
+    let involvedNamedRanges = []
+    allNamedRanges.forEach((namedRange) => {
+      if (namedRange.getName().indexOf("code") === 0) {
+        if (isInRange(range, namedRange.getRange())) {
+          involvedNamedRanges.push(namedRange)
+        }
       }
-      // log("Exiting triggerName " + triggerName)
     })
-    // log("Exiting namedRange " + namedRange)
+
+    involvedNamedRanges.forEach(namedRange => {
+    // log("Entering namedRange " + namedRange.getName())
+      Object.keys(rangeTriggers).forEach(triggerName => {
+        // log("Entering triggerName " + triggerName)
+        if (namedRange.getName().indexOf(triggerName) > -1) {
+          //log("Triggering " + triggerName)
+          rangeTriggers[triggerName](range)
+          //log("Triggered " + triggerName)
+        }
+        // log("Exiting triggerName " + triggerName)
+      })
+      // log("Exiting namedRange " + namedRange)
+    })
   })
   log("onEdit duration:",(new Date()) - startTime)
 }
 
-function formatAddress(e) {
+function formatAddress(range) {
   const app = SpreadsheetApp
   let backgroundColor = app.newColor()
-  if (e.value && e.value.trim()) {
-    addressParts = parseAddress(e.value)
+  if (range.getValue() && range.getValue().trim()) {
+    addressParts = parseAddress(range.getValue())
     let formattedAddress = getGeocode(addressParts.geocodeAddress, "formatted_address")
     if (addressParts.parenText) formattedAddress = formattedAddress + " " + addressParts.parenText
     if (formattedAddress.startsWith("Error")) {
       const msg = "Address " + formattedAddress
-      e.range.setNote(msg)
+      range.setNote(msg)
       app.getActiveSpreadsheet().toast(msg)
       backgroundColor.setRgbColor(errorBackgroundColor)
     } else {
-      e.range.setValue(formattedAddress)
-      e.range.setNote("")
+      range.setValue(formattedAddress)
+      range.setNote("")
       backgroundColor.setRgbColor(defaultBackgroundColor)
     } 
   } else {
-    e.range.setNote("")
+    range.setNote("")
     backgroundColor.setRgbColor(defaultBackgroundColor)
   }
-  e.range.setBackgroundObject(backgroundColor.build())
+  range.setBackgroundObject(backgroundColor.build())
 }
 
-function fillRequestCells(e) {
-  if (e.value) {
-    const tripRow = getFullRow(e.range)
+function fillRequestCells(range) {
+  if (range.getValue()) {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const tripRow = getFullRow(range)
     const tripValues = getValuesByHeaderNames(["Customer Name and ID","PU Address","DO Address","Service ID"], tripRow)
-    const customerRow = findFirstRowByHeaderNames({"Customer Name and ID": tripValues["Customer Name and ID"]}, e.source.getSheetByName("Customers"))
+    const customerRow = findFirstRowByHeaderNames({"Customer Name and ID": tripValues["Customer Name and ID"]}, ss.getSheetByName("Customers"))
     const customerAddresses = getValuesByHeaderNames(["Customer ID","Home Address","Default Destination","Default Service ID"], customerRow)
     let valuesToChange = {}
     valuesToChange["Customer ID"] = customerAddresses["Customer ID"]
@@ -88,12 +107,12 @@ function fillRequestCells(e) {
     if (tripValues["DO Address"] == '') { valuesToChange["DO Address"] = customerAddresses["Default Destination"] }
     if (tripValues["Service ID"] == '') { valuesToChange["Service ID"] = customerAddresses["Default Service ID"] }
     setValuesByHeaderNames(valuesToChange, tripRow)
-    if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { fillHoursAndMiles(e) }
+    if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { fillHoursAndMiles(range) }
   }
 }
 
-function fillHoursAndMiles(e) {
-  const tripRow = getFullRow(e.range)
+function fillHoursAndMiles(range) {
+  const tripRow = getFullRow(range)
   const values = getValuesByHeaderNames(["PU Address", "DO Address"], tripRow)
   let tripEstimate
   if (values["PU Address"] && values["DO Address"]) {
@@ -110,12 +129,11 @@ function fillHoursAndMiles(e) {
  *   This will be the field used to identify the customer in trip records
  * - Keep track of the current highest customer ID in document properties, seeding data when needed
  */
-function setCustomerKey(e) {
-  const customerRow = getFullRow(e.range)
+function setCustomerKey(range) {
+  const customerRow = getFullRow(range)
   const customerValues = getValuesByHeaderNames(["Customer First Name", "Customer Last Name", "ID", "Customer Name and ID"], customerRow)
   let newValues = {}
   if (customerValues["Customer First Name"] && customerValues["Customer Last Name"]) {
-    const docProperties = PropertiesService.getDocumentProperties()
     const lastCustomerID = getDocProp("lastCustomerID_")
     let nextCustomerID = ((lastCustomerID && (+lastCustomerID)) ? (Math.ceil(+lastCustomerID) + 1) : 1 )
     // There is no ID. Set one and update the lastCustomerID property
@@ -143,17 +161,17 @@ function setCustomerKey(e) {
   }
 }
 
-function scanForDuplicates(e) {
-  const thisRowNumber = e.range.getRow()
-  const range = e.range.getSheet().getRange(1, e.range.getColumn(), e.range.getSheet().getLastRow())
-  const values = range.getValues().map(row => row[0])
+function scanForDuplicates(range) {
+  const thisRowNumber = range.getRow()
+  const fullRange = e.range.getSheet().getRange(1, e.range.getColumn(), e.range.getSheet().getLastRow())
+  const values = fullRange.getValues().map(row => row[0])
   let duplicateRows = []
   values.forEach((value, i) => {
     if (value == e.value && (i + 1) != thisRowNumber) duplicateRows.push(i + 1)
   })
-  if (duplicateRows.length == 1) e.range.setNote("This value is already used in row "  + duplicateRows[0]) 
-  if (duplicateRows.length > 1)  e.range.setNote("This value is already used in rows " + duplicateRows.join(", ")) 
-  if (duplicateRows.length == 0) e.range.clearNote()
+  if (duplicateRows.length == 1) range.setNote("This value is already used in row "  + duplicateRows[0]) 
+  if (duplicateRows.length > 1)  range.setNote("This value is already used in rows " + duplicateRows.join(", ")) 
+  if (duplicateRows.length == 0) range.clearNote()
 }
 
 function getCustomerNameAndId(first, last, id) {
