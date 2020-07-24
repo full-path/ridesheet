@@ -72,7 +72,7 @@ function getFullRow(range) {
  * @return {number}
  */
 function getColNumberByHeaderName(headerName, range) {
-  return JSON.parse(PropertiesService.getDocumentProperties().getProperty(sheetHeaderPropertyName(range.getSheet().getName())))[headerName]
+  return JSON.parse(getDocProp(sheetHeaderPropertyName(range.getSheet().getName())))[headerName]
   //let headerValues = range.getSheet().getRange(headerRow, range.getColumn(), 1, range.getWidth()).getDisplayValues()[0]
   //return headerValues.indexOf(headerName)
 }
@@ -87,7 +87,7 @@ function getColNumberByHeaderName(headerName, range) {
  */
 function getColNumbersByHeaderNames(headerNames, range) {
   //let headerValues = range.getSheet().getRange(headerRow, range.getColumn(), 1, range.getWidth()).getDisplayValues()[0]
-  let headerValues = JSON.parse(PropertiesService.getDocumentProperties().getProperty(sheetHeaderPropertyName(range.getSheet().getName())))
+  let headerValues = getDocProp(sheetHeaderPropertyName(range.getSheet().getName()))
   return headerNames.map(i => headerValues[i])
 }
 
@@ -194,7 +194,6 @@ function setValuesByHeaderNames(values, range) {
 }
 
 function storeHeaderInformation(e) {
-  const docProperties = PropertiesService.getDocumentProperties()
   let allProperties = []
   sheetsWithHeaders.forEach(sheetName => {
     let sheet = e.source.getSheetByName(sheetName)
