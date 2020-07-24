@@ -55,7 +55,7 @@ function onEdit(e) {
 function formatAddress(e) {
   const app = SpreadsheetApp
   let backgroundColor = app.newColor()
-  if (e.value) {
+  if (e.value && e.value.trim()) {
     addressParts = parseAddress(e.value)
     let formattedAddress = getGeocode(addressParts.geocodeAddress, "formatted_address")
     if (addressParts.parenText) formattedAddress = formattedAddress + " " + addressParts.parenText
