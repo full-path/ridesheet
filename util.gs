@@ -98,3 +98,12 @@ function getType(value) {
     return "string"
   }
 }
+
+function getCustomerNameAndId(first, last, id) {
+  return `${last}, ${first} (${id})`
+}
+
+function convertNamedRangeToTriggerName(namedRange) {
+  // remove numeric suffix
+  return namedRange.getName().replace(/\d+$/g,'')
+}

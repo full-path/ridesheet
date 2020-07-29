@@ -3,11 +3,26 @@ const sheetTriggers = {
 }
 
 const rangeTriggers = {
-  "codeFillRequestCells":  fillRequestCells,
-  "codeFormatAddress":     formatAddress,
-  "codeFillHoursAndMiles": fillHoursAndMiles,
-  "codeSetCustomerKey":    setCustomerKey,
-  "codeScanForDuplicates": scanForDuplicates
+  codeFillRequestCells: {
+    functionCall: fillRequestCells,
+    callOncePerRow: true
+  },
+  codeFormatAddress: {
+    functionCall: formatAddress,
+    callOncePerRow: false
+  },
+  codeFillHoursAndMiles: {
+    functionCall: fillHoursAndMiles,
+    callOncePerRow: true
+  },
+  codeSetCustomerKey: {
+    functionCall: setCustomerKey,
+    callOncePerRow: true
+  },
+  codeScanForDuplicates: {
+    functionCall: scanForDuplicates,
+    callOncePerRow: false
+  }
 }
 
 /**
@@ -16,21 +31,38 @@ const rangeTriggers = {
  */
 function onEdit(e) {
   const startTime = new Date()
-  const spreadsheet = e.source
   const sheetName = e.range.getSheet().getName()
-  const sheet = e.range.getSheet()
+  
+  // Call any sheet-level triggers
   if (Object.keys(sheetTriggers).indexOf(sheetName) !== -1) {
     sheetTriggers[sheetName](e)
   }
+  
+  // Call special code that's just for data headers, if that's what's being edited
   if (e.range.getRow() === 1 && e.range.getLastRow() === 1 && sheetsWithHeaders.indexOf(sheetName) !== -1) {
     storeHeaderInformation(e)
     return
   }
   
-  const allNamedRanges = spreadsheet.getNamedRanges()
+  // Handle general 1-cell-level triggers
+  const spreadsheet = e.source
+  const sheet = e.range.getSheet()
+  const allNamedRanges = spreadsheet.getNamedRanges().filter(nr => nr.getName().indexOf("code") === 0)
+  const isMultiColumnRange = (e.range.getWidth() > 1)
+  const isMultiRowRange = (e.range.getHeight() > 1)
+  let triggeredRows = {}
   let ranges = []
-  log(e.range.getHeight(), e.range.getWidth())
-  if (e.range.getHeight() > 1 || e.range.getWidth() > 1) {
+
+  // If we're working with multiple rows, set up the system to prevent running some code from 
+  // running multiple times per row.
+  if (isMultiRowRange) {
+    Object.keys(rangeTriggers).forEach(key => {
+      if (rangeTriggers[key].callOncePerRow) triggeredRows[key] = []
+    })
+  }
+
+  // If we're working with multiple rows or columns, collect all the 1-cell ranges we'll be looking at.
+  if (isMultiRowRange || isMultiColumnRange) {
     //log("Rows:", e.range.getRow(), e.range.getLastRow())
     //log("Columns:", e.range.getColumn(), e.range.getLastColumn())
     for (let y = e.range.getColumn(); y <= e.range.getLastColumn(); y++) {
@@ -43,28 +75,37 @@ function onEdit(e) {
     ranges.push(e.range)
   }
   
+  // Proceed through the array of 1-cell ranges
   ranges.forEach(range => {
-    let involvedNamedRanges = []
-    allNamedRanges.forEach((namedRange) => {
-      if (namedRange.getName().indexOf("code") === 0) {
-        if (isInRange(range, namedRange.getRange())) {
-          involvedNamedRanges.push(namedRange)
-        }
+    // For this 1-cell range, collect all the triggers to be triggered.
+    let involvedTriggerNames = []
+    allNamedRanges.forEach(namedRange => {
+      if (isInRange(range, namedRange.getRange())) {
+        //log("Adding " + namedRange.getName() + " as involved named range")
+        involvedTriggerNames.push(convertNamedRangeToTriggerName(namedRange))
+        //log("Added " + namedRange.getName() + " as involved named range")
       }
     })
 
-    involvedNamedRanges.forEach(namedRange => {
-    // log("Entering namedRange " + namedRange.getName())
-      Object.keys(rangeTriggers).forEach(triggerName => {
-        // log("Entering triggerName " + triggerName)
-        if (namedRange.getName().indexOf(triggerName) > -1) {
+    // Call all the functions for the triggers involved with this 1-cell range
+    //log("Range: " + range.getA1Notation())
+    involvedTriggerNames.forEach(triggerName => {
+      // Check to see if this trigger has a one-call-per-row constraint on it
+      //log("Triggering " + triggerName)
+      if (triggeredRows[triggerName]) {
+        // if it hasn't been triggered for this row, trigger and record it.
+        if (triggeredRows[triggerName].indexOf(range.getRow()) === -1) {
           //log("Triggering " + triggerName)
-          rangeTriggers[triggerName](range)
+          rangeTriggers[triggerName]["functionCall"](range)
+          triggeredRows[triggerName].push(range.getRow())
           //log("Triggered " + triggerName)
         }
-        // log("Exiting triggerName " + triggerName)
-      })
-      // log("Exiting namedRange " + namedRange)
+      } else {
+        //log("Triggering " + triggerName)
+        rangeTriggers[triggerName]["functionCall"](range)
+        //log("Triggered " + triggerName)
+      }
+      //log("Triggered " + triggerName)
     })
   })
   log("onEdit duration:",(new Date()) - startTime)
@@ -172,10 +213,6 @@ function scanForDuplicates(range) {
   if (duplicateRows.length == 1) range.setNote("This value is already used in row "  + duplicateRows[0]) 
   if (duplicateRows.length > 1)  range.setNote("This value is already used in rows " + duplicateRows.join(", ")) 
   if (duplicateRows.length == 0) range.clearNote()
-}
-
-function getCustomerNameAndId(first, last, id) {
-  return `${last}, ${first} (${id})`
 }
 
 function updatePropertiesOnEdit(e) {
