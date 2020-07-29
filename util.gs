@@ -47,16 +47,18 @@ function isValidDate(date) {
 function formatDate(date, timeZone, dateFormat) {
   let thisDate
   if (!timeZone) timeZone = getDocProp("localTimeZone",defaultLocalTimeZone)
-  if (!dateFormat) dateFormat = "M/d/yy"
+  if (!dateFormat) dateFormat = "M/d/yyyy"
   if (!date) {
     thisDate = new Date()
   } else if (isValidDate(date)) {
-    thisDate = Date.parse(date)
-  } else {
     thisDate = date
+  } else {
+    thisDate = new Date(date)
   }
-  if (thisDate) return Utilities.formatDate(thisDate, timeZone, dateFormat)
+  if (isValidDate(thisDate)) return Utilities.formatDate(thisDate, timeZone, dateFormat)
 }
+
+function testFormatDate() {log(formatDate("2020-5-24"))}
 
 function dateAdd(date, days) {
   if (!date) date = new Date()
