@@ -1,3 +1,5 @@
+const tempText = "{{Temporary Text}}"
+
 function createManifests() {
   let startTime = new Date()
   ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -18,7 +20,9 @@ function createManifests() {
     // tomorrow, at midnight
     defaultDate = dateOnly(dateAdd(new Date(), 1))
   }
-  let promptResult = ui.prompt("Create Manifests", "Enter date for manifests. Leave blank for " + formatDate(defaultDate), ui.ButtonSet.OK_CANCEL)
+  log("Prompt ready:",(new Date()) - startTime)
+  let promptResult = ui.prompt("Create Manifests", "Enter date for manifests. Leave blank for " + formatDate(defaultDate, null, null), ui.ButtonSet.OK_CANCEL)
+  startTime = new Date()
   if (promptResult.getResponseText() == "") {
     manifestDate = defaultDate
   } else {
@@ -31,7 +35,7 @@ function createManifests() {
     ui.alert("Action cancelled.")
     return
   }
-  const templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
+  const templateDoc = DocumentApp.openById(getDocProp("driverManifestTemplateDocId"))
   prepareTemplate(templateDoc)
   log("Template prepared:",(new Date()) - startTime)
   
@@ -41,9 +45,13 @@ function createManifests() {
   runs.forEach((run, i) => {
     let manifestDoc = createManifest(run)
     log("Created manifest " + i + ":",(new Date()) - startTime)
+    emptyBody(manifestDoc)
     populateManifest(manifestDoc, templateDoc, run)
+    removeTempElement(manifestDoc)
+    manifestDoc.saveAndClose()
     log("Populated manifest " + i + ":",(new Date()) - startTime)
   })
+  log(`All manifests created:`,(new Date()) - startTime)
 }
 
 function createManifest(run) {
@@ -53,7 +61,6 @@ function createManifest(run) {
   const manifestFolder   = DriveApp.getFolderById(driverManifestFolderId)
   const manifestFile     = DriveApp.getFileById(templateFileId).makeCopy(manifestFolder).setName(manifestFileName)
   const manifestDoc      = DocumentApp.openById(manifestFile.getId())
-  emptyBody(manifestDoc.getBody())
   return manifestDoc
 }
                                                   
@@ -131,19 +138,29 @@ function replaceText(element, data) {
       element.replaceText("{" + field + "}", datum)
       if (field.match(/\baddress\b/i)) {
         let url = createGoogleMapsDirectionsURL(datum)
-        let addressRange = findText(datum)
+        let text = element.asText()
+        let addressRange = text.findText(datum)
         do {
-          element.asText().setLinkUrl(addressRange.getStartOffset(), addressRange.getEndOffsetInclusive, url)
-          addressRange = findText(datum, addressRange.getStartOffset() + datum.length)
+          text.setLinkUrl(addressRange.getStartOffset(), addressRange.getEndOffsetInclusive(), url)
+          addressRange = text.findText(datum, addressRange)
         } while (addressRange)
       } 
     }
   })
 }
 
-function emptyBody(body) {
-  body.appendParagraph('temp')
+// Remove all the original elements from the template, leaving just one temporary element,
+// since the body has to have at least one element or there will be an error
+function emptyBody(doc) {
+  let body = doc.getBody()
+  let tempParagraph = body.appendParagraph(tempText)
   while (body.getNumChildren() > 1) body.removeChild(body.getChild(0))
+}
+
+// Remove the temporary element created by emptyBody
+function removeTempElement(doc) {
+  let body = doc.getBody()
+  if (body.getChild(0).asText().getText() === tempText) body.removeChild(body.getChild(0))
 }
 
 function getManifestData(date) {
