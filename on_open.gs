@@ -3,8 +3,8 @@ function onOpen(e) {
   //storeHeaderInformation(e)
   let ui = SpreadsheetApp.getUi()
   let menu = ui.createMenu('RideSheet')
-  menu.addItem('Create Manifests', 'createManifests')
-  menu.addItem('Update Properties', 'presentProperties')
+  menu.addItem('Create manifests', 'createManifests')
+  menu.addItem('Update properties', 'presentProperties')
   menu.addToUi()
   
   log("onOpen duration:",(new Date()) - startTime)
