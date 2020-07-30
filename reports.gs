@@ -43,20 +43,23 @@ function createManifests() {
   log("Data acquired:",(new Date()) - startTime)
 
   runs.forEach((run, i) => {
-    let manifestDoc = createManifest(run)
+    const driverManifestFolderId = getDocProp("driverManifestFolderId")
+    const templateFileId = getDocProp("driverManifestTemplateDocId")
+    const manifestDoc = createManifest(run, templateFileId, driverManifestFolderId)
     log("Created manifest " + i + ":",(new Date()) - startTime)
     emptyBody(manifestDoc)
     populateManifest(manifestDoc, templateDoc, run)
     removeTempElement(manifestDoc)
     manifestDoc.saveAndClose()
+    const manifestFile = DriveApp.getFileById(manifestDoc.getId())
+    let manifestPDFFile = DriveApp.getFolderById(driverManifestFolderId).createFile(manifestFile.getBlob().getAs("application/pdf"))
+    manifestPDFFile.setName(manifestFile + ".pdf")
     log("Populated manifest " + i + ":",(new Date()) - startTime)
   })
   log(`All manifests created:`,(new Date()) - startTime)
 }
 
-function createManifest(run) {
-  const templateFileId         = getDocProp("driverManifestTemplateDocId")
-  const driverManifestFolderId = getDocProp("driverManifestFolderId")
+function createManifest(run, templateFileId, driverManifestFolderId) {
   const manifestFileName = `${formatDate(run["Trip Date"], null, "yyyy-MM-dd")} manifest for ${run["Driver Name"]} on ${run["Vehicle Name"]}`
   const manifestFolder   = DriveApp.getFolderById(driverManifestFolderId)
   const manifestFile     = DriveApp.getFileById(templateFileId).makeCopy(manifestFolder).setName(manifestFileName)
