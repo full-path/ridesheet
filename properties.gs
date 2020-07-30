@@ -1,22 +1,28 @@
 const propDescSuffix = "__description__"
 
-function getProperties() {
+function getProperties(showPrivateProperties) {
   let docProps = PropertiesService.getDocumentProperties().getProperties()
   let docPropKeys = Object.keys(docProps).sort()
   let filteredDocPropKeys = showPrivateProperties ? docPropKeys : docPropKeys.filter(key => !key.endsWith("_"))
   propsArray = []
   filteredDocPropKeys.forEach(propName => {
-    const thisRow = [propName, getPropParts(docProps[propName]).value]
+    let thisRow = {name: propName, value: getPropParts(docProps[propName]).value}
     if (propName.indexOf(propDescSuffix) === -1) {
       if (docPropKeys.indexOf(propName + propDescSuffix) === -1) {
-        thisRow.push("")
+        thisRow.description = ""
       } else {
-        thisRow.push(getPropParts(docProps[propName + propDescSuffix]).value)
+        thisRow.description = getPropParts(docProps[propName + propDescSuffix]).value
       }
     }
     propsArray.push(thisRow)
   })
   return propsArray
+}
+
+function loadProperties() {
+  const range = SpreadsheetApp.getActiveRange()
+  const props = JSON.parse(range.getValue())
+  setDocProps(props)
 }
 
 function presentProperties() {
@@ -27,13 +33,15 @@ function presentProperties() {
   let header = propSheet.getRange(1, 1, 1, 3)
   
   header.setValues([["Property Name","Property Value","Property Description"]])
-  header.setBackground("#fff2cc").setFontWeight("bold")
+  header.setBackground(headerBackgroundColor).setFontWeight("bold")
   propSheet.setFrozenRows(1)
   propSheet.setFrozenColumns(1)
-  props = getProperties()
-  propRange = propSheet.getRange(2,1,props.length,3)
-  propRange.setValues(props)
-  propSheet.autoResizeColumns(1,3)
+  props = getProperties().map(row => [row.name, row.value, row.description])
+  if (props.length > 0) {
+    propRange = propSheet.getRange(2,1,props.length,3)
+    propRange.setValues(props)
+    propSheet.autoResizeColumns(1,3)
+  }
   ss.setActiveSheet(propSheet)
   ss.moveActiveSheet(1)
 }
@@ -187,4 +195,3 @@ function cleanUpTestTypes() {
 //  deleteDocProp("testSet")
 //  deleteDocProp("testUndefined")
 }
-
