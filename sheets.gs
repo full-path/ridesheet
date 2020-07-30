@@ -72,7 +72,7 @@ function getFullRow(range) {
  * @return {number}
  */
 function getColNumberByHeaderName(headerName, range) {
-  return JSON.parse(getDocProp(sheetHeaderPropertyName(range.getSheet().getName())))[headerName]
+  return getDocProp(sheetHeaderPropertyName(range.getSheet().getName()))[headerName]
   //let headerValues = range.getSheet().getRange(headerRow, range.getColumn(), 1, range.getWidth()).getDisplayValues()[0]
   //return headerValues.indexOf(headerName)
 }
