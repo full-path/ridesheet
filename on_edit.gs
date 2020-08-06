@@ -167,10 +167,13 @@ function fillRequestCells(range) {
 function fillHoursAndMiles(range) {
   const tripRow = getFullRow(range)
   const values = getValuesByHeaderNames(["PU Address", "DO Address"], tripRow)
-  let tripEstimate
   if (values["PU Address"] && values["DO Address"]) {
-    tripEstimate = getTripEstimate(values["PU Address"], values["DO Address"], "milesAndDays")
+    const PUAddress = parseAddress(values["PU Address"]).geocodeAddress
+    const DOAddress = parseAddress(values["DO Address"]).geocodeAddress
+    const tripEstimate = getTripEstimate(PUAddress, DOAddress, "milesAndDays")
     setValuesByHeaderNames({"Est Hours": tripEstimate["days"], "Est Miles": tripEstimate["miles"]}, tripRow)
+  } else {
+    setValuesByHeaderNames({"Est Hours": "", "Est Miles": ""}, tripRow)
   }
 }
 
