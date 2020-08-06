@@ -33,14 +33,14 @@ function onEdit(e) {
   const startTime = new Date()
   const sheetName = e.range.getSheet().getName()
   
-  if (updateSheetHeaderRow(e, sheetname)) return
-  callSheetTriggers(e, sheetname)  
+  if (updateSheetHeaderRow(e, sheetName)) return
+  callSheetTriggers(e, sheetName)  
   callCellTriggers(e)
   
   log("onEdit duration:",(new Date()) - startTime)
 }
 
-function updateSheetHeaderRow(e, sheetname) {
+function updateSheetHeaderRow(e, sheetName) {
   // Call special code that's just for data headers, if that's what's being edited
   if (e.range.getRow() === 1 && e.range.getLastRow() === 1 && sheetsWithHeaders.indexOf(sheetName) !== -1) {
     storeHeaderInformation(e)
@@ -50,7 +50,7 @@ function updateSheetHeaderRow(e, sheetname) {
   }
 }
 
-function callSheetTriggers(e, sheetname) {
+function callSheetTriggers(e, sheetName) {
   if (Object.keys(sheetTriggers).indexOf(sheetName) !== -1) {
     sheetTriggers[sheetName](e)
   }
@@ -71,6 +71,7 @@ function callCellTriggers(e) {
     Object.keys(rangeTriggers).forEach(key => {
       if (rangeTriggers[key].callOncePerRow) triggeredRows[key] = []
     })
+    //log(JSON.stringify(triggeredRows))
   }
 
   // If we're working with multiple rows or columns, collect all the 1-cell ranges we'll be looking at.
