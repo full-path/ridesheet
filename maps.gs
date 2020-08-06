@@ -4,7 +4,7 @@
 * @param return_type Return type as string "lat", "long", or "formatted_address"
 * @customfunction
 */
-function getGeocode(address_to_code,return_type) {
+function getGeocode(address,returnType) {
   const bounds = getDocProps([
     {name: "geocoderBoundSwLatitude",  altValue: defaultGeocoderBoundSwLatitude},
     {name: "geocoderBoundSwLongitude", altValue: defaultGeocoderBoundSwLongitude},
@@ -18,15 +18,15 @@ function getGeocode(address_to_code,return_type) {
     bounds["geocoderBoundNeLongitude"]
   )
 
-  let result = mapGeo.geocode(address_to_code)
-  if (return_type === "raw") {
+  let result = mapGeo.geocode(address)
+  if (returnType === "raw") {
     return JSON.stringify(result).slice(0,50000)
   } else if (result["status"] != "OK") {
     return "Error: " + result["status"]
   } else if (result["results"][0]["partial_match"]) {
     return "Error: partial match: " + result["results"][0]["formatted_address"]
   }
-  switch(return_type){
+  switch(returnType){
     case "lat":               return result["results"][0]["geometry"]["location"]["lat"]
     case "lng":               return result["results"][0]["geometry"]["location"]["lng"]
     case "formatted_address": return result["results"][0]["formatted_address"]
@@ -40,7 +40,9 @@ function getTripEstimate(origin, destination, returnType) {
   mapObj.setDestination(destination)
   const result = mapObj.getDirections()
   
-  if (result["status"] != "OK") {
+  if (returnType === "raw") {
+    return JSON.stringify(result).slice(0,50000)
+  } else if (result["status"] != "OK") {
     return "Error: " + result["status"]
   } else {
     const distanceInMeters  = result["routes"][0]["legs"][0]["distance"]["value"]
@@ -62,8 +64,6 @@ function getTripEstimate(origin, destination, returnType) {
         return (durationInSeconds / 86400)
       case "milesAndDays":
         return {miles: (distanceInMeters * 0.000621371), days: (durationInSeconds / 86400)}
-      case "raw":
-        return JSON.stringify(result).slice(0,50000)
       default:
         return "Error: Invalid Unit Type"
     }
