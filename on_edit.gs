@@ -33,21 +33,10 @@ function onEdit(e) {
   const startTime = new Date()
   const sheetName = e.range.getSheet().getName()
   
-  if (updateSheetHeaderRow(e, sheetName)) return
   callSheetTriggers(e, sheetName)  
   callCellTriggers(e)
   
   log("onEdit duration:",(new Date()) - startTime)
-}
-
-function updateSheetHeaderRow(e, sheetName) {
-  // Call special code that's just for data headers, if that's what's being edited
-  if (e.range.getRow() === 1 && e.range.getLastRow() === 1 && sheetsWithHeaders.indexOf(sheetName) !== -1) {
-    storeHeaderInformation(e)
-    return true
-  } else {
-    return false
-  }
 }
 
 function callSheetTriggers(e, sheetName) {

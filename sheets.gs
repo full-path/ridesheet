@@ -1,3 +1,4 @@
+var headerInformation = {}
 const sheetsWithHeaders = ["Trips","Runs","Trip Review","Run Review","Recurring Trips","Customers","Trip Archive","Run Archive","Drivers","Services"]
 
 /**
@@ -66,28 +67,25 @@ function getFullRow(range) {
 /**
  * Given a desired column name and a range, 
  * return the first found (0-based) column numbers whose header row value
- * match the value in the headerNames parameter. Returns -1 if column cannot be found.
+ * match the value in the headerNames parameter.
  * @param {string} headerName The header name
  * @param {range} range The range 
  * @return {number}
  */
 function getColNumberByHeaderName(headerName, range) {
-  return getDocProp(sheetHeaderPropertyName(range.getSheet().getName()))[headerName]
-  //let headerValues = range.getSheet().getRange(headerRow, range.getColumn(), 1, range.getWidth()).getDisplayValues()[0]
-  //return headerValues.indexOf(headerName)
+  return getHeaderInformation(range.getSheet().getName())[headerName]
 }
 
 /**
  * Given an array of desired column names and a range, 
  * return an array of first-found (0-based) column numbers whose header row values
- * match each value in the headerNames array. Returns -1 for each column that cannot be found.
+ * match each value in the headerNames array.
  * @param {array} headerNames The names of the headers
  * @param {range} range The range 
  * @return {array}
  */
 function getColNumbersByHeaderNames(headerNames, range) {
-  //let headerValues = range.getSheet().getRange(headerRow, range.getColumn(), 1, range.getWidth()).getDisplayValues()[0]
-  let headerValues = getDocProp(sheetHeaderPropertyName(range.getSheet().getName()))
+  let headerValues = getHeaderInformation(range.getSheet().getName())
   return headerNames.map(i => headerValues[i])
 }
 
@@ -193,28 +191,21 @@ function setValuesByHeaderNames(values, range) {
   return range.setValues(rangeValues)
 }
 
-function storeHeaderInformation(e) {
-  let allProperties = []
-  sheetsWithHeaders.forEach(sheetName => {
-    let sheet = e.source.getSheetByName(sheetName)
+// Cache header info in a global variable so it only needs to be collected once per sheet per onEdit call.
+function getHeaderInformation(sheetName) {
+  if (!headerInformation[sheetName]) {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName)
     if (sheet) {
-      let headerRange = sheet.getRange("A1:1")
-      let headerValues = headerRange.getDisplayValues()[0]
+      const headerValues = sheet.getRange("A1:1").getDisplayValues()[0]
       let headerHash = {}
       headerValues.forEach((colName, i) => {
-        if (colName) { headerHash[colName] = i }
+        if (colName) headerHash[colName] = i
       })
-      let propHash = {}
-      propHash.name = sheetHeaderPropertyName(sheetName)
-      propHash.value = headerHash
-      allProperties.push(propHash)
+      headerInformation[sheetName] = headerHash
     }
-  })
-  setDocProps(allProperties)
-}
-
-function sheetHeaderPropertyName(sheet) {
-  return `sheetHeaders["${sheet}"]_`
+    log("Collected header information")
+  }
+  return headerInformation[sheetName]
 }
 
 function testSetDisplayValueByHeaderName() {
