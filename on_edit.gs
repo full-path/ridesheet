@@ -2,6 +2,11 @@ const sheetTriggers = {
   "Document Properties":   updatePropertiesOnEdit
 }
 
+const sheetNamesWithNoCellTriggers = [
+  "Document Properties",
+  "Debug Log"
+  ]
+
 const rangeTriggers = {
   codeFillRequestCells: {
     functionCall: fillRequestCells,
@@ -48,7 +53,11 @@ function callSheetTriggers(e, sheetName) {
 function callCellTriggers(e) {
   const spreadsheet = e.source
   const sheet = e.range.getSheet()
-  const allNamedRanges = spreadsheet.getNamedRanges().filter(nr => nr.getName().indexOf("code") === 0)
+  if (sheetNamesWithNoCellTriggers.indexOf(sheet.getName()) > -1) return
+  const allNamedRanges = spreadsheet.getNamedRanges().filter(namedRange => 
+    namedRange.getName().indexOf("code") === 0 && rangesOverlap(e.range, namedRange.getRange())
+  )
+  //log("allNamedRanges",allNamedRanges.length)
   const isMultiColumnRange = (e.range.getWidth() > 1)
   const isMultiRowRange = (e.range.getHeight() > 1)
   let triggeredRows = {}
@@ -76,6 +85,7 @@ function callCellTriggers(e) {
   } else {
     ranges.push(e.range)
   }
+  //log("Ranges:", ranges.length)
   
   // Proceed through the array of 1-cell ranges
   ranges.forEach(range => {
@@ -88,6 +98,7 @@ function callCellTriggers(e) {
         //log("Added " + namedRange.getName() + " as involved named range")
       }
     })
+    //log("involvedTriggerNames:", involvedTriggerNames.length)
 
     // Call all the functions for the triggers involved with this 1-cell range
     //log("Range: " + range.getA1Notation())

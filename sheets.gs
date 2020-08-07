@@ -19,6 +19,23 @@ function isInRange(innerRange, outerRange) {
 }
 
 /**
+ * Test whether two ranges overlap. See:
+ * https://stackoverflow.com/questions/306316/determine-if-two-rectangles-overlap-each-other
+ * @param {range} firstRange The first range
+ * @param {range} secondRange The second range
+ * @return {boolean}
+ */
+function rangesOverlap(firstRange, secondRange) {
+    return (
+      firstRange.getSheet().getName() === secondRange.getSheet().getName() &&
+      firstRange.getRow()              <= secondRange.getLastRow()         &&
+      firstRange.getLastRow()          >= secondRange.getRow()             &&
+      firstRange.getColumn()           <= secondRange.getLastColumn()      &&
+      firstRange.getLastColumn()       >= secondRange.getColumn()
+    )
+}
+
+/**
  * Given a hash of header names and data values to filter by and a sheet object, 
  * return the first found (0-based) range that is a single row where all
  * filter criteria are met
