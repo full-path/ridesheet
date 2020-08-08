@@ -58,6 +58,8 @@ function callCellTriggers(e) {
     namedRange.getName().indexOf("code") === 0 && rangesOverlap(e.range, namedRange.getRange())
   )
   //log("allNamedRanges",allNamedRanges.length)
+  if (allNamedRanges.length === 0) return
+
   const isMultiColumnRange = (e.range.getWidth() > 1)
   const isMultiRowRange = (e.range.getHeight() > 1)
   let triggeredRows = {}
