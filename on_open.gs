@@ -6,7 +6,7 @@ function onOpen(e) {
   menu.addItem('Create manifests', 'createManifests')
   menu.addItem('Update properties', 'presentProperties')
   menu.addToUi()
-  
+
   log("onOpen duration:",(new Date()) - startTime)
 }
 

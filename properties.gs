@@ -19,10 +19,28 @@ function getProperties(showPrivateProperties) {
   return propsArray
 }
 
-function loadProperties() {
+function loadPropertiesFromJSON() {
   const range = SpreadsheetApp.getActiveRange()
   const props = JSON.parse(range.getValue())
   setDocProps(props)
+}
+
+// Document properties don't pass on to copied sheets. This recreates the ones 
+function loadPropertiesFromSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const propSheet = ss.getSheetByName("Document Properties")
+  let docProps = PropertiesService.getDocumentProperties().getProperties()
+  if (Object.keys(docProps).length === 0 && propSheet) {
+    let propsGrid = propSheet.getDataRange().getValues().shift()
+    let propsObjects = propsGrid.map(row => {
+      let prop = {}
+      prop.name = row[0]
+      prop.value = row[1]
+      prop.description = row[2]
+      return prop
+    })
+    setDocProps(propsObjects)
+  }
 }
 
 function presentProperties() {
