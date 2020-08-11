@@ -76,6 +76,10 @@ function parseDate(date, alternateValue) {
   return isNaN(dateVal) ? alternateValue : new Date(dateVal)
 }
 
+function escapeRegex(string) {
+    return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
 function getType(value) {
   let objectClass = Object.prototype.toString.call(value)
   let classes = {

@@ -142,11 +142,15 @@ function replaceText(element, data) {
       if (field.match(/\baddress\b/i)) {
         let url = createGoogleMapsDirectionsURL(datum)
         let text = element.asText()
-        let addressRange = text.findText(datum)
-        do {
-          text.setLinkUrl(addressRange.getStartOffset(), addressRange.getEndOffsetInclusive(), url)
-          addressRange = text.findText(datum, addressRange)
-        } while (addressRange)
+        let addressRange = text.findText(escapeRegex(datum))
+        if (addressRange) {
+          do {
+            text.setLinkUrl(addressRange.getStartOffset(), addressRange.getEndOffsetInclusive(), url)
+            addressRange = text.findText(datum, addressRange)
+          } while (addressRange)
+        } else {
+          //log(text.getText(), datum)
+        }
       } 
     }
   })
