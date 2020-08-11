@@ -54,7 +54,7 @@ function callCellTriggers(e) {
   const spreadsheet = e.source
   const sheet = e.range.getSheet()
   if (sheetNamesWithNoCellTriggers.indexOf(sheet.getName()) > -1) return
-  const allNamedRanges = spreadsheet.getNamedRanges().filter(namedRange => 
+  const allNamedRanges = sheet.getNamedRanges().filter(namedRange => 
     namedRange.getName().indexOf("code") === 0 && rangesOverlap(e.range, namedRange.getRange())
   )
   //log("allNamedRanges",allNamedRanges.length)
