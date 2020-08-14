@@ -169,7 +169,7 @@ function coerceValue(value, type) {
   else if (type === "date")      { return new Date(JSON.parse(value)) } 
   else if (type === "map")       { return new Map(JSON.parse(value)) }
   else if (type === "null")      { return null }
-  else if (type === "number")    { return new Number(value) }
+  else if (type === "number")    { return Number(value) }
   else if (type === "object")    { return JSON.parse(value) }
   else if (type === "set")       { return new Set(JSON.parse(value))}
   else if (type === "string")    { return value }
