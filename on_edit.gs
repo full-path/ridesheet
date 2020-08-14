@@ -189,11 +189,18 @@ function fillHoursAndMiles(range) {
  */
 function setCustomerKey(range) {
   const customerRow = getFullRow(range)
-  const customerValues = getValuesByHeaderNames(["Customer First Name", "Customer Last Name", "ID", "Customer Name and ID"], customerRow)
+  const customerValues = getValuesByHeaderNames(["Customer First Name", "Customer Last Name", "Customer ID", "Customer Name and ID"], customerRow)
   let newValues = {}
   if (customerValues["Customer First Name"] && customerValues["Customer Last Name"]) {
-    const lastCustomerID = getDocProp("lastCustomerID_")
-    let nextCustomerID = ((lastCustomerID && (+lastCustomerID)) ? (Math.ceil(+lastCustomerID) + 1) : 1 )
+    let lastCustomerID = getDocProp("lastCustomerID_")
+    if (!Number.isFinite(lastCustomerID)) {
+      const sheet = range.getSheet()
+      const idColumn = getColNumberByHeaderName("Customer ID",range) + 1
+      const idRange = sheet.getRange(1, idColumn, sheet.getLastRow())
+      let maxID = getMaxValueInRange(idRange)
+      lastCustomerID = Number.isFinite(maxID) ? maxID : 1
+    }
+    let nextCustomerID = Math.ceil(lastCustomerID) + 1
     // There is no ID. Set one and update the lastCustomerID property
     if (!customerValues["Customer ID"]) {
       newValues["Customer ID"] = nextCustomerID
@@ -203,12 +210,12 @@ function setCustomerKey(range) {
       setDocProp("lastCustomerID_", nextCustomerID)
     // There is an ID value present, and it's numeric. 
     // Update the lastCustomerID property if the new ID is greater than the current lastCustomerID property
-    } else if (+customerValues["Customer ID"]) { 
-      newValues["Customer ID"] = (+customerValues["ID"])
+    } else if (Number.isFinite(customerValues["Customer ID"])) { 
+      newValues["Customer ID"] = (customerValues["Customer ID"])
       newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
       newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
       newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
-      if ((+customerValues["Customer ID"]) >= nextCustomerID) { setDocProp("lastCustomerID_", customerValues["ID"]) }
+      if (customerValues["Customer ID"] >= nextCustomerID) { setDocProp("lastCustomerID_", customerValues["Customer ID"]) }
     // There is an ID value, and it's not numeric. Allow this, but don't track it as the lastCustomerID
     } else { 
       newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
@@ -220,12 +227,14 @@ function setCustomerKey(range) {
 }
 
 function scanForDuplicates(range) {
+  thisValue = range.getValue()
   const thisRowNumber = range.getRow()
-  const fullRange = e.range.getSheet().getRange(1, e.range.getColumn(), e.range.getSheet().getLastRow())
-  const values = fullRange.getValues().map(row => row[0])
+  const fullRange = range.getSheet().getRange(1, range.getColumn(), range.getSheet().getLastRow())
+  const values = fullRange.getValues().flat()
+
   let duplicateRows = []
   values.forEach((value, i) => {
-    if (value == e.value && (i + 1) != thisRowNumber) duplicateRows.push(i + 1)
+    if (value == thisValue && (i + 1) != thisRowNumber) duplicateRows.push(i + 1)
   })
   if (duplicateRows.length == 1) range.setNote("This value is already used in row "  + duplicateRows[0]) 
   if (duplicateRows.length > 1)  range.setNote("This value is already used in rows " + duplicateRows.join(", ")) 

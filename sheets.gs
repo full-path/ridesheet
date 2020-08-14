@@ -220,7 +220,7 @@ function getHeaderInformation(sheetName) {
       })
       headerInformation[sheetName] = headerHash
     }
-    log("Collected header information")
+    //log("Collected header information")
   }
   return headerInformation[sheetName]
 }
@@ -249,4 +249,9 @@ function testGetDisplayValueByHeaderName() {
   log(displayValue.toString(), Array.isArray(displayValue))
   displayValue = getValueByHeaderName("Trip Date",range)
   log(displayValue.toString(), Array.isArray(displayValue))
+}
+
+function getMaxValueInRange(range) {
+  let values = range.getValues().flat().filter(Number.isFinite)
+  return values.reduce((a, b) => Math.max(a, b))
 }
