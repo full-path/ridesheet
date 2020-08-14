@@ -182,6 +182,13 @@ function deleteDocProp(propName) {
   PropertiesService.getDocumentProperties().deleteProperty(propName + propDescSuffix)
 }
 
+function deleteAllDocProps() {            
+  let docProps = PropertiesService.getDocumentProperties().getProperties()            
+  Object.keys(docProps).forEach(propName => {            
+    deleteDocProp(propName)            
+  })            
+}            
+
 function testTypes() {
 //  setDocProp("testArray",[1,2,3])
 //  setDocProp("testBigInt",BigInt(123))
