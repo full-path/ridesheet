@@ -5,7 +5,7 @@ const sheetTriggers = {
 const sheetNamesWithNoCellTriggers = [
   "Document Properties",
   "Debug Log"
-  ]
+]
 
 const rangeTriggers = {
   codeFillRequestCells: {
