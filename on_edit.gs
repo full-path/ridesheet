@@ -174,6 +174,9 @@ function fillHoursAndMiles(range) {
     const DOAddress = parseAddress(values["DO Address"]).geocodeAddress
     const tripEstimate = getTripEstimate(PUAddress, DOAddress, "milesAndDays")
     setValuesByHeaderNames({"Est Hours": tripEstimate["days"], "Est Miles": tripEstimate["miles"]}, tripRow)
+    if (tripEstimate["days"]) {
+      SpreadsheetApp.getActiveSpreadsheet().toast("Travel estimate saved")
+    }
   } else {
     setValuesByHeaderNames({"Est Hours": "", "Est Miles": ""}, tripRow)
   }
