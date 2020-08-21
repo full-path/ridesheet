@@ -27,6 +27,10 @@ const rangeTriggers = {
   codeScanForDuplicates: {
     functionCall: scanForDuplicates,
     callOncePerRow: false
+  },
+  codeUpdateTripTimes: {
+    functionCall: updateTripTimes,
+    callOncePerRow: true
   }
 }
 
@@ -37,11 +41,14 @@ const rangeTriggers = {
 function onEdit(e) {
   const startTime = new Date()
   const sheetName = e.range.getSheet().getName()
-  
-  callSheetTriggers(e, sheetName)  
-  callCellTriggers(e)
-  
-  log("onEdit duration:",(new Date()) - startTime)
+  try {  
+    callSheetTriggers(e, sheetName)  
+    callCellTriggers(e)
+  } catch(e) {
+    log(e.name + ': ' + e.message)
+  } finally {
+    log("onEdit duration:",(new Date()) - startTime)
+  }
 }
 
 function callSheetTriggers(e, sheetName) {
@@ -226,6 +233,26 @@ function setCustomerKey(range) {
       newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
     }
     setValuesByHeaderNames(newValues, customerRow)
+  }
+}
+
+function updateTripTimes(range) {
+  const row = getFullRow(range)
+  const values = getValuesByHeaderNames(["PU Time", "DO Time", "Est Hours"], row)
+  let newValues = {}
+  if (isFinite(values["Est Hours"])) {
+    const estMilliseconds = timeOnly(values["Est Hours"])
+    const estHours = estMilliseconds / 3600000
+    const padding = getDocProp("tripPaddingPerHourInMinutes") * estHours * 60000
+    const dwellTime = getDocProp("dwellTimeInMinutes") * 60000
+    const journeyTime = estMilliseconds + padding + dwellTime
+    if (values["PU Time"] && !values["DO Time"]) {
+      newValues["DO Time"] = timeAdd(values["PU Time"], journeyTime)
+    }
+    if (values["DO Time"] && !values["PU Time"]) {
+      newValues["PU Time"] = timeAdd(values["DO Time"], -journeyTime)
+    }
+    setValuesByHeaderNames(newValues, row)
   }
 }
 
