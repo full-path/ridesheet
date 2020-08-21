@@ -1,6 +1,7 @@
 function onOpen(e) {
   const startTime = new Date()
-  //storeHeaderInformation(e)
+  
+  repairProps()
   let ui = SpreadsheetApp.getUi()
   let menu = ui.createMenu('RideSheet')
   menu.addItem('Create manifests', 'createManifests')

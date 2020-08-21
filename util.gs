@@ -45,7 +45,7 @@ function isValidDate(date) {
 }
 
 function formatDate(date, timeZone, dateFormat) {
-  if (!timeZone) timeZone = getDocProp("localTimeZone",defaultLocalTimeZone)
+  if (!timeZone) timeZone = getDocProp("localTimeZone")
   if (!dateFormat) dateFormat = "M/d/yyyy"
   if (!date) {
     return Utilities.formatDate(new Date(), timeZone, dateFormat)
@@ -57,8 +57,6 @@ function formatDate(date, timeZone, dateFormat) {
   }
 }
 
-function testFormatDate() {log(formatDate("2020-5-24"))}
-
 function dateAdd(date, days) {
   if (!date) date = new Date()
   let result = new Date(date)
@@ -66,14 +64,31 @@ function dateAdd(date, days) {
   return result
 }
 
+function timeAdd(date, milliseconds) {
+  if (!date) date = new Date()
+  return new Date(date.getTime() + milliseconds)
+}
+
 function dateOnly(dateTime) {
   if (!dateOnly) dateTime = new Date()
   return new Date(dateTime.setHours(0,0,0,0))
 }
 
+function dateToday() {
+  return dateOnly(new Date)
+}
+
 function parseDate(date, alternateValue) {
   dateVal = Date.parse(date.toString())
   return isNaN(dateVal) ? alternateValue : new Date(dateVal)
+}
+
+function timeOnly(dateTime) {
+  return dateTime.getHours() * 3600000 + dateTime.getMinutes() * 60000 + dateTime.getSeconds() * 1000 + dateTime.getMilliseconds()
+}
+
+function testTimeOnly() {
+  log(timeOnly(new Date))
 }
 
 function escapeRegex(string) {

@@ -61,7 +61,6 @@ function presentProperties() {
     propSheet.autoResizeColumns(1,3)
   }
   ss.setActiveSheet(propSheet)
-  ss.moveActiveSheet(1)
 }
 
 function updateProperties(e) {
@@ -85,6 +84,17 @@ function updateProperties(e) {
   }
 }
 
+function addDocProp(propName) {
+  if (defaultProps[propName] && defaultProps[propName].value) {
+    setDocProp(propName, defaultProps[propName].value, defaultProps[propName].description)
+    return defaultProps[propName].value
+  } else {
+    msg = "Property " + propName + " not found"
+    SpreadsheetApp.getActiveSpreadsheet().toast(msg)
+    log(msg)
+  }
+}
+
 function setDocProp(propName, value, description) {
   const type = getType(value)
   let props = {}
@@ -104,10 +114,10 @@ function setDocProps(props) {
 
 function getDocProp(propName, altValue) {
   const prop = PropertiesService.getDocumentProperties().getProperty(propName)
-  if (!prop) {
-    return altValue
-  } else {
+  if (prop) {
     return deserializeProp(prop)
+  } else {
+    return addDocProp(propName)
   }
 }
 
@@ -119,7 +129,7 @@ function getDocProps(props) {
       if (prop.name in docProps) {
         result[prop.name] = deserializeProp(docProps[prop.name])
       } else {
-        result[prop.name] = prop.altValue
+        result[prop.name] = addDocProp(prop.name)
       }
     } else {
       result[prop] = deserializeProp(docProps[prop])
@@ -189,7 +199,33 @@ function deleteAllDocProps() {
   })
 }
 
+function repairProps() {
+  let docProps = PropertiesService.getDocumentProperties().getProperties()
+  let newProps = []
+  Object.keys(defaultProps).forEach(propName => {
+    if (!docProps[propName]) {
+      let prop = {}
+      prop.name = propName
+      prop.value = defaultProps[propName].value
+      if (defaultProps[propName].description !== docProps[propName + propDescSuffix]) prop.description = defaultProps[propName].description
+      newProps.push(prop)
+    } else if (defaultProps[propName].description !== !docProps[propName + propDescSuffix]) {
+      let prop = {}
+      prop.name = propName + propDescSuffix
+      prop.value = defaultProps[propName].description
+      newProps.push(prop)      
+    }
+  })
+  log(JSON.stringify(newProps))
+  setDocProps(newProps)
+}
+
 function testTypes() {
+  deleteDocProp("backupFolderId")
+  deleteDocProp("dwellTimeInMinutes")
+  deleteDocProp("monthlyFileRetentionInDays")
+  deleteDocProp("tripPaddingPerHourInMinutes")
+  repairProps()
 //  setDocProp("testArray",[1,2,3])
 //  setDocProp("testBigInt",BigInt(123))
 //  setDocProp("testBool", true)
