@@ -36,45 +36,23 @@ function rangesOverlap(firstRange, secondRange) {
 }
 
 /**
- * Given a hash of header names and data values to filter by and a sheet object, 
- * return the first found (0-based) range that is a single row where all
+ * Given sheet object and a filter function,
+ * return the first found (0-based) range that is a single row where the
  * filter criteria are met
- * match the value in the headerNames parameter. Returns -1 if column cannot be found.
- * @param {string} headerName The header name
- * @param {range} range The range 
+ * match the value in the headerNames parameter.
  * @return {number}
  */
-function findFirstRowByHeaderNames(values, sheet) {
-  const range = sheet.getDataRange()
-  const data = range.getDisplayValues()
-  const headerNames = Object.keys(values)
-  const columnNumbers = getColNumbersByHeaderNames(headerNames, range)
-  let isEqual
-  let result
-  
-  // Row loop
-  for (r = 0, l = data.length; r < l; r++) {
-    isEqual = true
-    columnLoop:
-    for (i = 0, n = columnNumbers.length; i < n; i++) {
-      if (data[r][columnNumbers[i]] !== values[headerNames[i]]) {
-        isEqual = false
-        break columnLoop
-      }
-    }
-    if (isEqual) { 
-      result = sheet.getRange(r + 1, 1, 1, data[0].length) 
-      break
-    }
+function findFirstRowByHeaderNames(sheet, filter) {
+  const data = getDataRangeAsTable(sheet.getDataRange().getValues())  
+  const matchingRows = data.filter(row => filter(row))
+  if (matchingRows.length > 0) {
+    return matchingRows[0]
   }
-  return result
 }
 
 function moveRows(sourceSheet, destSheet, filter) {
   const sourceData = getDataRangeAsTable(sourceSheet.getDataRange().getValues())
-  log(sourceData.length)
   const rowsToMove = sourceData.filter(row => filter(row))
-  log(rowsToMove.length)
   rowsToMove.forEach(row => appendDataRow(row, destSheet))
   const rowsToDelete = rowsToMove.map(row => row.rowPosition).sort((a,b)=>b-a)
   rowsToDelete.forEach(rowPosition => sourceSheet.deleteRow(rowPosition))

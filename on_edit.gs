@@ -161,13 +161,13 @@ function fillRequestCells(range) {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const tripRow = getFullRow(range)
     const tripValues = getValuesByHeaderNames(["Customer Name and ID","PU Address","DO Address","Service ID"], tripRow)
-    const customerRow = findFirstRowByHeaderNames({"Customer Name and ID": tripValues["Customer Name and ID"]}, ss.getSheetByName("Customers"))
-    const customerAddresses = getValuesByHeaderNames(["Customer ID","Home Address","Default Destination","Default Service ID"], customerRow)
+    const filter = function(row) { return row["Customer Name and ID"] === tripValues["Customer Name and ID"] }
+    const customerRow = findFirstRowByHeaderNames(ss.getSheetByName("Customers"), filter)
     let valuesToChange = {}
-    valuesToChange["Customer ID"] = customerAddresses["Customer ID"]
-    if (tripValues["PU Address"] == '') { valuesToChange["PU Address"] = customerAddresses["Home Address"] }
-    if (tripValues["DO Address"] == '') { valuesToChange["DO Address"] = customerAddresses["Default Destination"] }
-    if (tripValues["Service ID"] == '') { valuesToChange["Service ID"] = customerAddresses["Default Service ID"] }
+    valuesToChange["Customer ID"] = customerRow["Customer ID"]
+    if (tripValues["PU Address"] == '') { valuesToChange["PU Address"] = customerRow["Home Address"] }
+    if (tripValues["DO Address"] == '') { valuesToChange["DO Address"] = customerRow["Default Destination"] }
+    if (tripValues["Service ID"] == '') { valuesToChange["Service ID"] = customerRow["Default Service ID"] }
     setValuesByHeaderNames(valuesToChange, tripRow)
     if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { fillHoursAndMiles(range) }
   }

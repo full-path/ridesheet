@@ -244,8 +244,9 @@ function createDriverManifest(manifestDate, driverId) {
   const driverManifestFolderId = getDocProp("driverManifestFolderId")
   const driverManifestTemplateDocId = getDocProp("driverManifestTemplateDocId")
   const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const driverRow = findFirstRowByHeaderNames({"Driver ID": driverId},ss.getSheetByName("Drivers"))
-  const driverName = getValueByHeaderName("Driver Name",driverRow)
+  const filter = function(row) { return row["Driver ID"] == driverId }
+  const driverRow = findFirstRowByHeaderNames(ss.getSheetByName("Drivers"), filter)
+  const driverName = driverRow["Driver Name"]
   const manifestFileName = formatDate(manifestDate, null, "yyyy-MM-dd") + " Manifest for " + driverName
   const manifestFolder = DriveApp.getFolderById(driverManifestFolderId)
   const manifestFile = DriveApp.getFileById(driverManifestTemplateDocId).makeCopy(manifestFolder).setName(manifestFileName)
