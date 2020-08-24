@@ -70,6 +70,16 @@ function findFirstRowByHeaderNames(values, sheet) {
   return result
 }
 
+function moveRows(sourceSheet, destSheet, filter) {
+  const sourceData = getDataRangeAsTable(sourceSheet.getDataRange().getValues())
+  log(sourceData.length)
+  const rowsToMove = sourceData.filter(row => filter(row))
+  log(rowsToMove.length)
+  rowsToMove.forEach(row => appendDataRow(row, destSheet))
+  const rowsToDelete = rowsToMove.map(row => row.rowPosition).sort((a,b)=>b-a)
+  rowsToDelete.forEach(rowPosition => sourceSheet.deleteRow(rowPosition))
+}
+
 /**
  * Given a range, return the entire row that corresponds with the row
  * of the upper left corner of the passed in range. Useful with managing events.
@@ -79,6 +89,13 @@ function findFirstRowByHeaderNames(values, sheet) {
 function getFullRow(range) {
   const rowNum = range.getRow()
   return range.getSheet().getRange("A" + rowNum + ":" + rowNum)
+}
+
+// Take an incoming map of values and append them to the sheet, matching column names to map key names
+function appendDataRow(dataMap, sheet) {
+  const headerInfo = getHeaderInformation(sheet.getName())
+  const dataArray = Object.keys(headerInfo).map(colName => dataMap[colName])
+  sheet.appendRow(dataArray)
 }
 
 /**
@@ -107,11 +124,12 @@ function getColNumbersByHeaderNames(headerNames, range) {
 }
 
 // Takes a data range with a first row header and turns it into an array of data objects that function as maps.
-function getDataRangeAsTable(range) {
+function getDataRangeAsTable(dataRange) {
   let result = []
-  const headerNames = range.shift()
-  range.forEach(row => {
+  const headerNames = dataRange.shift()
+  dataRange.forEach((row, index) => {
     let rowMap = {}
+    rowMap.rowPosition = index + 2
     headerNames.forEach((headerName, i) => rowMap[headerName] = row[i])
     result.push(rowMap)
   })

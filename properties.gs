@@ -25,7 +25,7 @@ function loadPropertiesFromJSON() {
   setDocProps(props)
 }
 
-// Document properties don't pass on to copied sheets. This recreates the ones 
+// Document properties don't pass on to copied sheets. This recreates the ones put into the properties sheet.
 function loadPropertiesFromSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const propSheet = ss.getSheetByName("Document Properties")
@@ -72,11 +72,13 @@ function updateProperties(e) {
     if (propName && docProps.getKeys().indexOf(propName) !== -1) {
       if (e.value && e.range.getColumn() === 2) {
         const propType = getPropParts(PropertiesService.getDocumentProperties().getProperty(propName)).type
-        docProps.setProperty(propName, coerceValue(e.value, propType))
-        e.source.toast(`Property "${propName}" updated to "${e.value}".`)
-      } else if (e.range.getColumn() === 3 && allowPropDescriptionEdits) {
-        docProps.setProperty(propName + propDescSuffix, e.value)
-        e.source.toast(`Property description for "${propName}" updated.`)
+        try {
+          setDocProp(propName, coerceValue(e.value, propType))
+          e.source.toast(`Property "${propName}" updated to "${e.value}".`,"Success")
+        } catch(error) {
+          e.source.toast(`Property "${propName}" could not be updated: "${error.message}".`,"Update Error",-1)
+          e.range.setValue(e.oldValue)
+        }
       }
     }
   } else {
@@ -179,7 +181,14 @@ function coerceValue(value, type) {
   else if (type === "date")      { return new Date(JSON.parse(value)) } 
   else if (type === "map")       { return new Map(JSON.parse(value)) }
   else if (type === "null")      { return null }
-  else if (type === "number")    { return Number(value) }
+  else if (type === "number")    { 
+    const result = Number(value) 
+    if (isFinite(result)) {
+      return result
+    } else {
+      throw new Error("Invalid Number")
+    }
+  }
   else if (type === "object")    { return JSON.parse(value) }
   else if (type === "set")       { return new Set(JSON.parse(value))}
   else if (type === "string")    { return value }
@@ -203,29 +212,27 @@ function repairProps() {
   let docProps = PropertiesService.getDocumentProperties().getProperties()
   let newProps = []
   Object.keys(defaultProps).forEach(propName => {
-    if (!docProps[propName]) {
+    if (!docProps[propName] || getType(defaultProps[propName].value) !== getPropParts(docProps[propName]).type) {
       let prop = {}
       prop.name = propName
       prop.value = defaultProps[propName].value
       if (defaultProps[propName].description !== docProps[propName + propDescSuffix]) prop.description = defaultProps[propName].description
       newProps.push(prop)
-    } else if (defaultProps[propName].description !== !docProps[propName + propDescSuffix]) {
+    } else if (defaultProps[propName].description !== getPropParts(docProps[propName + propDescSuffix]).value) {
+      log(defaultProps[propName].description,docProps[propName + propDescSuffix])
       let prop = {}
       prop.name = propName + propDescSuffix
       prop.value = defaultProps[propName].description
-      newProps.push(prop)      
+      newProps.push(prop)
     }
   })
-  log(JSON.stringify(newProps))
   setDocProps(newProps)
 }
 
 function testTypes() {
-  deleteDocProp("backupFolderId")
-  deleteDocProp("dwellTimeInMinutes")
-  deleteDocProp("monthlyFileRetentionInDays")
-  deleteDocProp("tripPaddingPerHourInMinutes")
+//  deleteDocProp("tripReviewRequiredFields")
   repairProps()
+//  log(PropertiesService.getDocumentProperties().getProperty("tripReviewRequiredFields"))
 //  setDocProp("testArray",[1,2,3])
 //  setDocProp("testBigInt",BigInt(123))
 //  setDocProp("testBool", true)

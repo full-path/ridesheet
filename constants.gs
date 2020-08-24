@@ -78,5 +78,13 @@ const defaultProps = {
   tripPaddingPerHourInMinutes: {
     value: 5,
     description: "The length of time in minutes added to each hour of estimated travel time to account for weather, traffic, or other possible delays"
+  },
+  tripReviewRequiredFields: {
+    value: ["Trip Result", "Actual PU Time", "Actual DO Time"],
+    description: "The names of trip columns that must have data in them in order to be archived."
+  },
+  runReviewRequiredFields: {
+    value: [],
+    description: "The names of run columns that must have data in them in order to be archived."
   }
 }
