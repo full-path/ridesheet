@@ -72,33 +72,33 @@ function getFullRow(range) {
 // Take an incoming map of values and append them to the sheet, matching column names to map key names
 function appendDataRow(sourceSheet, destSheet, dataMap) {
   const sourceColumnNames = Object.keys(dataMap)
-  const originalDestColumnInfo = getHeaderInformation(destSheet.getName())
-  let currentDestColumnInfo = originalDestColumnInfo
+  const originalDestColumnNames = Object.keys(getHeaderInformation(destSheet))
+  let currentDestColumnNames = originalDestColumnNames
   let missingDestColumns = []
   sourceColumnNames.forEach((sourceColumnName, i) => {
-    if (Object.keys(originalDestColumnInfo).indexOf(sourceColumnName) === -1 && sourceColumnName !== "rowPosition") {
+    if (originalDestColumnNames.indexOf(sourceColumnName) === -1 && sourceColumnName !== "rowPosition") {
       let colPosition = 1
       if (i > 0) {
-        let positionOfColumnToInsertAfter = Object.keys(currentDestColumnInfo).indexOf(sourceColumnNames[i-1]) + 1
+        let positionOfColumnToInsertAfter = currentDestColumnNames.indexOf(sourceColumnNames[i-1]) + 1
         if (positionOfColumnToInsertAfter > 0) colPosition = positionOfColumnToInsertAfter + 1
       }
       destSheet.insertColumns(colPosition)
-      let sourceRange = sourceSheet.getRange(2, getHeaderInformation(sourceSheet.getName())[sourceColumnName] + 1)
+      let sourceRange = sourceSheet.getRange(2, getHeaderInformation(sourceSheet)[sourceColumnName] + 1)
       let destHeaderRange = destSheet.getRange(1, colPosition)
       let destDataRange = destSheet.getRange(2, colPosition, destSheet.getMaxRows()-1)
       
       destHeaderRange.setValue(sourceColumnName)
-      sourceRange.copyFormatToRange(destSheet, colPosition, colPosition + 1, 2, destSheet.getMaxRows())
+      sourceRange.copyFormatToRange(destSheet, colPosition, colPosition, 2, destSheet.getMaxRows())
       let rule = sourceRange.getDataValidation()
       if (rule == null) {
         destDataRange.clearDataValidations()
       } else {
         destDataRange.setDataValidation(rule)
       }
-      currentDestColumnInfo = getHeaderInformation(destSheet.getName(), true)
+      currentDestColumnNames = Object.keys(getHeaderInformation(destSheet, {forceRefresh: true}))
     }
   })
-  const dataArray = Object.keys(currentDestColumnInfo).map(colName => dataMap[colName])
+  const dataArray = currentDestColumnNames.map(colName => dataMap[colName])
   destSheet.appendRow(dataArray)
 }
 
@@ -111,7 +111,7 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
  * @return {number}
  */
 function getColNumberByHeaderName(headerName, range) {
-  return getHeaderInformation(range.getSheet().getName())[headerName]
+  return getHeaderInformation(range.getSheet())[headerName]
 }
 
 /**
@@ -123,7 +123,7 @@ function getColNumberByHeaderName(headerName, range) {
  * @return {array}
  */
 function getColNumbersByHeaderNames(headerNames, range) {
-  let headerValues = getHeaderInformation(range.getSheet().getName())
+  let headerValues = getHeaderInformation(range.getSheet())
   return headerNames.map(i => headerValues[i])
 }
 
@@ -231,17 +231,15 @@ function setValuesByHeaderNames(values, range) {
 }
 
 // Cache header info in a global variable so it only needs to be collected once per sheet per onEdit call.
-function getHeaderInformation(sheetName, forceRefresh) {
+function getHeaderInformation(sheet, {forceRefresh = false} = {}) {
+  const sheetName = sheet.getName()
   if (!headerInformation[sheetName] || forceRefresh) {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName)
-    if (sheet) {
-      const headerValues = sheet.getRange("A1:1").getDisplayValues()[0]
-      let headerHash = {}
-      headerValues.forEach((colName, i) => {
-        if (colName) headerHash[colName] = i
-      })
-      headerInformation[sheetName] = headerHash
-    }
+    const headerValues = sheet.getRange("A1:1").getDisplayValues()[0]
+    let headerHash = {}
+    headerValues.forEach((colName, i) => {
+      if (colName) headerHash[colName] = i
+    })
+    headerInformation[sheetName] = headerHash
     //log("Collected header information")
   }
   return headerInformation[sheetName]
