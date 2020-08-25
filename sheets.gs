@@ -53,7 +53,7 @@ function findFirstRowByHeaderNames(sheet, filter) {
 function moveRows(sourceSheet, destSheet, filter) {
   const sourceData = getDataRangeAsTable(sourceSheet.getDataRange().getValues())
   const rowsToMove = sourceData.filter(row => filter(row))
-  rowsToMove.forEach(row => appendDataRow(row, destSheet))
+  rowsToMove.forEach(row => appendDataRow(sourceSheet, destSheet, row))
   const rowsToDelete = rowsToMove.map(row => row.rowPosition).sort((a,b)=>b-a)
   rowsToDelete.forEach(rowPosition => sourceSheet.deleteRow(rowPosition))
 }
@@ -70,10 +70,36 @@ function getFullRow(range) {
 }
 
 // Take an incoming map of values and append them to the sheet, matching column names to map key names
-function appendDataRow(dataMap, sheet) {
-  const headerInfo = getHeaderInformation(sheet.getName())
-  const dataArray = Object.keys(headerInfo).map(colName => dataMap[colName])
-  sheet.appendRow(dataArray)
+function appendDataRow(sourceSheet, destSheet, dataMap) {
+  const sourceColumnNames = Object.keys(dataMap)
+  const originalDestColumnInfo = getHeaderInformation(destSheet.getName())
+  let currentDestColumnInfo = originalDestColumnInfo
+  let missingDestColumns = []
+  sourceColumnNames.forEach((sourceColumnName, i) => {
+    if (Object.keys(originalDestColumnInfo).indexOf(sourceColumnName) === -1 && sourceColumnName !== "rowPosition") {
+      let colPosition = 1
+      if (i > 0) {
+        let positionOfColumnToInsertAfter = Object.keys(currentDestColumnInfo).indexOf(sourceColumnNames[i-1]) + 1
+        if (positionOfColumnToInsertAfter > 0) colPosition = positionOfColumnToInsertAfter + 1
+      }
+      destSheet.insertColumns(colPosition)
+      let sourceRange = sourceSheet.getRange(2, getHeaderInformation(sourceSheet.getName())[sourceColumnName] + 1)
+      let destHeaderRange = destSheet.getRange(1, colPosition)
+      let destDataRange = destSheet.getRange(2, colPosition, destSheet.getMaxRows()-1)
+      
+      destHeaderRange.setValue(sourceColumnName)
+      sourceRange.copyFormatToRange(destSheet, colPosition, colPosition + 1, 2, destSheet.getMaxRows())
+      let rule = sourceRange.getDataValidation()
+      if (rule == null) {
+        destDataRange.clearDataValidations()
+      } else {
+        destDataRange.setDataValidation(rule)
+      }
+      currentDestColumnInfo = getHeaderInformation(destSheet.getName(), true)
+    }
+  })
+  const dataArray = Object.keys(currentDestColumnInfo).map(colName => dataMap[colName])
+  destSheet.appendRow(dataArray)
 }
 
 /**
@@ -205,8 +231,8 @@ function setValuesByHeaderNames(values, range) {
 }
 
 // Cache header info in a global variable so it only needs to be collected once per sheet per onEdit call.
-function getHeaderInformation(sheetName) {
-  if (!headerInformation[sheetName]) {
+function getHeaderInformation(sheetName, forceRefresh) {
+  if (!headerInformation[sheetName] || forceRefresh) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName)
     if (sheet) {
       const headerValues = sheet.getRange("A1:1").getDisplayValues()[0]
