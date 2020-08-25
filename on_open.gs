@@ -7,7 +7,10 @@ function onOpen(e) {
   menu.addItem('Create manifests', 'createManifests')
   menu.addItem('Send past trips and runs to review', 'moveTripsToReview')
   menu.addItem('Send reviewed trips and runs to archive', 'moveTripsToArchive')
-  menu.addItem('Update properties', 'presentProperties')
+  menu.addSeparator()
+  let settingsMenu = ui.createMenu('Settings')
+  settingsMenu.addItem('Update properties', 'presentProperties')
+  menu.addSubMenu(settingsMenu)
   menu.addToUi()
 
   log("onOpen duration:",(new Date()) - startTime)
@@ -16,4 +19,3 @@ function onOpen(e) {
 //function onSelectionChange(e) { 
 //  e.source.toast(e.range.getSheet().getName() + '!' + e.range.getA1Notation())
 //}
-
