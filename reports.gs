@@ -8,7 +8,7 @@ function createManifests() {
   let defaultDate
   let manifestDate
   if (activeSheet.getName() == "Trips") {
-    tripRow = getFullRow(activeSheet.getActiveCell())
+    tripRow = getFullRows(activeSheet.getActiveCell())
     tripDate = getValueByHeaderName("Trip Date",tripRow)
     if (isValidDate(tripDate)) {
       defaultDate = tripDate

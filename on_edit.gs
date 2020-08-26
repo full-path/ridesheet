@@ -159,7 +159,7 @@ function formatAddress(range) {
 function fillRequestCells(range) {
   if (range.getValue()) {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
-    const tripRow = getFullRow(range)
+    const tripRow = getFullRows(range)
     const tripValues = getValuesByHeaderNames(["Customer Name and ID","PU Address","DO Address","Service ID"], tripRow)
     const filter = function(row) { return row["Customer Name and ID"] === tripValues["Customer Name and ID"] }
     const customerRow = findFirstRowByHeaderNames(ss.getSheetByName("Customers"), filter)
@@ -174,7 +174,7 @@ function fillRequestCells(range) {
 }
 
 function fillHoursAndMiles(range) {
-  const tripRow = getFullRow(range)
+  const tripRow = getFullRows(range)
   const values = getValuesByHeaderNames(["PU Address", "DO Address"], tripRow)
   if (values["PU Address"] && values["DO Address"]) {
     const PUAddress = parseAddress(values["PU Address"]).geocodeAddress
@@ -198,7 +198,7 @@ function fillHoursAndMiles(range) {
  * - Keep track of the current highest customer ID in document properties, seeding data when needed
  */
 function setCustomerKey(range) {
-  const customerRow = getFullRow(range)
+  const customerRow = getFullRows(range)
   const customerValues = getValuesByHeaderNames(["Customer First Name", "Customer Last Name", "Customer ID", "Customer Name and ID"], customerRow)
   let newValues = {}
   if (customerValues["Customer First Name"] && customerValues["Customer Last Name"]) {
@@ -237,7 +237,7 @@ function setCustomerKey(range) {
 }
 
 function updateTripTimes(range) {
-  const row = getFullRow(range)
+  const row = getFullRows(range)
   const values = getValuesByHeaderNames(["PU Time", "DO Time", "Est Hours"], row)
   let newValues = {}
   if (isFinite(values["Est Hours"])) {
@@ -273,4 +273,8 @@ function scanForDuplicates(range) {
 
 function updatePropertiesOnEdit(e) {
   updateProperties(e)
+}
+
+function updateRunsOnEdit(e) {
+  updateRuns(e)
 }

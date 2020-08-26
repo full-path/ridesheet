@@ -64,9 +64,8 @@ function moveRows(sourceSheet, destSheet, filter) {
  * @param {range} range The source range 
  * @return {range}
  */
-function getFullRow(range) {
-  const rowNum = range.getRow()
-  return range.getSheet().getRange("A" + rowNum + ":" + rowNum)
+function getFullRows(range) {
+  return range.getSheet().getRange("A" + range.getRow() + ":" + range.getLastRow())
 }
 
 // Take an incoming map of values and append them to the sheet, matching column names to map key names
