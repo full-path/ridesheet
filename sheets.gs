@@ -1,4 +1,4 @@
-var headerInformation = {}
+var cachedHeaderNames = {}
 const sheetsWithHeaders = ["Trips","Runs","Trip Review","Run Review","Recurring Trips","Customers","Trip Archive","Run Archive","Drivers","Services"]
 
 /**
@@ -43,7 +43,7 @@ function rangesOverlap(firstRange, secondRange) {
  * @return {number}
  */
 function findFirstRowByHeaderNames(sheet, filter) {
-  const data = getDataRangeAsTable(sheet.getDataRange().getValues())  
+  const data = getRangeValuesAsTable(sheet.getDataRange())  
   const matchingRows = data.filter(row => filter(row))
   if (matchingRows.length > 0) {
     return matchingRows[0]
@@ -51,7 +51,7 @@ function findFirstRowByHeaderNames(sheet, filter) {
 }
 
 function moveRows(sourceSheet, destSheet, filter) {
-  const sourceData = getDataRangeAsTable(sourceSheet.getDataRange().getValues())
+  const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange())
   const rowsToMove = sourceData.filter(row => filter(row))
   rowsToMove.forEach(row => appendDataRow(sourceSheet, destSheet, row))
   const rowsToDelete = rowsToMove.map(row => row.rowPosition).sort((a,b)=>b-a)
@@ -69,20 +69,23 @@ function getFullRows(range) {
 }
 
 // Take an incoming map of values and append them to the sheet, matching column names to map key names
+// If columns present in the source data are missing in the destination sheet,
+// Those columns will be added to the destination sheet, right after the column they're after in the
+// source sheet.
 function appendDataRow(sourceSheet, destSheet, dataMap) {
   const sourceColumnNames = Object.keys(dataMap)
-  const originalDestColumnNames = Object.keys(getHeaderInformation(destSheet))
-  let currentDestColumnNames = originalDestColumnNames
+  const destColumnNamesOriginalState = getSheetHeaderNames(destSheet)
+  let destColumnNamesCurrentState = destColumnNamesOriginalState
   let missingDestColumns = []
   sourceColumnNames.forEach((sourceColumnName, i) => {
-    if (originalDestColumnNames.indexOf(sourceColumnName) === -1 && sourceColumnName !== "rowPosition") {
+    if (destColumnNamesOriginalState.indexOf(sourceColumnName) === -1 && sourceColumnName !== "rowPosition") {
       let colPosition = 1
       if (i > 0) {
-        let positionOfColumnToInsertAfter = currentDestColumnNames.indexOf(sourceColumnNames[i-1]) + 1
+        let positionOfColumnToInsertAfter = destColumnNamesCurrentState.indexOf(sourceColumnNames[i-1]) + 1
         if (positionOfColumnToInsertAfter > 0) colPosition = positionOfColumnToInsertAfter + 1
       }
       destSheet.insertColumns(colPosition)
-      let sourceRange = sourceSheet.getRange(2, getHeaderInformation(sourceSheet)[sourceColumnName] + 1)
+      let sourceRange = sourceSheet.getRange(2, getSheetHeaderNames(sourceSheet).indexOf(sourceColumnName) + 1)
       let destHeaderRange = destSheet.getRange(1, colPosition)
       let destDataRange = destSheet.getRange(2, colPosition, destSheet.getMaxRows()-1)
       
@@ -94,10 +97,10 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
       } else {
         destDataRange.setDataValidation(rule)
       }
-      currentDestColumnNames = Object.keys(getHeaderInformation(destSheet, {forceRefresh: true}))
+      destColumnNamesCurrentState = getSheetHeaderNames(destSheet, {forceRefresh: true})
     }
   })
-  const dataArray = currentDestColumnNames.map(colName => dataMap[colName])
+  const dataArray = destColumnNamesCurrentState.map(colName => dataMap[colName])
   destSheet.appendRow(dataArray)
 }
 
@@ -109,8 +112,8 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
  * @param {range} range The range 
  * @return {number}
  */
-function getColNumberByHeaderName(headerName, range) {
-  return getHeaderInformation(range.getSheet())[headerName]
+function getColumnIndexFromHeaderName(headerName, range) {
+  return getRangeHeaderNames(range).indexOf(headerName)
 }
 
 /**
@@ -121,25 +124,39 @@ function getColNumberByHeaderName(headerName, range) {
  * @param {range} range The range 
  * @return {array}
  */
-function getColNumbersByHeaderNames(headerNames, range) {
-  let headerValues = getHeaderInformation(range.getSheet())
-  return headerNames.map(i => headerValues[i])
+function getColumnIndexesFromHeaderNames(headerNames, range) {
+  const rangeHeaderNames = getRangeHeaderNames(range)
+  return headerNames.map(headerName => rangeHeaderNames.indexOf(headerName))
 }
 
-// Takes a data range with a first row header and turns it into an array of data objects that function as maps.
-function getDataRangeAsTable(dataRange) {
-  let result = []
-  const headerNames = dataRange.shift()
-  dataRange.forEach((row, index) => {
+// Takes a range and returns an array of objects, each object containing key/value pairs. 
+// If the range includes row 1 of the spreadsheet, that top row will be used as the keys. 
+// Otherwise row 1 will be collected separately and used as the source for keys.
+function getRangeValuesAsTable(range) {
+  let topRowPosition = range.getRow()
+  let data = range.getValues()
+  let rangeHeaderNames
+  if (topRowPosition === 1) {
+    if (data.length > 1) {
+      rangeHeaderNames = data.shift()
+      topRowPosition = 2
+    } else {
+      return []
+    }
+  } else {
+    rangeHeaderNames = getRangeHeaderNames(range)
+  }
+  let result = data.map((row, index) => {
     let rowMap = {}
-    rowMap.rowPosition = index + 2
-    headerNames.forEach((headerName, i) => rowMap[headerName] = row[i])
-    result.push(rowMap)
+    rowMap.rowPosition = index + topRowPosition
+    rangeHeaderNames.forEach((headerName, i) => rowMap[headerName] = row[i])
+    return rowMap
   })
   return result            
 }
 
 /**
+ * TODO make this work with multirow ranges
  * Given an array of desired column names and a range, 
  * return the display values of the first row of the columns whose header row values
  * matches the headerNames array. Returns null if column cannot be found.
@@ -148,14 +165,14 @@ function getDataRangeAsTable(dataRange) {
  * @return {object}
  */
 function getDisplayValuesByHeaderNames(headerNames, range) {
-  let columnNumbers = getColNumbersByHeaderNames(headerNames, range)
+  const columnIndexes = getColumnIndexesFromHeaderNames(headerNames, range)
   result = {}
   displayValues = range.getDisplayValues()[0]
-  columnNumbers.forEach((colNumber, i) => {
-    if (colNumber == -1) {
+  columnIndexes.forEach((columnIndex, i) => {
+    if (columnIndex === -1) {
       result[headerNames[i]] = null
     } else {
-      result[headerNames[i]] = displayValues[colNumber]
+      result[headerNames[i]] = displayValues[columnIndex]
     }
   })
   return result
@@ -170,15 +187,16 @@ function getDisplayValuesByHeaderNames(headerNames, range) {
  * @return {object}
  */
 function getDisplayValueByHeaderName(headerName, range) {
-  let colNumber = getColNumberByHeaderName(headerName, range)
-  if (colNumber == -1) {
+  const columnIndex = getColumnIndexFromHeaderName(headerName, range)
+  if (columnIndex == -1) {
     return null
   } else {
-    return range.getDisplayValues()[0][colNumber]
+    return range.getDisplayValues()[0][columnIndex]
   }
 }
 
 /**
+ * TODO make this work with multirow ranges
  * Given an array of desired column names and a range, 
  * return the display values of the first row of the columns whose header row values
  * matches the headerNames array. Returns null if column cannot be found.
@@ -187,14 +205,14 @@ function getDisplayValueByHeaderName(headerName, range) {
  * @return {object}
  */
 function getValuesByHeaderNames(headerNames, range) {
-  let columnNumbers = getColNumbersByHeaderNames(headerNames, range)
+  let columnIndexes = getColumnIndexesFromHeaderNames(headerNames, range)
   result = {}
   values = range.getValues()[0]
-  columnNumbers.forEach((colNumber, i) => {
-    if (colNumber == -1) {
+  columnIndexes.forEach((columnIndex, i) => {
+    if (columnIndex == -1) {
       result[headerNames[i]] = null
     } else {
-      result[headerNames[i]] = values[colNumber]
+      result[headerNames[i]] = values[columnIndex]
     }
   })
   return result
@@ -209,39 +227,54 @@ function getValuesByHeaderNames(headerNames, range) {
  * @return {object}
  */
 function getValueByHeaderName(headerName, range) {
-  let colNumber = getColNumberByHeaderName(headerName, range)
-  if (colNumber > -1) {
-    return range.getValues()[0][colNumber]
+  let columnIndex = getColumnIndexFromHeaderName(headerName, range)
+  if (columnIndex > -1) {
+    return range.getValues()[0][columnIndex]
   } else {
     return null
   }
 }
 
-function setValuesByHeaderNames(values, range) {
-  const headerNames = Object.keys(values)
-  const columnNumbers = getColNumbersByHeaderNames(headerNames, range)
+function setValuesByHeaderNames(newValues, range) {
+  const rangeHeaderNames = getRangeHeaderNames(range)
   let rangeValues = range.getValues()
-  columnNumbers.forEach((colNumber, i) => {
-    if (colNumber > -1) {
-      rangeValues[0][colNumber] = values[headerNames[i]]
-    }
+  rangeValues.forEach((sheetRow, sheetRowIndex) => {
+    rangeHeaderNames.forEach((rangeHeaderName, rangeHeaderIndex) => {
+      sheetRow[rangeHeaderIndex] = newValues[sheetRowIndex][rangeHeaderName]
+    })
   })
+  log(10,JSON.stringify(rangeValues))
   return range.setValues(rangeValues)
 }
 
+function appendValuesByHeaderNames(values, sheet) {
+  const sheetHeaderColumnNames = getSheetHeaderNames(sheet)
+  values.forEach(row => {
+    const rowArray = sheetHeaderColumnNames.map(colName => row[colName])
+    sheet.appendRow(rowArray)
+  })
+}
+
 // Cache header info in a global variable so it only needs to be collected once per sheet per onEdit call.
-function getHeaderInformation(sheet, {forceRefresh = false} = {}) {
+function getSheetHeaderNames(sheet, {forceRefresh = false} = {}) {
   const sheetName = sheet.getName()
-  if (!headerInformation[sheetName] || forceRefresh) {
-    const headerValues = sheet.getRange("A1:1").getDisplayValues()[0]
-    let headerHash = {}
-    headerValues.forEach((colName, i) => {
-      if (colName) headerHash[colName] = i
-    })
-    headerInformation[sheetName] = headerHash
-    //log("Collected header information")
+  if (!cachedHeaderNames[sheetName] || forceRefresh) {
+    const headerNames = sheet.getRange("A1:1").getValues()[0]
+    cachedHeaderNames[sheetName] = headerNames.map(headerName => !headerName ? " " : headerName)
   }
-  return headerInformation[sheetName]
+  return cachedHeaderNames[sheetName]
+}
+    
+// Cache header info in a global variable so it only needs to be collected once per sheet per onEdit call.
+function getRangeHeaderNames(range, {forceRefresh = false} = {}) {
+  const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {forceRefresh: forceRefresh})
+  const rangeStartColumnIndex = range.getColumn() - 1
+  return sheetHeaderNames.slice(rangeStartColumnIndex, rangeStartColumnIndex + range.getWidth())
+}
+
+function getMaxValueInRange(range) {
+  let values = range.getValues().flat().filter(Number.isFinite)
+  return values.reduce((a, b) => Math.max(a, b))
 }
 
 function testSetDisplayValueByHeaderName() {
@@ -255,9 +288,9 @@ function testGetDisplayValueByHeaderName() {
   let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Trips")
   let range = sheet.getRange("A7:M7")
 
-  let columnNumber = getColNumbersByHeaderNames(["Trip Date", "CustomerName"],range)
+  let columnNumber = getColumnIndexesFromHeaderNames(["Trip Date", "CustomerName"],range)
   log(columnNumber.toString())
-  columnNumber = getColNumberByHeaderName("Trip Date",range)
+  columnNumber = getColumnIndexFromHeaderName("Trip Date",range)
   log(columnNumber.toString())
   
   let displayValues = getDisplayValuesByHeaderNames(["Trip Date", "Customer Name"],range)
@@ -268,9 +301,4 @@ function testGetDisplayValueByHeaderName() {
   log(displayValue.toString(), Array.isArray(displayValue))
   displayValue = getValueByHeaderName("Trip Date",range)
   log(displayValue.toString(), Array.isArray(displayValue))
-}
-
-function getMaxValueInRange(range) {
-  let values = range.getValues().flat().filter(Number.isFinite)
-  return values.reduce((a, b) => Math.max(a, b))
 }

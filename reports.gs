@@ -175,10 +175,10 @@ function getManifestData(date) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   
   // Get all the raw data
-  const drivers = getDataRangeAsTable(ss.getSheetByName("Drivers").getDataRange().getValues())
-  const vehicles = getDataRangeAsTable(ss.getSheetByName("Vehicles").getDataRange().getValues())
-  const customers = getDataRangeAsTable(ss.getSheetByName("Customers").getDataRange().getValues())
-  const trips = getDataRangeAsTable(ss.getSheetByName("Trips").getDataRange().getValues())
+  const drivers = getRangeValuesAsTable(ss.getSheetByName("Drivers").getDataRange())
+  const vehicles = getRangeValuesAsTable(ss.getSheetByName("Vehicles").getDataRange())
+  const customers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
+  const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange())
   const manifestTrips = trips.filter(row => new Date(row["Trip Date"]).valueOf() == date.valueOf())
   
   // Pull in the lookup table data
