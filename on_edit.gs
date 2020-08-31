@@ -1,5 +1,6 @@
 const sheetTriggers = {
-  "Document Properties":   updatePropertiesOnEdit
+  "Document Properties":   updatePropertiesOnEdit,
+  "Trips":                 updateRunsOnEdit
 }
 
 const sheetNamesWithNoCellTriggers = [
@@ -205,7 +206,7 @@ function setCustomerKey(range) {
     let lastCustomerID = getDocProp("lastCustomerID_")
     if (!Number.isFinite(lastCustomerID)) {
       const sheet = range.getSheet()
-      const idColumn = getColNumberByHeaderName("Customer ID",range) + 1
+      const idColumn = getColumnIndexFromHeaderName("Customer ID",range) + 1
       const idRange = sheet.getRange(1, idColumn, sheet.getLastRow())
       let maxID = getMaxValueInRange(idRange)
       lastCustomerID = Number.isFinite(maxID) ? maxID : 1
