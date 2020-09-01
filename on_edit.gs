@@ -1,12 +1,15 @@
 const sheetTriggers = {
-  "Document Properties":   updatePropertiesOnEdit,
-  "Trips":                 updateRunsOnEdit
+  "Document Properties":   updatePropertiesOnEdit
 }
 
 const sheetNamesWithNoCellTriggers = [
   "Document Properties",
   "Debug Log"
 ]
+
+const finalSheetTriggers = {
+  "Trips":                 updateRunsOnEdit
+}
 
 const rangeTriggers = {
   codeFillRequestCells: {
@@ -43,8 +46,9 @@ function onEdit(e) {
   const startTime = new Date()
   const sheetName = e.range.getSheet().getName()
   try {  
-    callSheetTriggers(e, sheetName)  
+    callSheetTriggers(e, sheetName, sheetTriggers)
     callCellTriggers(e)
+    callSheetTriggers(e, sheetName, finalSheetTriggers)
   } catch(e) {
     log(e.name + ': ' + e.message)
   } finally {
@@ -52,13 +56,14 @@ function onEdit(e) {
   }
 }
 
-function callSheetTriggers(e, sheetName) {
-  if (Object.keys(sheetTriggers).indexOf(sheetName) !== -1) {
-    sheetTriggers[sheetName](e)
+function callSheetTriggers(e, sheetName, triggers) {
+  if (Object.keys(triggers).indexOf(sheetName) !== -1) {
+    triggers[sheetName](e)
   }
 }
 
 function callCellTriggers(e) {
+  //log("Entering callCellTriggers")
   const spreadsheet = e.source
   const sheet = e.range.getSheet()
   if (sheetNamesWithNoCellTriggers.indexOf(sheet.getName()) > -1) return
@@ -160,7 +165,7 @@ function formatAddress(range) {
 function fillRequestCells(range) {
   if (range.getValue()) {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
-    const tripRow = getFullRows(range)
+    const tripRow = getFullRow(range)
     const tripValues = getValuesByHeaderNames(["Customer Name and ID","PU Address","DO Address","Service ID"], tripRow)
     const filter = function(row) { return row["Customer Name and ID"] === tripValues["Customer Name and ID"] }
     const customerRow = findFirstRowByHeaderNames(ss.getSheetByName("Customers"), filter)
@@ -169,24 +174,24 @@ function fillRequestCells(range) {
     if (tripValues["PU Address"] == '') { valuesToChange["PU Address"] = customerRow["Home Address"] }
     if (tripValues["DO Address"] == '') { valuesToChange["DO Address"] = customerRow["Default Destination"] }
     if (tripValues["Service ID"] == '') { valuesToChange["Service ID"] = customerRow["Default Service ID"] }
-    setValuesByHeaderNames(valuesToChange, tripRow)
+    setValuesByHeaderNames([valuesToChange], tripRow)
     if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { fillHoursAndMiles(range) }
   }
 }
 
 function fillHoursAndMiles(range) {
-  const tripRow = getFullRows(range)
+  const tripRow = getFullRow(range)
   const values = getValuesByHeaderNames(["PU Address", "DO Address"], tripRow)
   if (values["PU Address"] && values["DO Address"]) {
     const PUAddress = parseAddress(values["PU Address"]).geocodeAddress
     const DOAddress = parseAddress(values["DO Address"]).geocodeAddress
     const tripEstimate = getTripEstimate(PUAddress, DOAddress, "milesAndDays")
-    setValuesByHeaderNames({"Est Hours": tripEstimate["days"], "Est Miles": tripEstimate["miles"]}, tripRow)
+    setValuesByHeaderNames([{"Est Hours": tripEstimate["days"], "Est Miles": tripEstimate["miles"]}], tripRow)
     if (tripEstimate["days"]) {
       SpreadsheetApp.getActiveSpreadsheet().toast("Travel estimate saved")
     }
   } else {
-    setValuesByHeaderNames({"Est Hours": "", "Est Miles": ""}, tripRow)
+    setValuesByHeaderNames([{"Est Hours": "", "Est Miles": ""}], tripRow)
   }
 }
 
@@ -199,7 +204,7 @@ function fillHoursAndMiles(range) {
  * - Keep track of the current highest customer ID in document properties, seeding data when needed
  */
 function setCustomerKey(range) {
-  const customerRow = getFullRows(range)
+  const customerRow = getFullRow(range)
   const customerValues = getValuesByHeaderNames(["Customer First Name", "Customer Last Name", "Customer ID", "Customer Name and ID"], customerRow)
   let newValues = {}
   if (customerValues["Customer First Name"] && customerValues["Customer Last Name"]) {
@@ -233,12 +238,12 @@ function setCustomerKey(range) {
       newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
       newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
     }
-    setValuesByHeaderNames(newValues, customerRow)
+    setValuesByHeaderNames([newValues], customerRow)
   }
 }
 
 function updateTripTimes(range) {
-  const row = getFullRows(range)
+  const row = getFullRow(range)
   const values = getValuesByHeaderNames(["PU Time", "DO Time", "Est Hours"], row)
   let newValues = {}
   if (isFinite(values["Est Hours"])) {
@@ -253,7 +258,7 @@ function updateTripTimes(range) {
     if (values["DO Time"] && !values["PU Time"]) {
       newValues["PU Time"] = timeAdd(values["DO Time"], -journeyTime)
     }
-    setValuesByHeaderNames(newValues, row)
+    setValuesByHeaderNames([newValues], row)
   }
 }
 

@@ -64,6 +64,17 @@ function moveRows(sourceSheet, destSheet, filter) {
  * @param {range} range The source range 
  * @return {range}
  */
+function getFullRow(range) {
+  const rowPosition = range.getRow()
+  return range.getSheet().getRange("A" + rowPosition + ":" + rowPosition)
+}
+
+/**
+ * Given a range, return the entire row that corresponds with the row
+ * of the upper left corner of the passed in range. Useful with managing events.
+ * @param {range} range The source range 
+ * @return {range}
+ */
 function getFullRows(range) {
   return range.getSheet().getRange("A" + range.getRow() + ":" + range.getLastRow())
 }
@@ -240,10 +251,12 @@ function setValuesByHeaderNames(newValues, range) {
   let rangeValues = range.getValues()
   rangeValues.forEach((sheetRow, sheetRowIndex) => {
     rangeHeaderNames.forEach((rangeHeaderName, rangeHeaderIndex) => {
-      sheetRow[rangeHeaderIndex] = newValues[sheetRowIndex][rangeHeaderName]
+      if (Object.keys(newValues[sheetRowIndex]).indexOf(rangeHeaderName) > -1) {
+        sheetRow[rangeHeaderIndex] = newValues[sheetRowIndex][rangeHeaderName]
+      }
     })
   })
-  log(10,JSON.stringify(rangeValues))
+  //log(10,JSON.stringify(rangeValues))
   return range.setValues(rangeValues)
 }
 
