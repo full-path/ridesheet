@@ -34,7 +34,6 @@ function updateRuns(e) {
             tripRow["Trip Date"]  <=  runRow["Run Date"] &&
             tripRow["Driver ID"]  === runRow["Driver ID"] &&
             tripRow["Vehicle ID"] === runRow["Vehicle ID"]) {
-          log(2)
           found = true
           newRunsMap.get(runRow).push(tripRow)
         }
@@ -64,11 +63,7 @@ function updateRunDetails(runsMap) {
     let tripsArray = runsMap.get(run).filter(trip => trip["PU Time"])
     if (tripsArray.length === 0) {
       run["First PU Time"] = null
-    } else if (tripsArray.length === 1) {
-      //log(6, JSON.stringify(tripsArray))
-      run["First PU Time"] = tripsArray[0]["PU Time"]
     } else {
-      //log(7, JSON.stringify(tripsArray))
       run["First PU Time"] = tripsArray.reduce((min, p) => p["PU Time"] < min ? p["PU Time"] : min, tripsArray[0]["PU Time"])
     }
   })
@@ -77,11 +72,7 @@ function updateRunDetails(runsMap) {
     let tripsArray = runsMap.get(run).filter(trip => trip["DO Time"])
     if (tripsArray.length === 0) {
       run["Last DO Time"] = null
-    } else if (tripsArray.length === 1) {
-      //log(8, JSON.stringify(tripsArray))
-      run["Last DO Time"] = tripsArray[0]["DO Time"]
     } else {
-      //log(9, JSON.stringify(tripsArray))
       run["Last DO Time"] = tripsArray.reduce((max, p) => p["DO Time"] > max ? p["DO Time"] : max, tripsArray[0]["DO Time"])
     }
   })
