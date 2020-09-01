@@ -25,7 +25,6 @@ function updateRuns(e) {
           tripRow["Driver ID"]  === runRow["Driver ID"] &&
           tripRow["Vehicle ID"] === runRow["Vehicle ID"]) {
         found = true
-        runRow["Test"] = runRow["Test"] + 1
         runsMap.get(runRow).push(tripRow)
       }
     })
@@ -46,7 +45,6 @@ function updateRuns(e) {
       newRun["Run Date"] = tripRow["Trip Date"]
       newRun["Driver ID"] = tripRow["Driver ID"]
       newRun["Vehicle ID"] = tripRow["Vehicle ID"]
-      newRun["Test"] = 0
       newRunsMap.set(newRun,[tripRow])
     }
   })
@@ -63,17 +61,28 @@ function updateRuns(e) {
 function updateRunDetails(runsMap) {
   let runsArray = Array.from(runsMap.keys())
   runsArray.forEach(run => {
-    if (runsMap.get(run).length === 1) {
-      log(6, JSON.stringify(runsMap.get(run)))
-      run["First PU Time"] = runsMap.get(run)[0]["PU Time"]
-      run["Last DO Time"] = runsMap.get(run)[0]["DO Time"]
-    } else if (runsMap.get(run).length > 1) {
-      log(7, JSON.stringify(runsMap.get(run)))
-      run["First PU Time"] = runsMap.get(run).reduce((a,b) => {return new Date(Math.min(a["PU Time"], b["PU Time"]))})
-      run["Last DO Time"] = runsMap.get(run).reduce((a,b) => {return new Date(Math.max(a["DO Time"], b["DO Time"]))})
-    } else {
+    let tripsArray = runsMap.get(run).filter(trip => trip["PU Time"])
+    if (tripsArray.length === 0) {
       run["First PU Time"] = null
+    } else if (tripsArray.length === 1) {
+      //log(6, JSON.stringify(tripsArray))
+      run["First PU Time"] = tripsArray[0]["PU Time"]
+    } else {
+      //log(7, JSON.stringify(tripsArray))
+      run["First PU Time"] = tripsArray.reduce((min, p) => p["PU Time"] < min ? p["PU Time"] : min, tripsArray[0]["PU Time"])
+    }
+  })
+  
+  runsArray.forEach(run => {
+    let tripsArray = runsMap.get(run).filter(trip => trip["DO Time"])
+    if (tripsArray.length === 0) {
       run["Last DO Time"] = null
+    } else if (tripsArray.length === 1) {
+      //log(8, JSON.stringify(tripsArray))
+      run["Last DO Time"] = tripsArray[0]["DO Time"]
+    } else {
+      //log(9, JSON.stringify(tripsArray))
+      run["Last DO Time"] = tripsArray.reduce((max, p) => p["DO Time"] > max ? p["DO Time"] : max, tripsArray[0]["DO Time"])
     }
   })
   return runsArray
