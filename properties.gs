@@ -218,8 +218,7 @@ function repairProps() {
       prop.value = defaultProps[propName].value
       if (defaultProps[propName].description !== docProps[propName + propDescSuffix]) prop.description = defaultProps[propName].description
       newProps.push(prop)
-    } else if (defaultProps[propName].description !== getPropParts(docProps[propName + propDescSuffix]).value) {
-      log(defaultProps[propName].description,docProps[propName + propDescSuffix])
+    } else if (!docProps[propName + propDescSuffix] || defaultProps[propName].description !== getPropParts(docProps[propName + propDescSuffix]).value) {
       let prop = {}
       prop.name = propName + propDescSuffix
       prop.value = defaultProps[propName].description
