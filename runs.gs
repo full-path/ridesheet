@@ -78,4 +78,3 @@ function updateRunDetails(runsMap) {
   })
   return runsArray
 }
-
