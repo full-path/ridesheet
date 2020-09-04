@@ -35,6 +35,10 @@ const rangeTriggers = {
   codeUpdateTripTimes: {
     functionCall: updateTripTimes,
     callOncePerRow: true
+  },
+  codeUpdateTripVehicle: {
+    functionCall: updateTripVehicleOnEdit,
+    callOncePerRow: true
   }
 }
 
@@ -260,6 +264,24 @@ function updateTripTimes(range) {
     }
     setValuesByHeaderNames([newValues], tripRow)
   }
+}
+
+function updateTripVehicleOnEdit(range) {
+  if (range.getValue()) {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const tripRow = getFullRow(range)
+    const tripValues = getRangeValuesAsTable(tripRow)[0]
+    if (!tripValues["Vehicle ID"]) {
+      const filter = function(row) { return row["Driver ID"] === tripValues["Driver ID"] && row["Default Vehicle ID"] }
+      const driverRow = findFirstRowByHeaderNames(ss.getSheetByName("Drivers"), filter)
+      if (driverRow) {
+        let valuesToChange = {}
+        valuesToChange["Vehicle ID"] = driverRow["Default Vehicle ID"]
+        setValuesByHeaderNames([valuesToChange], tripRow)
+      }
+    }
+  }
+  
 }
 
 function scanForDuplicates(range) {
