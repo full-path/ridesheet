@@ -166,7 +166,7 @@ function fillRequestCells(range) {
   if (range.getValue()) {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const tripRow = getFullRow(range)
-    const tripValues = getValuesByHeaderNames(["Customer Name and ID","PU Address","DO Address","Service ID"], tripRow)
+    const tripValues = getRangeValuesAsTable(tripRow)[0]
     const filter = function(row) { return row["Customer Name and ID"] === tripValues["Customer Name and ID"] }
     const customerRow = findFirstRowByHeaderNames(ss.getSheetByName("Customers"), filter)
     let valuesToChange = {}
@@ -181,12 +181,12 @@ function fillRequestCells(range) {
 
 function fillHoursAndMiles(range) {
   const tripRow = getFullRow(range)
-  const values = getValuesByHeaderNames(["PU Address", "DO Address"], tripRow)
-  if (values["PU Address"] && values["DO Address"]) {
-    const PUAddress = parseAddress(values["PU Address"]).geocodeAddress
-    const DOAddress = parseAddress(values["DO Address"]).geocodeAddress
+  const tripValues = getRangeValuesAsTable(tripRow)[0]
+  if (tripValues["PU Address"] && tripValues["DO Address"]) {
+    const PUAddress = parseAddress(tripValues["PU Address"]).geocodeAddress
+    const DOAddress = parseAddress(tripValues["DO Address"]).geocodeAddress
     const tripEstimate = getTripEstimate(PUAddress, DOAddress, "milesAndDays")
-    setValuesByHeaderNames([{"Est Hours": tripEstimate["days"], "Est Miles": tripEstimate["miles"]}], tripRow)
+    setValuesByHeaderNames([{"Est Hours": tripEstimate.days, "Est Miles": tripEstimate.miles}], tripRow)
     if (tripEstimate["days"]) {
       SpreadsheetApp.getActiveSpreadsheet().toast("Travel estimate saved")
     }
@@ -205,7 +205,7 @@ function fillHoursAndMiles(range) {
  */
 function setCustomerKey(range) {
   const customerRow = getFullRow(range)
-  const customerValues = getValuesByHeaderNames(["Customer First Name", "Customer Last Name", "Customer ID", "Customer Name and ID"], customerRow)
+  const customerValues = getRangeValuesAsTable(customerRow)[0]
   let newValues = {}
   if (customerValues["Customer First Name"] && customerValues["Customer Last Name"]) {
     let lastCustomerID = getDocProp("lastCustomerID_")
@@ -243,22 +243,22 @@ function setCustomerKey(range) {
 }
 
 function updateTripTimes(range) {
-  const row = getFullRow(range)
-  const values = getValuesByHeaderNames(["PU Time", "DO Time", "Est Hours"], row)
+  const tripRow = getFullRow(range)
+  const tripValues = getRangeValuesAsTable(tripRow)[0]
   let newValues = {}
-  if (isFinite(values["Est Hours"])) {
-    const estMilliseconds = timeOnly(values["Est Hours"])
+  if (isFinite(tripValues["Est Hours"])) {
+    const estMilliseconds = timeOnly(tripValues["Est Hours"])
     const estHours = estMilliseconds / 3600000
     const padding = getDocProp("tripPaddingPerHourInMinutes") * estHours * 60000
     const dwellTime = getDocProp("dwellTimeInMinutes") * 60000
     const journeyTime = estMilliseconds + padding + dwellTime
-    if (values["PU Time"] && !values["DO Time"]) {
-      newValues["DO Time"] = timeAdd(values["PU Time"], journeyTime)
+    if (tripValues["PU Time"] && !tripValues["DO Time"]) {
+      newValues["DO Time"] = timeAdd(tripValues["PU Time"], journeyTime)
     }
-    if (values["DO Time"] && !values["PU Time"]) {
-      newValues["PU Time"] = timeAdd(values["DO Time"], -journeyTime)
+    if (tripValues["DO Time"] && !tripValues["PU Time"]) {
+      newValues["PU Time"] = timeAdd(tripValues["DO Time"], -journeyTime)
     }
-    setValuesByHeaderNames([newValues], row)
+    setValuesByHeaderNames([newValues], tripRow)
   }
 }
 

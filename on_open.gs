@@ -2,8 +2,8 @@ function onOpen(e) {
   const startTime = new Date()
   try {
     repairProps()
-  } catch(error) {
-    log("repairProps", error.name + ': ' + error.message)
+  } catch(e) {
+    log("repairProps", e.name + ': ' + e.message)
   }
   try {
     let ui = SpreadsheetApp.getUi()
@@ -16,8 +16,8 @@ function onOpen(e) {
     settingsMenu.addItem('Update properties', 'presentProperties')
     menu.addSubMenu(settingsMenu)
     menu.addToUi()
-  } catch(error) {
-    log("Custom Menu", error.name + ': ' + error.message)
+  } catch(e) {
+    log("Custom Menu", e.name + ': ' + e.message)
   }
   log("onOpen duration:",(new Date()) - startTime)
 }
