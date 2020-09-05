@@ -13,27 +13,27 @@ const finalSheetTriggers = {
 
 const rangeTriggers = {
   codeFillRequestCells: {
-    functionCall: fillRequestCells,
+    functionCall: fillTripCellsOnEdit,
     callOncePerRow: true
   },
   codeFormatAddress: {
-    functionCall: formatAddress,
+    functionCall: formatAddressOnEdit,
     callOncePerRow: false
   },
   codeFillHoursAndMiles: {
-    functionCall: fillHoursAndMiles,
+    functionCall: fillHoursAndMilesOnEdit,
     callOncePerRow: true
   },
   codeSetCustomerKey: {
-    functionCall: setCustomerKey,
+    functionCall: setCustomerKeyOnEdit,
     callOncePerRow: true
   },
   codeScanForDuplicates: {
-    functionCall: scanForDuplicates,
+    functionCall: scanForDuplicatesOnEdit,
     callOncePerRow: false
   },
   codeUpdateTripTimes: {
-    functionCall: updateTripTimes,
+    functionCall: updateTripTimesOnEdit,
     callOncePerRow: true
   },
   codeUpdateTripVehicle: {
@@ -142,7 +142,7 @@ function callCellTriggers(e) {
   }) 
 }
 
-function formatAddress(range) {
+function formatAddressOnEdit(range) {
   const app = SpreadsheetApp
   let backgroundColor = app.newColor()
   if (range.getValue() && range.getValue().trim()) {
@@ -166,7 +166,7 @@ function formatAddress(range) {
   range.setBackgroundObject(backgroundColor.build())
 }
 
-function fillRequestCells(range) {
+function fillTripCellsOnEdit(range) {
   if (range.getValue()) {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const tripRow = getFullRow(range)
@@ -179,11 +179,11 @@ function fillRequestCells(range) {
     if (tripValues["DO Address"] == '') { valuesToChange["DO Address"] = customerRow["Default Destination"] }
     if (tripValues["Service ID"] == '') { valuesToChange["Service ID"] = customerRow["Default Service ID"] }
     setValuesByHeaderNames([valuesToChange], tripRow)
-    if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { fillHoursAndMiles(range) }
+    if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { fillHoursAndMilesOnEdit(range) }
   }
 }
 
-function fillHoursAndMiles(range) {
+function fillHoursAndMilesOnEdit(range) {
   const tripRow = getFullRow(range)
   const tripValues = getRangeValuesAsTable(tripRow)[0]
   if (tripValues["PU Address"] && tripValues["DO Address"]) {
@@ -207,7 +207,7 @@ function fillHoursAndMiles(range) {
  *   This will be the field used to identify the customer in trip records
  * - Keep track of the current highest customer ID in document properties, seeding data when needed
  */
-function setCustomerKey(range) {
+function setCustomerKeyOnEdit(range) {
   const customerRow = getFullRow(range)
   const customerValues = getRangeValuesAsTable(customerRow)[0]
   let newValues = {}
@@ -246,7 +246,7 @@ function setCustomerKey(range) {
   }
 }
 
-function updateTripTimes(range) {
+function updateTripTimesOnEdit(range) {
   const tripRow = getFullRow(range)
   const tripValues = getRangeValuesAsTable(tripRow)[0]
   let newValues = {}
@@ -267,24 +267,21 @@ function updateTripTimes(range) {
 }
 
 function updateTripVehicleOnEdit(range) {
-  if (range.getValue()) {
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
-    const tripRow = getFullRow(range)
-    const tripValues = getRangeValuesAsTable(tripRow)[0]
-    if (!tripValues["Vehicle ID"]) {
-      const filter = function(row) { return row["Driver ID"] === tripValues["Driver ID"] && row["Default Vehicle ID"] }
-      const driverRow = findFirstRowByHeaderNames(ss.getSheetByName("Drivers"), filter)
-      if (driverRow) {
-        let valuesToChange = {}
-        valuesToChange["Vehicle ID"] = driverRow["Default Vehicle ID"]
-        setValuesByHeaderNames([valuesToChange], tripRow)
-      }
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const tripRow = getFullRow(range)
+  const tripValues = getRangeValuesAsTable(tripRow)[0]
+  if (tripValues["Driver ID"] && !tripValues["Vehicle ID"]) {
+    const filter = function(row) { return row["Driver ID"] === tripValues["Driver ID"] && row["Default Vehicle ID"] }
+    const driverRow = findFirstRowByHeaderNames(ss.getSheetByName("Drivers"), filter)
+    if (driverRow) {
+      let valuesToChange = {}
+      valuesToChange["Vehicle ID"] = driverRow["Default Vehicle ID"]
+      setValuesByHeaderNames([valuesToChange], tripRow)
     }
-  }
-  
+  }  
 }
 
-function scanForDuplicates(range) {
+function scanForDuplicatesOnEdit(range) {
   thisValue = range.getValue()
   const thisRowNumber = range.getRow()
   const fullRange = range.getSheet().getRange(1, range.getColumn(), range.getSheet().getLastRow())
