@@ -197,8 +197,9 @@ function coerceValue(value, type) {
 }
 
 function deleteDocProp(propName) {
-  PropertiesService.getDocumentProperties().deleteProperty(propName)
-  PropertiesService.getDocumentProperties().deleteProperty(propName + propDescSuffix)
+  const docProps = PropertiesService.getDocumentProperties()
+  docProps.deleteProperty(propName)
+  docProps.deleteProperty(propName + propDescSuffix)
 }
 
 function deleteAllDocProps() {

@@ -1,5 +1,4 @@
 var cachedHeaderNames = {}
-const sheetsWithHeaders = ["Trips","Runs","Trip Review","Run Review","Recurring Trips","Customers","Trip Archive","Run Archive","Drivers","Services"]
 
 /**
  * Test whether a range is fully inside or matches another range. 
