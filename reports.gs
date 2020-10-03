@@ -2,9 +2,9 @@ const tempText = "{{Temporary Text}}"
 
 function createManifests() {
   let startTime = new Date()
-  ss = SpreadsheetApp.getActiveSpreadsheet()
-  activeSheet = ss.getActiveSheet()
-  ui = SpreadsheetApp.getUi()
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const activeSheet = ss.getActiveSheet()
+  const ui = SpreadsheetApp.getUi()
   let defaultDate
   let manifestDate
   if (activeSheet.getName() == "Trips") {
