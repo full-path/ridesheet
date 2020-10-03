@@ -1,12 +1,11 @@
 function createReturnTrip() {
   const ss              = SpreadsheetApp.getActiveSpreadsheet()
   const tripSheet       = ss.getActiveSheet()
-  if (tripSheet.getName() !== "Trips") { return }
   const sourceTripRange = getFullRow(tripSheet.getActiveCell())
   const sourceTripRow   = sourceTripRange.getRow()
   const sourceTripData  = getRangeValuesAsTable(sourceTripRange)[0]
   let   returnTripData  = {...sourceTripData}
-  if (isCompleteTrip(sourceTripData)) {
+  if (tripSheet.getName() === "Trips" && isCompleteTrip(sourceTripData)) {
     returnTripData["PU Address"] = sourceTripData["DO Address"]
     returnTripData["DO Address"] = sourceTripData["PU Address"]
     if (sourceTripData["Appt Time"]) {
@@ -25,6 +24,8 @@ function createReturnTrip() {
     setValuesByHeaderNames([returnTripData],returnTripRange)
     fillHoursAndMilesOnEdit(returnTripRange)
     updateTripTimesOnEdit(returnTripRange)
+  } else {
+    ss.toast("Select a cell in a trip to create its return trip.")
   }
 }
 
