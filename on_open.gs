@@ -8,6 +8,7 @@ function onOpen(e) {
   try {
     let ui = SpreadsheetApp.getUi()
     let menu = ui.createMenu('RideSheet')
+    menu.addItem('Create return trip', 'createReturnTrip')
     menu.addItem('Create manifests', 'createManifests')
     menu.addItem('Send past trips and runs to review', 'moveTripsToReview')
     menu.addItem('Send reviewed trips and runs to archive', 'moveTripsToArchive')

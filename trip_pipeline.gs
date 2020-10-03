@@ -1,3 +1,33 @@
+function createReturnTrip() {
+  const ss              = SpreadsheetApp.getActiveSpreadsheet()
+  const tripSheet       = ss.getActiveSheet()
+  if (tripSheet.getName() !== "Trips") { return }
+  const sourceTripRange = getFullRow(tripSheet.getActiveCell())
+  const sourceTripRow   = sourceTripRange.getRow()
+  const sourceTripData  = getRangeValuesAsTable(sourceTripRange)[0]
+  let   returnTripData  = {...sourceTripData}
+  if (isCompleteTrip(sourceTripData)) {
+    returnTripData["PU Address"] = sourceTripData["DO Address"]
+    returnTripData["DO Address"] = sourceTripData["PU Address"]
+    if (sourceTripData["Appt Time"]) {
+      returnTripData["PU Time"] = timeAdd(sourceTripData["Appt Time"], 60*60*1000)
+    } else if (sourceTripData["DO Time"]) {
+      returnTripData["PU Time"] = timeAdd(sourceTripData["DO Time"], 60*60*1000)
+    } else {
+      returnTripData["PU Time"] = null
+    }
+    returnTripData["DO Time"]   = null
+    returnTripData["Appt Time"] = null
+    returnTripData["Est Hours"] = null
+    returnTripData["Est Miles"] = null
+    tripSheet.insertRowAfter(sourceTripRow)
+    let returnTripRange = getFullRow(tripSheet.getRange(sourceTripRow + 1, 1))
+    setValuesByHeaderNames([returnTripData],returnTripRange)
+    fillHoursAndMilesOnEdit(returnTripRange)
+    updateTripTimesOnEdit(returnTripRange)
+  }
+}
+
 function moveTripsToReview() {
   const ss              = SpreadsheetApp.getActiveSpreadsheet()
   const tripSheet       = ss.getSheetByName("Trips")
@@ -30,4 +60,8 @@ function moveTripsToArchive() {
     return blankColumns.length === 0
   }
   moveRows(runReviewSheet, runArchiveSheet, runFilter)  
+}
+  
+function isCompleteTrip(trip) {
+  return (trip["Trip Date"] && trip["Customer Name and ID"])
 }
