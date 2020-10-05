@@ -178,6 +178,7 @@ function fillTripCellsOnEdit(range) {
     if (tripValues["PU Address"] == '') { valuesToChange["PU Address"] = customerRow["Home Address"] }
     if (tripValues["DO Address"] == '') { valuesToChange["DO Address"] = customerRow["Default Destination"] }
     if (tripValues["Service ID"] == '') { valuesToChange["Service ID"] = customerRow["Default Service ID"] }
+    if (tripValues["Trip ID"] == '')    { valuesToChange["Trip ID"]    = Utilities.getUuid() }
     setValuesByHeaderNames([valuesToChange], tripRow)
     if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { fillHoursAndMilesOnEdit(range) }
   }

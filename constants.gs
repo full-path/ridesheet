@@ -214,6 +214,7 @@ const sheetDDL = {
     "Est Miles": {},
     "Manifest ID": {},
     "Calendar ID": {},
+    "Trip ID": {},
     "Customer ID": {}
   },
   "Runs": {

@@ -15,10 +15,12 @@ function createReturnTrip() {
     } else {
       returnTripData["PU Time"] = null
     }
-    returnTripData["DO Time"]   = null
-    returnTripData["Appt Time"] = null
-    returnTripData["Est Hours"] = null
-    returnTripData["Est Miles"] = null
+    returnTripData["DO Time"]     = null
+    returnTripData["Appt Time"]   = null
+    returnTripData["Est Hours"]   = null
+    returnTripData["Est Miles"]   = null
+    returnTripData["Trip ID"]     = Utilities.getUuid()
+    returnTripData["Calendar ID"] = null
     tripSheet.insertRowAfter(sourceTripRow)
     let returnTripRange = getFullRow(tripSheet.getRange(sourceTripRow + 1, 1))
     setValuesByHeaderNames([returnTripData],returnTripRange)
