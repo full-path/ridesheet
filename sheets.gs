@@ -73,6 +73,7 @@ function moveRows(sourceSheet, destSheet, filter) {
   const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange())
   const rowsToMove = sourceData.filter(row => filter(row))
   rowsToMove.forEach(row => appendDataRow(sourceSheet, destSheet, row))
+  if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
   const rowsToDelete = rowsToMove.map(row => row.rowPosition).sort((a,b)=>b-a)
   rowsToDelete.forEach(rowPosition => sourceSheet.deleteRow(rowPosition))
 }
