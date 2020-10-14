@@ -72,6 +72,7 @@ function findFirstRowByHeaderNames(sheet, filter) {
 function moveRows(sourceSheet, destSheet, filter) {
   const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange())
   const rowsToMove = sourceData.filter(row => filter(row))
+  const lastRowPosition = sourceSheet.getLastRow()
   rowsToMove.forEach(row => appendDataRow(sourceSheet, destSheet, row))
   if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
   const rowsToDelete = rowsToMove.map(row => row.rowPosition).sort((a,b)=>b-a)
@@ -90,11 +91,17 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
   sourceColumnNames.forEach((sourceColumnName, i) => {
     if (destColumnNamesOriginalState.indexOf(sourceColumnName) === -1 && sourceColumnName !== "rowPosition") {
       let colPosition = 1
-      if (i > 0) {
+      if (i === 0) {
+        destSheet.insertColumns(colPosition)
+      } else {
         let positionOfColumnToInsertAfter = destColumnNamesCurrentState.indexOf(sourceColumnNames[i-1]) + 1
-        if (positionOfColumnToInsertAfter > 0) colPosition = positionOfColumnToInsertAfter + 1
+        if (positionOfColumnToInsertAfter === 0) {
+          destSheet.insertColumns(colPosition)
+        } else {
+          colPosition = positionOfColumnToInsertAfter + 1
+          destSheet.insertColumnAfter(positionOfColumnToInsertAfter)
+        }
       }
-      destSheet.insertColumns(colPosition)
       let sourceRange = sourceSheet.getRange(2, getSheetHeaderNames(sourceSheet).indexOf(sourceColumnName) + 1)
       let destHeaderRange = destSheet.getRange(1, colPosition)
       let destDataRange = destSheet.getRange(2, colPosition, destSheet.getMaxRows()-1)
