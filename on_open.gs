@@ -25,6 +25,11 @@ function onOpen(e) {
   } catch(e) {
     log("Custom Menu", e.name + ': ' + e.message)
   }
+  try {
+    //manageOnChangeTrigger()
+  } catch(e) {
+    log("manageOnChangeTrigger", e.name + ': ' + e.message)
+  }
   log("onOpen duration:",(new Date()) - startTime)
 }
 
@@ -50,5 +55,22 @@ function addAndPopulateTripIdColumn() {
       }
     })
     setValuesByHeaderNames(values, dataRange)
+  }
+}
+
+function manageOnChangeTrigger() {
+  const allTriggers = ScriptApp.getProjectTriggers()
+  const allTriggersLength = allTriggers.length
+  let exists = false
+  for (var i = 0; i < allTriggersLength; i++) {
+    if (allTriggers[i].getEventType() == ScriptApp.EventType.ON_CHANGE &&
+        allTriggers[i].getHandlerFunction() == "onChange") { 
+      exists = true
+      break
+    }
+  }
+  if (!exists) {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    ScriptApp.newTrigger("onChange").forSpreadsheet(ss).onChange().create();
   }
 }
