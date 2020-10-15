@@ -1,14 +1,9 @@
-const sheetTriggers = {
-  "Document Properties":   updatePropertiesOnEdit
+const initialSheetTriggers = {
+  "Document Properties": updatePropertiesOnEdit
 }
 
-const sheetNamesWithNoCellTriggers = [
-  "Document Properties",
-  "Debug Log"
-]
-
 const finalSheetTriggers = {
-  "Trips":                 updateRunsOnEdit
+  "Trips": tripSheetTrigger
 }
 
 const rangeTriggers = {
@@ -50,7 +45,7 @@ function onEdit(e) {
   const startTime = new Date()
   const sheetName = e.range.getSheet().getName()
   try {  
-    callSheetTriggers(e, sheetName, sheetTriggers)
+    callSheetTriggers(e, sheetName, initialSheetTriggers)
     callCellTriggers(e)
     callSheetTriggers(e, sheetName, finalSheetTriggers)
   } catch(e) {
@@ -70,7 +65,6 @@ function callCellTriggers(e) {
   //log("Entering callCellTriggers")
   const spreadsheet = e.source
   const sheet = e.range.getSheet()
-  if (sheetNamesWithNoCellTriggers.indexOf(sheet.getName()) > -1) return
   const allNamedRanges = sheet.getNamedRanges().filter(namedRange => 
     namedRange.getName().indexOf("code") === 0 && rangesOverlap(e.range, namedRange.getRange())
   )
@@ -81,15 +75,14 @@ function callCellTriggers(e) {
   const isMultiRowRange = (e.range.getHeight() > 1)
   let triggeredRows = {}
   let ranges = []
+  let callsToMake = {}
+  Object.keys(rangeTriggers).forEach(rangeTrigger => callsToMake[rangeTrigger] = [])
 
-  // If we're working with multiple rows, set up the system to prevent running some code from 
-  // running multiple times per row.
-  if (isMultiRowRange) {
-    Object.keys(rangeTriggers).forEach(key => {
-      if (rangeTriggers[key].callOncePerRow) triggeredRows[key] = []
-    })
-    //log(JSON.stringify(triggeredRows))
-  }
+  // Set up the tracking to prevent running some code from running multiple times per row.
+  Object.keys(rangeTriggers).forEach(key => {
+    if (rangeTriggers[key].callOncePerRow) triggeredRows[key] = []
+  })
+  //log(JSON.stringify(triggeredRows))
 
   // If we're working with multiple rows or columns, collect all the 1-cell ranges we'll be looking at.
   if (isMultiRowRange || isMultiColumnRange) {
@@ -127,19 +120,29 @@ function callCellTriggers(e) {
       if (triggeredRows[triggerName]) {
         // if it hasn't been triggered for this row, trigger and record it.
         if (triggeredRows[triggerName].indexOf(range.getRow()) === -1) {
-          //log("Triggering " + triggerName)
-          rangeTriggers[triggerName]["functionCall"](range)
+          callsToMake[triggerName].push(range)
           triggeredRows[triggerName].push(range.getRow())
-          //log("Triggered " + triggerName)
+          //log("Added " + triggerName + ", limited to once per row")
         }
       } else {
         //log("Triggering " + triggerName)
-        rangeTriggers[triggerName]["functionCall"](range)
-        //log("Triggered " + triggerName)
+        callsToMake[triggerName].push(range)
+        //log("Added " + triggerName + " without limiting to once per row")
       }
       //log("Triggered " + triggerName)
     })
-  }) 
+  })
+  
+//  const serializableCallsToMake = {}
+//  Object.keys(callsToMake).forEach(rangeTrigger => {
+//    serializableCallsToMake[rangeTrigger] = callsToMake[rangeTrigger].map(range => range.getA1Notation())
+//  })
+//  log(JSON.stringify(serializableCallsToMake))
+  Object.keys(callsToMake).forEach(rangeTrigger => {
+    callsToMake[rangeTrigger].forEach(range => {
+      rangeTriggers[rangeTrigger]["functionCall"](range)
+    })
+  })
 }
 
 function formatAddressOnEdit(range) {
@@ -180,7 +183,10 @@ function fillTripCellsOnEdit(range) {
     if (tripValues["Service ID"] == '') { valuesToChange["Service ID"] = customerRow["Default Service ID"] }
     if (tripValues["Trip ID"] == '')    { valuesToChange["Trip ID"]    = Utilities.getUuid() }
     setValuesByHeaderNames([valuesToChange], tripRow)
-    if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { fillHoursAndMilesOnEdit(range) }
+    if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { 
+      //log("fillTripCellsOnEdit called")
+      fillHoursAndMilesOnEdit(range) 
+    }
   }
 }
 
@@ -297,10 +303,23 @@ function scanForDuplicatesOnEdit(range) {
   if (duplicateRows.length == 0) range.clearNote()
 }
 
+// When a trip is pasted in, change the Trip ID to avoid duplicate IDs
+function updateTripID(e) {
+  if (e.range.getColumn() === 1 && 
+      e.range.getLastColumn() === e.range.getSheet().getMaxColumns()) {
+    let tripValues = getRangeValuesAsTable(e.range)
+    tripValues.forEach(row => {
+      if (row["Trip ID"]) { row["Trip ID"] = Utilities.getUuid() }
+    })
+    setValuesByHeaderNames(tripValues, e.range)
+  }
+}
+
 function updatePropertiesOnEdit(e) {
   updateProperties(e)
 }
 
-function updateRunsOnEdit(e) {
+function tripSheetTrigger(e) {
+  updateTripID(e)
   updateRuns(e)
 }
