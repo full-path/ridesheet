@@ -95,6 +95,10 @@ const defaultProps = {
     value: 5,
     description: "The length of time in minutes added to each hour of estimated travel time to account for weather, traffic, or other possible delays"
   },
+  dropOffToAppointmentTimeInMinutes: {
+    value: 10,
+    description: "The length of time in minutes between the drop off time and the appointment time"
+  },
   tripReviewCompletedTripResults: {
     value: ["Completed"],
     description: "The values of trip results where other required fields must be filled in."

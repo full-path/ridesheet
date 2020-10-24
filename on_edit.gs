@@ -278,13 +278,16 @@ function updateTripTimesOnEdit(range) {
     const estMilliseconds = timeOnly(tripValues["Est Hours"])
     const estHours = estMilliseconds / 3600000
     const padding = getDocProp("tripPaddingPerHourInMinutes") * estHours * 60000
+    const apptPadding = getDocProp("dropOffToAppointmentTimeInMinutes") * 60000
     const dwellTime = getDocProp("dwellTimeInMinutes") * 60000
     const journeyTime = estMilliseconds + padding + dwellTime
-    if (tripValues["PU Time"] && !tripValues["DO Time"]) {
+    if (tripValues["PU Time"] && !tripValues["DO Time"] && !tripValues["Appt Time"]) {
       newValues["DO Time"] = timeAdd(tripValues["PU Time"], journeyTime)
-    }
-    if (tripValues["DO Time"] && !tripValues["PU Time"]) {
+    } else if (!tripValues["PU Time"] && tripValues["DO Time"] && !tripValues["Appt Time"]) {
       newValues["PU Time"] = timeAdd(tripValues["DO Time"], -journeyTime)
+    } else if (!tripValues["PU Time"] && !tripValues["DO Time"] && tripValues["Appt Time"]) {
+      newValues["DO Time"] = timeAdd(tripValues["Appt Time"], -apptPadding)
+      newValues["PU Time"] = timeAdd(newValues["DO Time"], -journeyTime)
     }
     setValuesByHeaderNames([newValues], tripRow)
   }
