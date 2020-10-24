@@ -1,6 +1,11 @@
 function onOpen(e) {
   const startTime = new Date()
   try {
+    loadPropertiesFromSheet()
+  } catch(e) {
+    log("loadPropertiesFromSheet", e.name + ': ' + e.message)
+  }
+  try {
     repairProps()
   } catch(e) {
     log("repairProps", e.name + ': ' + e.message)

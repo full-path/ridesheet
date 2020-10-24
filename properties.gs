@@ -25,24 +25,6 @@ function loadPropertiesFromJSON() {
   setDocProps(props)
 }
 
-// Document properties don't pass on to copied sheets. This recreates the ones put into the properties sheet.
-function loadPropertiesFromSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const propSheet = ss.getSheetByName("Document Properties")
-  let docProps = PropertiesService.getDocumentProperties().getProperties()
-  if (Object.keys(docProps).length === 0 && propSheet) {
-    let propsGrid = propSheet.getDataRange().getValues().shift()
-    let propsObjects = propsGrid.map(row => {
-      let prop = {}
-      prop.name = row[0]
-      prop.value = row[1]
-      prop.description = row[2]
-      return prop
-    })
-    setDocProps(propsObjects)
-  }
-}
-
 function presentProperties() {
   let ss = SpreadsheetApp.getActiveSpreadsheet()
   let propSheet = ss.getSheetByName("Document Properties") || ss.insertSheet("Document Properties")
@@ -65,15 +47,17 @@ function presentProperties() {
 
 function updateProperties(e) {
   const row = e.range.getRow()
-  if (row > 1) {
+  const column = e.range.getColumn()
+  if (row > 1 && column === 2) {
     const sheet = e.range.getSheet()
     const propName = sheet.getRange(row,1).getValue()
+    const propValue = e.value
     const docProps = PropertiesService.getDocumentProperties()
     if (propName && docProps.getKeys().indexOf(propName) !== -1) {
-      if (e.value && e.range.getColumn() === 2) {
-        const propType = getPropParts(PropertiesService.getDocumentProperties().getProperty(propName)).type
+      if (propValue) {
+        const propType = getPropParts(docProps.getProperty(propName)).type
         try {
-          setDocProp(propName, coerceValue(e.value, propType))
+          setDocProp(propName, coerceValue(propValue, propType))
           e.source.toast(`Property "${propName}" updated to "${e.value}".`,"Success")
         } catch(error) {
           e.source.toast(`Property "${propName}" could not be updated: "${error.message}".`,"Update Error",-1)
@@ -207,6 +191,25 @@ function deleteAllDocProps() {
   Object.keys(docProps).forEach(propName => {
     deleteDocProp(propName)
   })
+}
+
+// Document properties don't pass on to copied sheets. This recreates the ones put into the properties sheet.
+function loadPropertiesFromSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const propSheet = ss.getSheetByName("Document Properties")
+  let docProps = PropertiesService.getDocumentProperties().getProperties()
+  if (true || Object.keys(docProps).length === 0 && propSheet) {
+    let propsGrid = propSheet.getDataRange().getValues()
+    propsGrid.shift() // Clear out the header row
+    let propsObjects = propsGrid.map(row => {
+      let prop = {}
+      prop.name = row[0]
+      prop.value = row[1]
+      prop.description = row[2]
+      return prop
+    })
+    setDocProps(propsObjects)
+  }
 }
 
 function repairProps() {
