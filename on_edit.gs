@@ -45,6 +45,7 @@ function onEdit(e) {
   const startTime = new Date()
   const sheetName = e.range.getSheet().getName()
   try {  
+    //if (protectHeaders(e, sheetName)) {return}
     callSheetTriggers(e, sheetName, initialSheetTriggers)
     callCellTriggers(e)
     callSheetTriggers(e, sheetName, finalSheetTriggers)
@@ -58,6 +59,22 @@ function onEdit(e) {
 function callSheetTriggers(e, sheetName, triggers) {
   if (Object.keys(triggers).indexOf(sheetName) !== -1) {
     triggers[sheetName](e)
+  }
+}
+
+function protectHeaders(e, sheetName) {
+  if (sheetsWithHeaders.indexOf(sheetName) !== -1 && 
+      e.range.getRow() === 1 &&
+      e.range.getHeight() === 1 && 
+      e.range.getWidth() === 1) {
+    let ui = SpreadsheetApp.getUi()
+    let response = ui.alert("Whoa There", 
+                            "Did you really mean to change this column name? That can mess things up. If you really meant to, click 'Yes'", 
+                            ui.ButtonSet.YES_NO_CANCEL)
+    if (response != ui.Button.YES) {
+      e.range.setValue(e.oldValue)
+      return true
+    }
   }
 }
 
