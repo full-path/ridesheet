@@ -29,91 +29,111 @@ const sheetsWithHeaders = [
   "Drivers",
   "Services",
 ]
-
-const defaultProps = {
+  
+const defaultDocumentProperties = {
   lastCustomerID_: {
+    type: "number",
     value: 0,
     description: "The value of the last set customer ID."
   },
   driverManifestFolderId: {
+    type: "string",
     value: "Enter ID here",
     description: "The ID of the folder where newly created trip manifests will be saved."
   },
   driverManifestTemplateDocId: {
+    type: "string",
     value: "Enter ID here",
     description: "The document ID of the Google Doc you'll be using as your manifest template."
   },
   geocoderBoundNeLatitude: {
+    type: "number",
     value: 46.299097,
     description: "The north latitude of the box where Google Maps gives extra preference when geocoding addresses."
   }, 
   geocoderBoundNeLongitude: {
+    type: "number",
     value: -116.463363,
     description: "The east longitude of the box where Google Maps gives extra preference when geocoding addresses."
   },
   geocoderBoundSwLatitude: {
+    type: "number",
     value: 41.997013,
     description: "The south latitude of the box where Google Maps gives extra preference when geocoding addresses."
   },
   geocoderBoundSwLongitude: {
+    type: "number",
     value: -124.560974,
     description: "The west longitude of the box where Google Maps gives extra preference when geocoding addresses."
   },
   localTimeZone:  {
+    type: "string",
     value: "America/Los_Angeles",
     description: "The local time zone. Use one of the TZ database names found here: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones"
   },
   monthlyBackupFolderId: {
+    type: "string",
     value: "Enter ID here",
     description: "The ID of the folder where monthly backups will be saved"
   },
   monthlyFileRetentionInDays: {
+    type: "number",
     value: 365,
     description: "How many days monthly backups should be held onto before they're automatically deleted"
   },
   nightlyBackupFolderId: {
+    type: "string",
     value: "Enter ID here",
     description: "The ID of the folder where nightly backups will be saved"
   },
   nightlyFileRetentionInDays: {
+    type: "number",
     value: 90,
     description: "How many days weekly backups should be held onto before they're automatically deleted"
   },
   weeklyBackupFolderId: {
+    type: "string",
     value: "Enter ID here",
     description: "The ID of the folder where nightly backups will be saved"
   },
   weeklyFileRetentionInDays: {
+    type: "number",
     value: 180,
     description: "How many days weekly backups should be held onto before they're automatically deleted"
   },
   dwellTimeInMinutes: {
+    type: "number",
     value: 10,
     description: "The length of time in minutes added to the journey time to account for the time it takes to pick up and drop off a rider"
   },
   tripPaddingPerHourInMinutes: {
+    type: "number",
     value: 5,
     description: "The length of time in minutes added to each hour of estimated travel time to account for weather, traffic, or other possible delays"
   },
   dropOffToAppointmentTimeInMinutes: {
+    type: "number",
     value: 10,
     description: "The length of time in minutes between the drop off time and the appointment time"
   },
   tripReviewCompletedTripResults: {
+    type: "array",
     value: ["Completed"],
     description: "The values of trip results where other required fields must be filled in."
   },
   tripReviewRequiredFields: {
+    type: "array",
     value: ["Trip Result", "Actual PU Time", "Actual DO Time"],
     description: "The names of trip columns that must have data in them in order to be archived."
   },
   runReviewRequiredFields: {
+    type: "array",
     value: [],
     description: "The names of run columns that must have data in them in order to be archived."
   }
 }
 
-const sheetDDL = {
+const defaultColumns = {
   "Customers": {
     "Customer Name and ID": {},
     "Customer ID": {},
@@ -618,7 +638,7 @@ const sheetDDL = {
   }
 }
 
-const globalNamedRanges = {
+const defaultNamedRanges = {
   "codeFillHoursAndMiles1": {
     "sheetName":"Trips",
     "headerName":"PU Address"
@@ -675,29 +695,33 @@ const globalNamedRanges = {
     "sheetName":"Trips",
     "headerName":"DO Time"
   },
+  "codeUpdateTripTimes3":{
+    "sheetName":"Trips",
+    "headerName":"Appt Time"
+  },
   "lookupCustomerNames": {
     "sheetName":"Lookups",
-    "range":"A:A"
+    "range":"A1:A9999"
   },
   "lookupDriverIds": {
     "sheetName":"Lookups",
-    "range":"B:B"
+    "range":"B1:B9999"
   },
   "lookupVehicleIds": {
     "sheetName":"Lookups",
-    "range":"C:C"
+    "range":"C1:C9999"
   },
   "lookupServiceIds": {
     "sheetName":"Lookups",
-    "range":"D:D"
+    "range":"D1:D9999"
   },
   "lookupTripPurposes": {
     "sheetName":"Lookups",
-    "range":"E:E"
+    "range":"E1:E9999"
   },
   "lookupTripResults": {
     "sheetName":"Lookups",
-    "range":"F:F"
+    "range":"F1:F9999"
   },
   "queryCustomerNameAndId": {
     "sheetName":"Customers",

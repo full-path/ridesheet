@@ -71,9 +71,9 @@ function updateProperties(e) {
 }
 
 function addDocProp(propName) {
-  if (defaultProps[propName] && defaultProps[propName].value) {
-    setDocProp(propName, defaultProps[propName].value, defaultProps[propName].description)
-    return defaultProps[propName].value
+  if (defaultDocumentProperties[propName] && defaultDocumentProperties[propName].value) {
+    setDocProp(propName, defaultDocumentProperties[propName].value, defaultDocumentProperties[propName].description)
+    return defaultDocumentProperties[propName].value
   } else {
     msg = "Property " + propName + " not found"
     SpreadsheetApp.getActiveSpreadsheet().toast(msg)
@@ -176,7 +176,7 @@ function coerceValue(value, type) {
   else if (type === "object")    { return JSON.parse(value) }
   else if (type === "set")       { return new Set(JSON.parse(value))}
   else if (type === "string")    { return value }
-  else if (type === "undefined") { return undefined }  
+  else if (type === "undefined") { return undefined }
   else                           { return value }
 }
 
@@ -191,45 +191,6 @@ function deleteAllDocProps() {
   Object.keys(docProps).forEach(propName => {
     deleteDocProp(propName)
   })
-}
-
-// Document properties don't pass on to copied sheets. This recreates the ones put into the properties sheet.
-function loadPropertiesFromSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const propSheet = ss.getSheetByName("Document Properties")
-  let docProps = PropertiesService.getDocumentProperties().getProperties()
-  if (true || Object.keys(docProps).length === 0 && propSheet) {
-    let propsGrid = propSheet.getDataRange().getValues()
-    propsGrid.shift() // Clear out the header row
-    let propsObjects = propsGrid.map(row => {
-      let prop = {}
-      prop.name = row[0]
-      prop.value = row[1]
-      prop.description = row[2]
-      return prop
-    })
-    setDocProps(propsObjects)
-  }
-}
-
-function repairProps() {
-  let docProps = PropertiesService.getDocumentProperties().getProperties()
-  let newProps = []
-  Object.keys(defaultProps).forEach(propName => {
-    if (!docProps[propName] || getType(defaultProps[propName].value) !== getPropParts(docProps[propName]).type) {
-      let prop = {}
-      prop.name = propName
-      prop.value = defaultProps[propName].value
-      if (defaultProps[propName].description !== docProps[propName + propDescSuffix]) prop.description = defaultProps[propName].description
-      newProps.push(prop)
-    } else if (!docProps[propName + propDescSuffix] || defaultProps[propName].description !== getPropParts(docProps[propName + propDescSuffix]).value) {
-      let prop = {}
-      prop.name = propName + propDescSuffix
-      prop.value = defaultProps[propName].description
-      newProps.push(prop)
-    }
-  })
-  setDocProps(newProps)
 }
 
 function testTypes() {
