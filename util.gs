@@ -4,6 +4,10 @@ function log(d, ...args) {
   logSheet.appendRow([new Date(), d].concat(args))
 }
 
+function logError(e) {
+  log(e.name + ': ' + e.message, e.stack)
+}
+
 function clearLog() {
   let ss = SpreadsheetApp.getActiveSpreadsheet()
   let logSheet = ss.getSheetByName("Debug Log")
@@ -92,7 +96,7 @@ function testTimeOnly() {
 }
 
 function escapeRegex(string) {
-    return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
 function getType(value) {
