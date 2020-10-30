@@ -18,4 +18,3 @@ function onOpen(e) {
   }
   log("onOpen duration:",(new Date()) - startTime)
 }
-
