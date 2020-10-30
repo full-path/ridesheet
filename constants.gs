@@ -130,6 +130,11 @@ const defaultDocumentProperties = {
     type: "array",
     value: [],
     description: "The names of run columns that must have data in them in order to be archived."
+  },
+  calendarIdForUnassignedTrips: {
+    type: "string",
+    value: "Enter ID here",
+    description: "The ID of the Google Calendar where trips without drivers are shown"    
   }
 }
 
@@ -701,27 +706,27 @@ const defaultNamedRanges = {
   },
   "lookupCustomerNames": {
     "sheetName":"Lookups",
-    "range":"A1:A9999"
+    "column":"A"
   },
   "lookupDriverIds": {
     "sheetName":"Lookups",
-    "range":"B1:B9999"
+    "column":"B"
   },
   "lookupVehicleIds": {
     "sheetName":"Lookups",
-    "range":"C1:C9999"
+    "column":"C"
   },
   "lookupServiceIds": {
     "sheetName":"Lookups",
-    "range":"D1:D9999"
+    "column":"D"
   },
   "lookupTripPurposes": {
     "sheetName":"Lookups",
-    "range":"E1:E9999"
+    "column":"E"
   },
   "lookupTripResults": {
     "sheetName":"Lookups",
-    "range":"F1:F9999"
+    "column":"F"
   },
   "queryCustomerNameAndId": {
     "sheetName":"Customers",

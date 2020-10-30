@@ -3,6 +3,7 @@
 function buildMenus() {
   let ui = SpreadsheetApp.getUi()
   let menu = ui.createMenu('RideSheet')
+  menu.addItem('Update driver calendars', 'updateDriverCalendars')
   menu.addItem('Create return trip', 'createReturnTrip')
   menu.addItem('Create manifests', 'createManifests')
   menu.addItem('Send past trips and runs to review', 'moveTripsToReview')
@@ -20,40 +21,37 @@ function buildNamedRanges() {
     const namedRanges = ss.getNamedRanges()
     const currentRangeNames = namedRanges.map(nr => nr.getName())
     const buildRangeNames = Object.keys(defaultNamedRanges)
-    
     namedRanges.forEach(namedRange => {
-      if (buildRangeNames.indexOf(namedRange.getName()) !== -1 && namedRange.getRange().getLastRow() !== 9999) {
-        let newRange = defaultNamedRanges[namedRange.getName()]
-        buildNamedRange(namedRange.getName(),newRange.sheetName, newRange.range, newRange.headerName)
+      if (buildRangeNames.indexOf(namedRange.getName()) !== -1 && 
+          (namedRange.getRange().getRow() !== 1 || 
+          namedRange.getRange().getLastRow() !== namedRange.getRange().getSheet().getMaxRows() + 1000)) {
+        const name = namedRange.getName()
+        let newRange = defaultNamedRanges[name]
+        //namedRange.remove()
+        buildNamedRange(ss, name, newRange.sheetName, newRange.column, newRange.headerName)
       }
     })
     buildRangeNames.forEach(rangeName => {
       if (currentRangeNames.indexOf(rangeName) === -1) {
         let newRange = defaultNamedRanges[rangeName]
-        buildNamedRange(rangeName,newRange.sheetName, newRange.range, newRange.headerName)
+        buildNamedRange(ss, rangeName,newRange.sheetName, newRange.column, newRange.headerName)
       }
     })
   } catch(e) {
-    log("repairNamedRanges", e.name + ': ' + e.message)
+    log("buildNamedRanges", e.name + ': ' + e.message)
   }
 }
 
-function buildNamedRange(name, sheetName, rangeA1Notation, headerName) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
+function buildNamedRange(ss, name, sheetName, column, headerName) {
   const sheet = ss.getSheetByName(sheetName)
-  let a1Notation
-  if (rangeA1Notation) {
-    a1Notation = rangeA1Notation
-  } else if (headerName) {
+  if (headerName) {
     const headerNames = getSheetHeaderNames(sheet)
     const columnPosition = headerNames.indexOf(headerName) + 1
-    if (columnPosition > 0) {
-      const columnLetter = sheet.getRange(1, columnPosition).getA1Notation().slice(0,-1)
-      a1Notation = columnLetter + "1:" + columnLetter + "9999"
-    }
+    if (columnPosition > 0) column = sheet.getRange(1, columnPosition).getA1Notation().slice(0,-1)
   }
-  if (a1Notation) {
-    const range = ss.getRange(sheetName + "!" + a1Notation)
+  if (column) {
+    const range = sheet.getRange(column + "1:" + column + (sheet.getMaxRows() + 1000))
+    log(name,range.getSheet().getName() + "!" + column + "1:" + column + (sheet.getMaxRows() + 1000))
     ss.setNamedRange(name, range)
   }
 }
