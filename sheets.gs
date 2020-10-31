@@ -182,17 +182,27 @@ function getValueByHeaderName(headerName, range) {
 }
 
 function setValuesByHeaderNames(newValues, range) {
-  const rangeHeaderNames = getRangeHeaderNames(range)
-  let rangeValues = range.getValues()
-  rangeValues.forEach((sheetRow, sheetRowIndex) => {
-    rangeHeaderNames.forEach((rangeHeaderName, rangeHeaderIndex) => {
-      if (Object.keys(newValues[sheetRowIndex]).indexOf(rangeHeaderName) > -1) {
-        sheetRow[rangeHeaderIndex] = newValues[sheetRowIndex][rangeHeaderName]
+  try {
+    const rangeHeaderNames = getRangeHeaderNames(range)
+    const rangeIncludesHeaderRow = (range.getRow() === 1)
+    const rowOffset = (rangeIncludesHeaderRow ? 1 : 0)
+    let rangeValues = range.getValues()
+    //log("newValues: " + newValues.length, "rangeValues: " + rangeValues.length)
+    rangeValues.forEach((sheetRow, sheetRowIndex) => {
+      if (rangeIncludesHeaderRow && sheetRowIndex === 0) {
+        // skip header row
+      } else {
+        rangeHeaderNames.forEach((rangeHeaderName, rangeHeaderIndex) => {
+          if (Object.keys(newValues[sheetRowIndex - rowOffset]).indexOf(rangeHeaderName) > -1) {
+            sheetRow[rangeHeaderIndex] = newValues[sheetRowIndex - rowOffset][rangeHeaderName]
+          }
+        })
       }
     })
-  })
-  //log(10,JSON.stringify(rangeValues))
-  return range.setValues(rangeValues)
+    return range.setValues(rangeValues)
+  } catch(e) {
+    logError(e)
+  }
 }
 
 function appendValuesByHeaderNames(values, sheet) {
