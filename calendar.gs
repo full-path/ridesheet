@@ -77,7 +77,6 @@ function createTripCalendarEvent(calendarId, tripValues) {
     const calendar = getCalendarById(calendarId)
     if (calendar) {
       const event = calendar.createEvent(tripValues["Customer Name and ID"], startTime, endTime, {
-        location: tripValues["PU Address"],
         description: "Generated automatically by RideSheet"
       })
       event.setTag("RideSheet","RideSheet")
