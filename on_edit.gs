@@ -275,26 +275,30 @@ function setCustomerKeyOnEdit(range) {
 
 function updateTripTimesOnEdit(range) {
   try {
-    const tripRow = getFullRow(range)
-    const tripValues = getRangeValuesAsTable(tripRow)[0]
-    let newValues = {}
-    if (isFinite(tripValues["Est Hours"])) {
-      const estMilliseconds = timeOnly(tripValues["Est Hours"])
-      const estHours = estMilliseconds / 3600000
-      const padding = getDocProp("tripPaddingPerHourInMinutes") * estHours * 60000
-      const apptPadding = getDocProp("dropOffToAppointmentTimeInMinutes") * 60000
-      const dwellTime = getDocProp("dwellTimeInMinutes") * 60000
-      const journeyTime = estMilliseconds + padding + dwellTime
-      if (tripValues["PU Time"] && !tripValues["DO Time"] && !tripValues["Appt Time"]) {
-        newValues["DO Time"] = timeAdd(tripValues["PU Time"], journeyTime)
-      } else if (!tripValues["PU Time"] && tripValues["DO Time"] && !tripValues["Appt Time"]) {
-        newValues["PU Time"] = timeAdd(tripValues["DO Time"], -journeyTime)
-      } else if (!tripValues["PU Time"] && !tripValues["DO Time"] && tripValues["Appt Time"]) {
-        newValues["DO Time"] = timeAdd(tripValues["Appt Time"], -apptPadding)
-        newValues["PU Time"] = timeAdd(newValues["DO Time"], -journeyTime)
+    const tripRows = getFullRows(range)
+    const tripValues = getRangeValuesAsTable(tripRows)
+    let newValues = []
+    tripValues.forEach(row => {
+      let newRowValues = {}
+      if (isFinite(row["Est Hours"])) {
+        const estMilliseconds = timeOnly(row["Est Hours"])
+        const estHours = estMilliseconds / 3600000
+        const padding = getDocProp("tripPaddingPerHourInMinutes") * estHours * 60000
+        const apptPadding = getDocProp("dropOffToAppointmentTimeInMinutes") * 60000
+        const dwellTime = getDocProp("dwellTimeInMinutes") * 60000
+        const journeyTime = estMilliseconds + padding + dwellTime
+        if (row["PU Time"] && !row["DO Time"] && !row["Appt Time"]) {
+          newRowValues["DO Time"] = timeAdd(row["PU Time"], journeyTime)
+        } else if (!row["PU Time"] && row["DO Time"] && !row["Appt Time"]) {
+          newRowValues["PU Time"] = timeAdd(row["DO Time"], -journeyTime)
+        } else if (!row["PU Time"] && !row["DO Time"] && row["Appt Time"]) {
+          newRowValues["DO Time"] = timeAdd(row["Appt Time"], -apptPadding)
+          newRowValues["PU Time"] = timeAdd(newRowValues["DO Time"], -journeyTime)
+        }
       }
-      setValuesByHeaderNames([newValues], tripRow)
-    }
+      newValues.push(newRowValues)
+    })
+    setValuesByHeaderNames(newValues, tripRows)
   } catch(e) {
     logError(e)
   }
