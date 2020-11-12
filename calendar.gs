@@ -128,6 +128,20 @@ function getDriverCalendarIds() {
   return result
 }
 
+function isCalendarEventActive(calendar, eventId) {
+  try {
+    const event = calendar.getEventById(eventId)
+    if (event) {
+      const events = calendar.getEvents(event.getStartTime(),event.getEndTime())
+      return events.some((thisEvent) => thisEvent.getId() == eventId)
+    } else {
+      return false
+    }
+  } catch(e) {
+    logError(e)
+  }    
+}
+
 function getCalendarById(calendarId) {
   try {
     return CalendarApp.getCalendarById(calendarId)
