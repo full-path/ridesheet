@@ -183,23 +183,43 @@ function getValueByHeaderName(headerName, range) {
 
 function setValuesByHeaderNames(newValues, range) {
   try {
+    const sheetHeaderNames = getSheetHeaderNames(range.getSheet())
     const rangeHeaderNames = getRangeHeaderNames(range)
     const rangeIncludesHeaderRow = (range.getRow() === 1)
     const rowOffset = (rangeIncludesHeaderRow ? 1 : 0)
-    let rangeValues = range.getValues()
-    //log("newValues: " + newValues.length, "rangeValues: " + rangeValues.length)
-    rangeValues.forEach((sheetRow, sheetRowIndex) => {
+
+    // Get the full list of header names for columns to be updated
+    let headerNamesInNewValues = []
+    newValues.forEach(row => {
+      Object.keys(row).forEach(headerName => {
+        if (headerNamesInNewValues.indexOf(headerName) === -1) headerNamesInNewValues.push(headerName)
+      })
+    })
+    
+    // Find the smallest range that will update the columns that need to be updated
+    const headerNamePositions = headerNamesInNewValues.filter(headerName => rangeHeaderNames.indexOf(headerName) > -1 ).map(headerName => sheetHeaderNames.indexOf(headerName) + 1)
+    const firstRowPosition = range.getRow()
+    const firstColumnPosition = Math.min(...headerNamePositions)
+    const numRows = range.getLastRow() - firstRowPosition + 1
+    const numColumns = Math.max(...headerNamePositions) - firstColumnPosition + 1
+    const narrowedRange = range.getSheet().getRange(firstRowPosition, firstColumnPosition, numRows, numColumns)
+    const narrowedRangeHeaderNames = getRangeHeaderNames(narrowedRange)
+    let narrowedRangeValues = narrowedRange.getValues()
+    
+    // Update the array of arrays with the new values
+    narrowedRangeValues.forEach((sheetRow, sheetRowIndex) => {
       if (rangeIncludesHeaderRow && sheetRowIndex === 0) {
         // skip header row
       } else {
-        rangeHeaderNames.forEach((rangeHeaderName, rangeHeaderIndex) => {
+        narrowedRangeHeaderNames.forEach((rangeHeaderName, rangeHeaderIndex) => {
           if (Object.keys(newValues[sheetRowIndex - rowOffset]).indexOf(rangeHeaderName) > -1) {
             sheetRow[rangeHeaderIndex] = newValues[sheetRowIndex - rowOffset][rangeHeaderName]
           }
         })
       }
     })
-    return range.setValues(rangeValues)
+    // Do the actual update
+    return narrowedRange.setValues(narrowedRangeValues)
   } catch(e) {
     logError(e)
   }

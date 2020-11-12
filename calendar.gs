@@ -7,16 +7,22 @@ function updateDriverCalendars() {
     let range = sheet.getDataRange()
     let values = getRangeValuesAsTable(range)
     let newValues = []
-    values.forEach(row => newValues.push(updateTripCalendarEvent(row)))
-    setValuesByHeaderNames(newValues,range)
+    let newValuesToSave = []
+    values.forEach(row => {
+      let rowValuesToSave = updateTripCalendarEvent(row)
+      let rowNewValues = {...rowValuesToSave}
+      rowNewValues["Trip Date"] = row["Trip Date"]
+      newValues.push(rowNewValues)
+      newValuesToSave.push(rowValuesToSave)
+    })
+    setValuesByHeaderNames(newValuesToSave,range)
     
     // Remove any calendar events that might have gotten left around, unattached to trips
     let calendarIds = getDriverCalendarIds()
     calendarIds.push(getDocProp("calendarIdForUnassignedTrips"))
     let tripEvents = {}
     calendarIds.forEach(calendarId => tripEvents[calendarId] = [])
-    values = getRangeValuesAsTable(range)
-    values.forEach(row => {
+    newValues.forEach(row => {
       if (row["Trip Date"] >= dateToday() && row["Driver Calendar ID"] && row["Trip Event ID"]) {
         tripEvents[row["Driver Calendar ID"]].push(row["Trip Event ID"])
       }
@@ -40,7 +46,7 @@ function updateDriverCalendars() {
 function updateTripCalendarEvent(tripValues) {
   try {
     let newTripValues = {}
-    let calendarId
+    let calendarId = "Unset"
     if (tripValues["Trip Date"] >= dateToday()) {
       if (tripValues["PU Time"] && tripValues["DO Time"] && tripValues["Customer Name and ID"]) {
         if (tripValues["Driver ID"]) {
@@ -48,17 +54,22 @@ function updateTripCalendarEvent(tripValues) {
           const driverSheet = ss.getSheetByName("Drivers")
           const driverValues = findFirstRowByHeaderNames(driverSheet, function(row) { return row["Driver ID"] === tripValues["Driver ID"] })
           if (driverValues) calendarId = driverValues["Driver Calendar ID"]
+          //log("Got driver calendar ID " + calendarId)
         } else {
           calendarId = getDocProp("calendarIdForUnassignedTrips")
-        }      
+        }
         if (calendarId) {
+          //log("About to try to create event with Calendar ID: " + calendarId)
           newTripValues["Driver Calendar ID"] = calendarId
           newTripValues["Trip Event ID"] = createTripCalendarEvent(calendarId, tripValues)
+          //log("Created new calendar event with ID",newTripValues["Trip Event ID"])
         } else {
+          //log("No event 1")
           newTripValues["Driver Calendar ID"] = null
           newTripValues["Trip Event ID"] = null
         }
       } else {
+        //log("No event 2")
         newTripValues["Driver Calendar ID"] = null
         newTripValues["Trip Event ID"] = null
       }
@@ -81,9 +92,11 @@ function createTripCalendarEvent(calendarId, tripValues) {
       })
       event.setTag("RideSheet","RideSheet")
       return event.getId()
+    } else {
+      //log("Didn't get calendar object for " + calendarId)
     }
   } catch(e) {
-    log("createTripCalendarEvent", e.name + ': ' + e.message)
+    logError(e)
   }
 }
 
