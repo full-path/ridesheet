@@ -88,11 +88,12 @@ function parseDate(date, alternateValue) {
 }
 
 function timeOnly(dateTime) {
-  return dateTime.getHours() * 3600000 + dateTime.getMinutes() * 60000 + dateTime.getSeconds() * 1000 + dateTime.getMilliseconds()
-}
-
-function testTimeOnly() {
-  log(timeOnly(new Date))
+  try {
+    return dateTime.getHours() * 3600000 + dateTime.getMinutes() * 60000 + dateTime.getSeconds() * 1000 + dateTime.getMilliseconds()
+  } catch(e) {
+    log("Value: " + dateTime, "Type: " + getType(dateTime))
+    logError(e)
+  }
 }
 
 function escapeRegex(string) {
