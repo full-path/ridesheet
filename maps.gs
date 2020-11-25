@@ -75,7 +75,7 @@ function parseAddress(rawAddress) {
   parenText = rawAddress.match(/\([^)]*\)/)
   if (parenText) {
     result.parenText      = parenText[0]
-    result.geocodeAddress = rawAddress.replace(parenText[0],"")
+    result.geocodeAddress = rawAddress.replace(parenText[0],"").trim()
   } else {
     result.geocodeAddress = rawAddress
   }
@@ -88,4 +88,13 @@ function createGoogleMapsDirectionsURL(address) {
   const destAddress = parseAddress(address).geocodeAddress
   const destination = "&destination=" + encodeURIComponent(destAddress)
   return baseURL + travelMode + destination
+}
+
+function extractCity(address) {
+  let noParens = parseAddress(address).geocodeAddress
+  let parsed = noParens.match(/.*, (.*, .*) \d{5}, USA/)
+  if (parsed) return parsed[1]
+  parsed = noParens.match(/[A-Z0-9]{4}\+[A-Z0-9]{2} (.*, .*), USA/)
+  if (parsed) return parsed[1]
+  return "Unspecified area"
 }
