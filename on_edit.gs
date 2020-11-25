@@ -102,10 +102,10 @@ function callCellTriggers(e) {
     if (isMultiRowRange || isMultiColumnRange) {
       for (let y = e.range.getColumn(); y <= e.range.getLastColumn(); y++) {
         for (let x = e.range.getRow(); x <= e.range.getLastRow(); x++) {
-          ranges.push(sheet.getRange(x,y))
+          if (x > 1) ranges.push(sheet.getRange(x,y))
         }
       }
-    } else {
+    } else if (e.range.getRow() > 1) {
       ranges.push(e.range)
     }
 
