@@ -672,6 +672,10 @@ const defaultNamedRanges = {
     "sheetName":"Customers",
     "headerName":"Default Destination"
   },
+  "codeFormatAddress5": {
+    "sheetName":"Vehicles",
+    "headerName":"Garage Address"
+  },
   "codeScanForDuplicates1": {
     "sheetName":"Customers",
     "headerName":"Customer ID"
