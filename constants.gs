@@ -135,6 +135,16 @@ const defaultDocumentProperties = {
     type: "string",
     value: "Enter ID here",
     description: "The ID of the Google Calendar where trips without drivers are shown"    
+  },
+  providerName: {
+    type: "string",
+    value: "Enter provider name here",
+    description: "Name of the agency using this RideSheet document"
+  },
+  remoteURLs: {
+    type: "array",
+    value: ["https://example.com"],
+    description: "URLs of the other coordinating agencies"    
   }
 }
 
