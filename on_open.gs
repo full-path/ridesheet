@@ -3,18 +3,18 @@ function onOpen(e) {
   try {
     buildMenus()
   } catch(e) {
-    log("buildMenus", e.name + ': ' + e.message)
+    logError(e)
   }
   try {
     buildDocumentPropertiesFromSheet()
     buildDocumentPropertiesFromDefaults()
   } catch(e) {
-    log("buildDocumentProperties", e.name + ': ' + e.message)
+    logError(e)
   }
   try {
     buildNamedRanges()
   } catch(e) {
-    log("buildNamedRanges", e.name + ': ' + e.message)
+    logError(e)
   }
   log("onOpen duration:",(new Date()) - startTime)
 }
