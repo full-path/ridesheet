@@ -158,7 +158,7 @@ function getPropParts(prop) {
 }
 
 function coerceValue(value, type) {
-  if      (!type)                { return value}
+  if      (!type || type === getType(value)) { return value }
   else if (type === "array")     { return JSON.parse(value) }
   else if (type === "bigint")    { return BigInt(value) }
   else if (type === "boolean")   { return new Boolean(JSON.parse(value)) }
