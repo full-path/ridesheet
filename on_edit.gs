@@ -239,8 +239,8 @@ function setCustomerKeyOnEdit(range) {
       let lastCustomerID = getDocProp("lastCustomerID_")
       if (!Number.isFinite(lastCustomerID)) {
         const sheet = range.getSheet()
-        const idColumn = getColumnIndexFromHeaderName("Customer ID",range) + 1
-        const idRange = sheet.getRange(1, idColumn, sheet.getLastRow())
+        const idColumnPosition = getSheetHeaderNames(sheet).indexOf("Customer ID") + 1
+        const idRange = sheet.getRange(1, idColumnPosition, sheet.getLastRow())
         let maxID = getMaxValueInRange(idRange)
         lastCustomerID = Number.isFinite(maxID) ? maxID : 1
       }
@@ -367,6 +367,10 @@ function updatePropertiesOnEdit(e) {
 }
 
 function tripSheetTrigger(e) {
-  updateTripID(e)
-  updateRuns(e)
+  try {
+    updateTripID(e)
+    updateRuns(e)
+  } catch(e) {
+    logError(e)
+  }
 }
