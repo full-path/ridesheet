@@ -10,7 +10,7 @@ function buildMenus() {
   menu.addItem('Send reviewed trips and runs to archive', 'moveTripsToArchive')
   menu.addSeparator()
   let settingsMenu = ui.createMenu('Settings')
-  settingsMenu.addItem('Update properties', 'presentProperties')
+  settingsMenu.addItem('View or reload properties', 'presentProperties')
   menu.addSubMenu(settingsMenu)
   menu.addToUi()
 }
