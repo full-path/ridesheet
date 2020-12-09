@@ -193,6 +193,20 @@ function deleteAllDocProps() {
   })
 }
 
+function deleteDeprecatedProps() {
+  try {
+    const defaultPropNames = Object.keys(defaultDocumentProperties)
+    const defaultPropDescriptions = defaultPropNames.map(propName => propName + propDescSuffix)
+    const currentPropNames = Object.keys(PropertiesService.getDocumentProperties().getProperties())
+    currentPropNames.forEach(propName => {
+      if (defaultPropNames.indexOf(propName) === -1 && 
+          defaultPropDescriptions.indexOf(propName) === -1) deleteDocProp(propName)
+    })
+  } catch(e) {
+    logError(e)    
+  }
+}
+
 function testTypes() {
 //  deleteDocProp("tripReviewRequiredFields")
   repairProps()
