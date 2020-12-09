@@ -68,3 +68,7 @@ function moveTripsToArchive() {
 function isCompleteTrip(trip) {
   return (trip["Trip Date"] && trip["Customer Name and ID"])
 }
+
+function shareTrips() {
+  return []
+}

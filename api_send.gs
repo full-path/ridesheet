@@ -39,3 +39,37 @@ function getRuns() {
     })
   } catch(e) { logError(e) }
 }
+
+function getTrips() {
+  try {
+    endPoints = getDocProp("apiGetAccess")
+    endPoints.forEach(endPoint => {
+      if (endPoint.hasTrips) {
+        let params = {}
+        params.resource = "trips"
+        params.version = endPoint.version
+        params.apiKey = endPoint.apiKey
+        let hmac = {}
+        hmac.nonce = Utilities.getUuid()
+        hmac.timestamp = JSON.parse(JSON.stringify(new Date()))
+        hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
+        
+        const options = {method: 'GET', contentType: 'application/json'}
+        let response = UrlFetchApp.fetch(endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac), options)
+        let responseObject
+        try {
+          responseObject = JSON.parse(response.getContentText())
+        } catch(e) {
+          responseObject = {status: "LOCAL_ERROR:" + e.name}
+        }
+          
+        let tripArray = []
+        if (responseObject.trips) {
+          responseObject.trips.forEach(trip => {
+          })
+        }
+        log("Received from GET:",JSON.stringify(responseObject))
+      }
+    })
+  } catch(e) { logError(e) }
+}

@@ -19,9 +19,16 @@ function doGet(e) {
     output.setMimeType(ContentService.MimeType.JSON)
     let content = {}
     if (validatedApiAccount) {
-      if (params.resource === "runs" && params.version === "v1") {
-        content.status = "OK"
-        content.runs = shareRuns()
+      if (params.version === "v1") {
+        if (params.resource === "runs") {
+          content.status = "OK"
+          content.runs = shareRuns()
+        } else if (params.resource === "trips") {
+          content.status = "OK"
+          content.runs = shareTrips()
+        } else {
+          content.status = "INVALID_REQUEST"
+        }
       } else {
         content.status = "INVALID_REQUEST"
       }
