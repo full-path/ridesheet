@@ -141,10 +141,30 @@ const defaultDocumentProperties = {
     value: "Enter provider name here",
     description: "Name of the agency using this RideSheet document"
   },
-  remoteURLs: {
+  apiGetAccess: {
     type: "array",
-    value: ["https://example.com"],
-    description: "URLs of the other coordinating agencies"    
+    value: [
+      {
+        name: "Example agency name",
+        url: "https://example.com",
+        apiVersion: "v1",
+        apiKey: "Enter key here",
+        secret: "Enter secret here",
+        hasRuns: true,
+        hasTrips: true
+      }
+    ],
+    description: "API information needed to connect to other agencies"    
+  },
+  apiGiveAccess: {
+    type: "object",
+    value: {
+      Enter_agency_key_here: {
+        name: "Example agency name with API access to data in this sheet",
+          secret: "Enter secret here"
+      }  
+    },
+    description: "API information needed to allow agencies to connect to this sheet. We recommend using https://www.uuidgenerator.net/ to generate API keys."    
   }
 }
 

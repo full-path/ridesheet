@@ -1,14 +1,38 @@
 function doGet(e) {
-  const params = JSON.stringify(e)
-  //log(e.queryString)
-  //log(JSON.stringify(e.parameters))
-  log(JSON.stringify(e))
-  let output = ContentService.createTextOutput()
-  output.setMimeType(ContentService.MimeType.JSON)
-  output.setContent(JSON.stringify(params))
-  return output
+  try {
+    const params = e.parameter
+    const hmacParamKeys = ["nonce","timestamp","signature"]
+    let baseParams = {}
+    let validatedApiAccount
+    if (params.apiKey) {
+      const apiAccounts = getDocProp("apiGiveAccess")
+      const statedApiAccount = apiAccounts[params.apiKey]
+      Object.keys(params).forEach(key => {
+        if (hmacParamKeys.indexOf(key) === -1) baseParams[key] = params[key]
+      })
+      if (params.signature === generateHmacHexString(statedApiAccount.secret, params.nonce, params.timestamp, baseParams)) {
+        validatedApiAccount = statedApiAccount
+      }
+    }
+  
+    let output = ContentService.createTextOutput()
+    output.setMimeType(ContentService.MimeType.JSON)
+    let content = {}
+    if (validatedApiAccount) {
+      if (params.resource === "runs" && params.version === "v1") {
+        content.status = "OK"
+        content.runs = shareRuns()
+      } else {
+        content.status = "INVALID_REQUEST"
+      }
+    } else {
+      content.status = "UNAUTHORIZED"
+    }
+    output.setContent(JSON.stringify(content))
+    return output
+  } catch(e) { logError(e) }
 }
-
+  
 function doPost(e) {
   log(JSON.stringify(e))
   let output = ContentService.createTextOutput()
@@ -16,5 +40,3 @@ function doPost(e) {
   output.setMimeType(ContentService.MimeType.JSON)
   return output
 }
-
-"https://script.google.com/a/fullpath.io/macros/s/AKfycbz3o_gnLxEExcwvRC6qjLqNFqTmWYf6EKlfHnacVw/exec"

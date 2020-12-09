@@ -91,7 +91,6 @@ function timeOnly(dateTime) {
   try {
     return dateTime.getHours() * 3600000 + dateTime.getMinutes() * 60000 + dateTime.getSeconds() * 1000 + dateTime.getMilliseconds()
   } catch(e) {
-    log("Value: " + dateTime, "Type: " + getType(dateTime))
     logError(e)
   }
 }
@@ -131,4 +130,38 @@ function getCustomerNameAndId(first, last, id) {
 function convertNamedRangeToTriggerName(namedRange) {
   // remove numeric suffix
   return namedRange.getName().replace(/\d+$/g,'')
+}
+
+function urlQueryString(params) {
+  try {
+    const keys = Object.keys(params)
+    result = keys.reduce((a, key, i) => {
+      if (i === 0) {
+        return key + "=" + params[key]
+      } else {
+        return a + "&" + key + "=" + params[key]
+      }
+    },"")
+    return result
+  } catch(e) { logError(e) }
+}
+
+function byteArrayToHexString(bytes) {
+  try {
+    return bytes.map(byte => {
+      return ("0" + (byte & 0xFF).toString(16)).slice(-2)
+    }).join('')
+  } catch(e) { logError(e) }
+}
+
+function generateHmacHexString(secret, nonce, timestamp, params) {
+  try {
+    let orderedParams = {}
+    Object.keys(params).sort().forEach(key => {
+      orderedParams[key] = params[key]
+    })
+    const value = [nonce, timestamp, JSON.stringify(orderedParams)].join(':')
+    const sigAsByteArray = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_SHA_256, value, secret)
+    return byteArrayToHexString(sigAsByteArray)
+  } catch(e) { logError(e) }
 }
