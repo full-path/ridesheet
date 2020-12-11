@@ -130,7 +130,6 @@ function shareRuns() {
       return runOut
     })
     result.sort((a, b) => a.runDate.getTime() - b.runDate.getTime())
-    log(JSON.stringify(result))
     return result
   } catch(e) {
     logError(e)

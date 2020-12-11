@@ -70,5 +70,46 @@ function isCompleteTrip(trip) {
 }
 
 function shareTrips() {
-  return []
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
+      return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true  && tripRow["Source"] === ""
+    })
+    const customers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
+
+    let result = trips.map(tripIn => {
+      let tripOut = {}
+      let customer = customers.find(c => c["Customer ID"] === runIn["Customer ID"]) || {}
+
+      runOut.runDate = runIn["Run Date"]    
+      runOut.ambulatorySpacePoints = vehicle["Seating Capacity"]
+      runOut.standardWheelchairSpacePoints = vehicle["Seating Capacity"]
+      runOut.ambulatorySpacePoints = vehicle["Seating Capacity"]
+      runOut.hasLift = !!vehicle["Has Lift"]
+      runOut.hasRamp = !!vehicle["Has Ramp"]
+      runOut.startLocation = runIn["Start Location"]
+      runOut.endLocation = runIn["End Location"]
+      let stops = []
+      runTrips.forEach(trip => {
+        let puStop = {}
+        puStop.time = new Date(trip["Trip Date"].getTime() + timeOnly(trip["PU Time"]))
+        puStop.city = extractCity(trip["PU Address"])
+        puStop.riderChange =  1 + trip["Guests"]
+        mergeStop(puStop, stops)
+
+        let doStop = {}
+        doStop.time = new Date(trip["Trip Date"].getTime() + timeOnly(trip["DO Time"]))
+        doStop.city = extractCity(trip["DO Address"])
+        doStop.riderChange = -1 - trip["Guests"]
+        mergeStop(doStop, stops)
+      })
+      stops.sort((a, b) => a.time.getTime() - b.time.getTime())
+      runOut.stops = stops
+      return runOut
+    })
+    result.sort((a, b) => a.runDate.getTime() - b.runDate.getTime())
+    return result
+  } catch(e) {
+    logError(e)
+  }
 }

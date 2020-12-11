@@ -41,7 +41,6 @@ function doGet(e) {
 }
   
 function doPost(e) {
-  log(JSON.stringify(e))
   let output = ContentService.createTextOutput()
   output.setContent(JSON.stringify(e))
   output.setMimeType(ContentService.MimeType.JSON)

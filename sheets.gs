@@ -220,9 +220,7 @@ function setValuesByHeaderNames(newValues, range) {
     })
     // Do the actual update
     return narrowedRange.setValues(narrowedRangeValues)
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function appendValuesByHeaderNames(values, sheet) {
@@ -256,19 +254,11 @@ function getMaxValueInRange(range) {
   return values.reduce((a, b) => Math.max(a, b))
 }
 
-function testSetDisplayValueByHeaderName() {
-  let startTime = new Date()
-  let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Trips")
-  let range = sheet.getRange("A7:M7")
-  setValuesByHeaderNames({"Trip Date": "5/23/2020", "Customer Name":"Johnson, Howard (1)"}, range)
-}
-
-function testGetDisplayValueByHeaderName() {
-  let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Trips")
-  let range = sheet.getRange("A7:M7")
-
-  let displayValue = getDisplayValueByHeaderName("Trip Date",range)
-  log(displayValue.toString(), Array.isArray(displayValue))
-  displayValue = getValueByHeaderName("Trip Date",range)
-  log(displayValue.toString(), Array.isArray(displayValue))
+function applyFormats(formatGroups, sheet) {
+  try {
+    Object.keys(formatGroups).forEach(groupName => {
+      const ranges = formatGroups[groupName].ranges
+      if (ranges) formatGroups[groupName].formats(sheet.getRangeList(ranges))
+    })
+  } catch(e) { logError(e) }
 }
