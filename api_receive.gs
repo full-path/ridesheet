@@ -1,5 +1,6 @@
 function doGet(e) {
   try {
+    const timeNow = new Date()
     const params = e.parameter
     const hmacParamKeys = ["nonce","timestamp","signature"]
     let baseParams = {}
@@ -10,7 +11,10 @@ function doGet(e) {
       Object.keys(params).forEach(key => {
         if (hmacParamKeys.indexOf(key) === -1) baseParams[key] = params[key]
       })
-      if (params.signature === generateHmacHexString(statedApiAccount.secret, params.nonce, params.timestamp, baseParams)) {
+      let receivedTimestamp = new Date(params.timestamp)
+      let timePassed = timeNow.getTime() - receivedTimestamp.getTime() // In milliseconds
+      if (params.signature === generateHmacHexString(statedApiAccount.secret, params.nonce, params.timestamp, baseParams) && 
+          timePassed < 300000) {
         validatedApiAccount = statedApiAccount
       }
     }
