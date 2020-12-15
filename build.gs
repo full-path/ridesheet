@@ -3,7 +3,8 @@
 function buildMenus() {
   let ui = SpreadsheetApp.getUi()
   let menu = ui.createMenu('RideSheet')
-  menu.addItem('Update driver calendars', 'updateDriverCalendars')
+  menu.addItem('Refresh driver calendars', 'updateDriverCalendars')
+  menu.addItem('Refresh outside runs', 'getRuns')
   menu.addItem('Create return trip', 'createReturnTrip')
   menu.addItem('Create manifests', 'createManifests')
   menu.addItem('Send past trips and runs to review', 'moveTripsToReview')

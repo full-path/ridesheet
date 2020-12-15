@@ -258,7 +258,7 @@ function applyFormats(formatGroups, sheet) {
   try {
     Object.keys(formatGroups).forEach(groupName => {
       const ranges = formatGroups[groupName].ranges
-      if (ranges) formatGroups[groupName].formats(sheet.getRangeList(ranges))
+      if (ranges.length) formatGroups[groupName].formats(sheet.getRangeList(ranges))
     })
   } catch(e) { logError(e) }
 }

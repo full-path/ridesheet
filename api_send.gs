@@ -1,7 +1,7 @@
 
 function getRuns() {
   try {
-    let runArray = [["Last Updated", new Date(), new Date(), null]]
+    let runArray = [["Last Updated:", new Date(), new Date(), null]]
     let currentRow = 2
     endPoints = getDocProp("apiGetAccess")
     endPoints.forEach(endPoint => {
@@ -21,7 +21,8 @@ function getRuns() {
         try {
           responseObject = JSON.parse(response.getContentText())
         } catch(e) {
-          responseObject = {status: "LOCAL_ERROR:" + e.name}
+          logError(e)
+          responseObject = {status: "LOCAL_ERROR::" + e.name}
         }
         
         let formatGroups = {
@@ -72,9 +73,26 @@ function getRuns() {
             formats: function(rl) {
               rl.setNumberFormat("0")
             }
+          },
+          mergeCells: {
+            ranges: [],
+            formats: function(rl) {
+              rl.getRanges().forEach(range => range.merge())
+            }
           }
         }
-        if (responseObject.runs) {
+        if (responseObject.status !== "OK") {
+          runArray.push(
+            [null, null, null, null],
+            [responseObject.status, null, null, null]
+          )
+          const thisRange = "A" + (currentRow + 1) + ":D" + (currentRow + 1)
+          formatGroups.header.ranges.push(thisRange)
+          formatGroups.mergeCells.ranges.push(thisRange)
+
+          currentRow += 2
+
+        } else if (responseObject.runs && responseObject.runs.length) {
           responseObject.runs.forEach(run => {
             runArray.push(
               [null, null, null, null],
@@ -97,11 +115,21 @@ function getRuns() {
             formatGroups.riderChange.ranges.push("D" + currentRow + ":D" + (currentRow + run.stops.length -1))
             currentRow += run.stops.length           
           })
+        } else {
+          runArray.push(
+            [null, null, null, null],
+            [endPoint.name + " responded with no runs", null, null, null]
+          )
+          const thisRange = "A" + (currentRow + 1) + ":D" + (currentRow + 1)
+          formatGroups.header.ranges.push(thisRange)
+          formatGroups.mergeCells.ranges.push(thisRange)
+
+          currentRow += 2
         }
   
        const ss = SpreadsheetApp.getActiveSpreadsheet()
        const runSheet = ss.getSheetByName("Outside Runs") || ss.insertSheet("Outside Runs")
-       runSheet.getDataRange().clear()
+       runSheet.getDataRange().clear().breakApart()
        let range = runSheet.getRange(1,1,runArray.length,4)
        range.setValues(runArray)
        range.clearFormat()
