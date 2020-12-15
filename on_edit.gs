@@ -42,8 +42,8 @@ const rangeTriggers = {
  * @param {event} e The onEdit event.
  */
 function onEdit(e) {
-  const startTime = new Date()
   try {  
+    const startTime = new Date()
     const sheetName = e.range.getSheet().getName()
     callSheetTriggers(e, sheetName, initialSheetTriggers)
     callCellTriggers(e)
@@ -51,7 +51,7 @@ function onEdit(e) {
   } catch(e) {
     logError(e)
   } finally {
-    log("onEdit duration:",(new Date()) - startTime)
+    log("onEdit duration:", new Date().getTime() - startTime.getTime())
   }
 }
 
