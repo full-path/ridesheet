@@ -73,30 +73,61 @@ function shareTrips() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
-      return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true  && tripRow["Source"] === ""
+      return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true && tripRow["Source"] === ""
     })
-    const customers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
 
     let result = trips.map(tripIn => {
       let tripOut = {}
-      let customer = customers.find(c => c["Customer ID"] === tripIn["Customer ID"]) || {}
+      tripOut.pickupAddress  = buildAddressToSpec(tripIn["PU Address"])
+      tripOut.dropoffAddress = buildAddressToSpec(tripIn["DO Address"])
+      tripOut.pickupTime     = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["PU Time"])}
+      tripOut.dropoffTime    = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["DO Time"])}
+      if (tripIn["Appt Time"]) {
+        tripOut.appointmentTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["Appt Time"])}
+      }
 
-      tripOut.pickupAddress = tripIn["PU Address"]
-      tripOut.dropoffAddress = tripIn["DO Address"]
-      tripOut.pickupTime = tripIn["PU Time"]
-      tripOut.dropoffTime = tripIn["DO Time"]
-      tripOut.appointmentTime = tripIn["Appt Time"]
-      tripOut.pickupWindowStartTime = null
-      tripOut.pickupWindowEndTime = null
-      tripOut.detoursPermissible = null
-      tripOut.negotiatedPickupTime = null
-      tripOut.hardConstraintOnPickupTime = null
-      tripOut.hardConstraintOnDropoffTime = null
-      return tripOut
+      let openAttributes = {}
+      openAttributes.tripTicketId = tripIn["Trip ID"]
+      openAttributes.estimatedTripDurationInSeconds = timeOnlyAsMilliseconds(tripIn["Est Hours"] || 0)/1000
+      openAttributes.estimatedTripDistanceInMiles = tripIn["Est Miles"]
+      if (tripIn["Guests"]) openAttributes.guestCount = tripIn["Guests"]
+      if (tripIn["Mobility Factors"]) openAttributes.mobilityFactors = tripIn["Mobility Factors"]
+      if (tripIn["Notes"]) openAttributes.notes = tripIn["Notes"]
+      tripOut["@openAttribute"] = JSON.stringify(openAttributes)
+      
+      return {tripRequest: tripOut}
     })
-    result.sort((a, b) => a.runDate.getTime() - b.runDate.getTime())
+    result.sort((a, b) => a.tripRequest.pickupTime["@time"].getTime() - b.tripRequest.pickupTime["@time"].getTime())
+    console.log(JSON.stringify(result[1]))
+    //console.log(result)
     return result
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
+}
+
+function buildAddressToSpec(address) {
+  try {
+    let result = {}
+    const parsedAddress = parseAddress(address)
+    result["@addressName"] = parsedAddress.geocodeAddress
+    if (parsedAddress.parenText) {
+      let manualAddr = {}
+      manualAddr["@manualText"] = parsedAddress.parenText
+      manualAddr["@sendtoInvoice"] = true
+      manualAddr["@sendtoVehicle"] = true
+      manualAddr["@sendtoOperator"] = true
+      manualAddr["@vehicleConfirmation"] = false
+      result.manualDescriptionAddress = manualAddr
+    }
+    return result
+  } catch(e) { logError(e) }
+}
+
+function buildAddressFromSpec(address) {
+  try {
+    let result = address["@addressName"]
+    if (address.manualDescriptionAddress) {
+      result = result + " (" + address.manualDescriptionAddress["@manualText"] + ")"
+    }
+    return result
+  } catch(e) { logError(e) }
 }

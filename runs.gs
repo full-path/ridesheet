@@ -98,10 +98,10 @@ function shareRuns() {
       let runOut = {}
       let vehicle = vehicles.find(v => v["Vehicle ID"] === runIn["Vehicle ID"]) || {}
       let runTrips = trips.filter(t => {
-                           return t["Trip Date"].getTime()  === runIn["Run Date"].getTime() && 
-                                  t["Vehicle ID"] === runIn["Vehicle ID"] && 
-                                  t["Driver ID"]  === runIn["Driver ID"] 
-                                  })
+        return  t["Trip Date"].getTime()  === runIn["Run Date"].getTime() && 
+                t["Vehicle ID"] === runIn["Vehicle ID"] && 
+                t["Driver ID"]  === runIn["Driver ID"] 
+      })
 
       runOut.runDate = runIn["Run Date"]    
       runOut.ambulatorySpacePoints = vehicle["Seating Capacity"]
@@ -114,13 +114,13 @@ function shareRuns() {
       let stops = []
       runTrips.forEach(trip => {
         let puStop = {}
-        puStop.time = new Date(trip["Trip Date"].getTime() + timeOnly(trip["PU Time"]))
+        puStop.time = new Date(trip["Trip Date"].getTime() + timeOnlyAsMilliseconds(trip["PU Time"]))
         puStop.city = extractCity(trip["PU Address"])
         puStop.riderChange =  1 + trip["Guests"]
         mergeStop(puStop, stops)
 
         let doStop = {}
-        doStop.time = new Date(trip["Trip Date"].getTime() + timeOnly(trip["DO Time"]))
+        doStop.time = new Date(trip["Trip Date"].getTime() + timeOnlyAsMilliseconds(trip["DO Time"]))
         doStop.city = extractCity(trip["DO Address"])
         doStop.riderChange = -1 - trip["Guests"]
         mergeStop(doStop, stops)

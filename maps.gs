@@ -72,9 +72,9 @@ function getTripEstimate(origin, destination, returnType) {
 
 function parseAddress(rawAddress) {
   result = {}
-  parenText = rawAddress.match(/\([^)]*\)/)
+  const parenText = rawAddress.match(/\(([^)]*)\)/)
   if (parenText) {
-    result.parenText      = parenText[0]
+    result.parenText      = parenText[1]
     result.geocodeAddress = rawAddress.replace(parenText[0],"").trim()
   } else {
     result.geocodeAddress = rawAddress

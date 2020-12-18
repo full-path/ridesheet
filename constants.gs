@@ -1,8 +1,10 @@
+const debugLogging                       = false
 const allowPropDescriptionEdits          = false
 
 const errorBackgroundColor               = "#f4cccc"
 const defaultBackgroundColor             = "#ffffff"
 const headerBackgroundColor              = "#fff2cc"
+const highlightBackgroundColor           = "#ffff00"
 
 // Config for the state of Oregon
 const defaultLocalTimeZone               = "America/Los_Angeles"

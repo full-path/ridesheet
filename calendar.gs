@@ -83,8 +83,8 @@ function updateTripCalendarEvent(tripValues) {
 function createTripCalendarEvent(calendarId, tripValues) {
   try {
     let newTripValues = {}
-    const startTime = new Date(tripValues["Trip Date"].getTime() + timeOnly(tripValues["PU Time"]))
-    const endTime = new Date(tripValues["Trip Date"].getTime() + timeOnly(tripValues["DO Time"]))
+    const startTime = new Date(tripValues["Trip Date"].getTime() + timeOnlyAsMilliseconds(tripValues["PU Time"]))
+    const endTime = new Date(tripValues["Trip Date"].getTime() + timeOnlyAsMilliseconds(tripValues["DO Time"]))
     const calendar = getCalendarById(calendarId)
     if (calendar) {
       const event = calendar.createEvent(tripValues["Customer Name and ID"], startTime, endTime, {

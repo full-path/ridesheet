@@ -1,22 +1,13 @@
 
 function getRuns() {
   try {
-    let runArray = [["Last Updated:", new Date(), new Date(), null]]
+    let grid = [["Last Updated:", new Date(), new Date(), null]]
     let currentRow = 2
     endPoints = getDocProp("apiGetAccess")
     endPoints.forEach(endPoint => {
       if (endPoint.hasRuns) {
-        let params = {}
-        params.resource = "runs"
-        params.version = endPoint.version
-        params.apiKey = endPoint.apiKey
-        let hmac = {}
-        hmac.nonce = Utilities.getUuid()
-        hmac.timestamp = JSON.parse(JSON.stringify(new Date()))
-        hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
-        
-        const options = {method: 'GET', contentType: 'application/json'}
-        let response = UrlFetchApp.fetch(endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac), options)
+        let params = {resource: "runs"}
+        let response = getResource(endPoint, params)
         let responseObject
         try {
           responseObject = JSON.parse(response.getContentText())
@@ -37,7 +28,7 @@ function getRuns() {
           date: {
             ranges: ["C1"],
             formats: function(rl) {
-              rl.setNumberFormat("mm-dd-yyyy")
+              rl.setNumberFormat("mm/dd/yyyy")
               rl.setHorizontalAlignment("left")
             }
           },
@@ -81,25 +72,24 @@ function getRuns() {
             }
           }
         }
+        
         if (responseObject.status !== "OK") {
-          runArray.push(
+          grid.push(
             [null, null, null, null],
             [responseObject.status, null, null, null]
           )
           const thisRange = "A" + (currentRow + 1) + ":D" + (currentRow + 1)
           formatGroups.header.ranges.push(thisRange)
           formatGroups.mergeCells.ranges.push(thisRange)
-
           currentRow += 2
-
-        } else if (responseObject.runs && responseObject.runs.length) {
-          responseObject.runs.forEach(run => {
-            runArray.push(
+        } else if (responseObject.results && responseObject.results.length) {
+          responseObject.results.forEach(row => {
+            grid.push(
               [null, null, null, null],
-              ["Source", endPoint.name, "Run Date", new Date(run.runDate)],
-              ["Seats", run.ambulatorySpacePoints, "Wheelchair spaces", run.standardWheelchairSpacePoints],
-              ["Lift", run.hasLift ? "Yes" : "No", "Ramp", run.hasLift ? "Yes" : "No"],
-              ["Start location", run.startLocation, "End location", run.endLocation],
+              ["Source", endPoint.name, "Run Date", new Date(row.runDate)],
+              ["Seats", row.ambulatorySpacePoints, "Wheelchair spaces", row.standardWheelchairSpacePoints],
+              ["Lift", row.hasLift ? "Yes" : "No", "Ramp", row.hasLift ? "Yes" : "No"],
+              ["Start location", row.startLocation, "End location", row.endLocation],
               [null, "Stop Time", "Stop City", "Rider Change"]
             )
             formatGroups.label.ranges.push("A" + (currentRow + 1) + ":A" + (currentRow + 4), "C" + (currentRow + 1) + ":C" + (currentRow + 4))
@@ -108,33 +98,32 @@ function getRuns() {
             formatGroups.runAttributes.ranges.push("A" + (currentRow + 1) + ":D" + (currentRow + 5))
             formatGroups.header.ranges.push("A" + (currentRow + 5) + ":D" + (currentRow + 5))
             currentRow += 6
-            run.stops.forEach(stop => {
-              runArray.push([null, new Date(stop.time), stop.city, stop.riderChange])
+            row.stops.forEach(stop => {
+              grid.push([null, new Date(stop.time), stop.city, stop.riderChange])
             })
-            formatGroups.time.ranges.push("B" + currentRow + ":B" + (currentRow + run.stops.length -1))
-            formatGroups.riderChange.ranges.push("D" + currentRow + ":D" + (currentRow + run.stops.length -1))
-            currentRow += run.stops.length           
+            formatGroups.time.ranges.push("B" + currentRow + ":B" + (currentRow + row.stops.length -1))
+            formatGroups.riderChange.ranges.push("D" + currentRow + ":D" + (currentRow + row.stops.length -1))
+            currentRow += row.stops.length
           })
         } else {
-          runArray.push(
+          grid.push(
             [null, null, null, null],
             [endPoint.name + " responded with no runs", null, null, null]
           )
           const thisRange = "A" + (currentRow + 1) + ":D" + (currentRow + 1)
           formatGroups.header.ranges.push(thisRange)
           formatGroups.mergeCells.ranges.push(thisRange)
-
           currentRow += 2
         }
-  
        const ss = SpreadsheetApp.getActiveSpreadsheet()
        const runSheet = ss.getSheetByName("Outside Runs") || ss.insertSheet("Outside Runs")
        runSheet.getDataRange().clear().breakApart()
-       let range = runSheet.getRange(1,1,runArray.length,4)
-       range.setValues(runArray)
+       let range = runSheet.getRange(1,1,grid.length,grid[0].length)
+       range.setValues(grid)
        range.clearFormat()
        applyFormats(formatGroups, runSheet)
-       runSheet.autoResizeColumns(1,4)
+       runSheet.setFrozenRows(1)
+       runSheet.autoResizeColumns(1,grid[0].length)
       }
     })
   } catch(e) { logError(e) }
@@ -142,33 +131,149 @@ function getRuns() {
 
 function getTrips() {
   try {
+    const lastColumnLetter = "O"
+    let grid = [
+      ["Last Updated:", new Date(), new Date()].concat(Array(12).fill(null)),
+      [
+        "Source",
+        "PU Time to Offer",
+        "Claim",
+        "Trip Date",
+        "Requested PU Time",
+        "Requested DO Time",
+        "Appt Time",
+        "PU Address",
+        "DO Address",
+        "Guests",
+        "Mobility Factors",
+        "Notes",
+        "Est Hours",
+        "Est Miles",
+        "Trip ID"
+      ]
+    ]
+    let currentRow = 3
     endPoints = getDocProp("apiGetAccess")
     endPoints.forEach(endPoint => {
       if (endPoint.hasTrips) {
-        let params = {}
-        params.resource = "trips"
-        params.version = endPoint.version
-        params.apiKey = endPoint.apiKey
-        let hmac = {}
-        hmac.nonce = Utilities.getUuid()
-        hmac.timestamp = JSON.parse(JSON.stringify(new Date()))
-        hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
-        
-        const options = {method: 'GET', contentType: 'application/json'}
-        let response = UrlFetchApp.fetch(endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac), options)
+        let params = {resource: "tripRequests"}
+        let response = getResource(endPoint, params)
         let responseObject
         try {
           responseObject = JSON.parse(response.getContentText())
         } catch(e) {
+          logError(e)
           responseObject = {status: "LOCAL_ERROR:" + e.name}
         }
-          
-        let tripArray = []
-        if (responseObject.trips) {
-          responseObject.trips.forEach(trip => {
-          })
+        let formatGroups = {
+          mergeCells: {
+            ranges: [],
+            formats: function(rl) {
+              rl.getRanges().forEach(range => range.merge())
+            }
+          },       
+          header: {
+            ranges: ["A1:" + lastColumnLetter + "2"],
+            formats: function(rl) {
+              rl.setBackground(headerBackgroundColor)
+              rl.setFontWeight("bold")
+              rl.setBorder(true, true, true, true, null, null, "black", SpreadsheetApp.BorderStyle.SOLID_MEDIUM)
+            }
+          },
+          date: {
+            ranges: ["C1"],
+            formats: function(rl) {
+              rl.setNumberFormat("mm/dd/yyyy")
+              rl.setHorizontalAlignment("left")
+            }
+          },
+          time: {
+            ranges: ["B1"],
+            formats: function(rl) {
+              rl.setNumberFormat("h:mm am/pm")
+            }
+          },
+          duration: {
+            ranges: [],
+            formats: function(rl) {
+              rl.setNumberFormat("h:mm")
+            }
+          },
+          distance: {
+            ranges: [],
+            formats: function(rl) {
+              rl.setNumberFormat("0.00")
+            }
+          },
+          integer: {
+            ranges: [],
+            formats: function(rl) {
+              rl.setNumberFormat("0")
+              rl.setHorizontalAlignment("right")
+            }
+          },
+          checkbox: {
+            ranges: [],
+            formats: function(rl) {
+              rl.insertCheckboxes()
+            }
+          }
         }
-        log("Received from GET:",JSON.stringify(responseObject))
+        if (responseObject.status !== "OK") {
+          grid.push(
+            [responseObject.status].concat(Array(14).fill(null))
+          )
+          const thisRange = "A" + currentRow + ":" + lastColumnLetter + currentRow
+          formatGroups.mergeCells.ranges.push(thisRange)
+          currentRow += 1
+        } else if (responseObject.results && responseObject.results.length) {
+          responseObject.results.forEach(item => {
+            const row = item.tripRequest
+            const openAttributes = JSON.parse(row["@openAttribute"])
+            grid.push([
+              endPoint.name,
+              null,
+              false,
+              new Date(row.pickupTime["@time"]),
+              new Date(row.pickupTime["@time"]),
+              new Date(row.dropoffTime["@time"]),
+              new Date(row.appointmentTime["@time"]),
+              buildAddressFromSpec(row.pickupAddress),
+              buildAddressFromSpec(row.dropoffAddress),
+              openAttributes.guestCount,
+              openAttributes.mobilityFactors,
+              openAttributes.notes,
+              openAttributes.estimatedTripDurationInSeconds / 86400,
+              openAttributes.estimatedTripDistanceInMiles,
+              openAttributes.tripTicketId
+            ])
+          })
+          formatGroups.checkbox.ranges.push("C" + currentRow + ":C" + (currentRow + responseObject.results.length - 1))
+          formatGroups.date.ranges.push("D" + currentRow + ":D" + (currentRow + responseObject.results.length - 1))
+          formatGroups.time.ranges.push("E" + currentRow + ":G" + (currentRow + responseObject.results.length - 1))
+          formatGroups.integer.ranges.push("J" + currentRow + ":J" + (currentRow + responseObject.results.length - 1))
+          formatGroups.duration.ranges.push("M" + currentRow + ":M" + (currentRow + responseObject.results.length - 1))
+          formatGroups.distance.ranges.push("N" + currentRow + ":N" + (currentRow + responseObject.results.length - 1))
+          currentRow += responseObject.results.length
+
+          const ss = SpreadsheetApp.getActiveSpreadsheet()
+          const sheet = ss.getSheetByName("Outside Trips") || ss.insertSheet("Outside Trips")
+          sheet.getDataRange().clear().breakApart()
+          let range = sheet.getRange(1, 1, grid.length, grid[0].length)
+          range.clearFormat()
+          range.setValues(grid)
+          applyFormats(formatGroups, sheet)
+          sheet.setFrozenRows(2)
+          sheet.setFrozenColumns(3)
+          sheet.autoResizeColumns(1,grid[0].length)
+        } else {
+          grid.push(
+            [endPoint.name + " responded with no trip requests"].concat(Array(14).fill(null))
+          )
+          const thisRange = "A" + currentRow + ":" + lastColumnLetter + currentRow
+          formatGroups.mergeCells.ranges.push(thisRange)
+          currentRow += 1
+        }
       }
     })
   } catch(e) { logError(e) }

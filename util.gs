@@ -74,12 +74,23 @@ function timeAdd(date, milliseconds) {
 }
 
 function dateOnly(dateTime) {
-  if (!dateOnly) dateTime = new Date()
-  return new Date(dateTime.setHours(0,0,0,0))
+  try {
+    let thisDateTime
+    if (!dateTime) {
+      thisDateTime = new Date()
+    } else if (typeof dateTime === "string") {
+      thisDateTime = new Date(dateTime)
+    } else {
+      thisDateTime = dateTime
+    } 
+    return new Date(thisDateTime.setHours(0,0,0,0))
+  } catch(e) { logError(e) }
 }
 
 function dateToday() {
-  return dateOnly(new Date)
+  try {
+    return dateOnly()
+  } catch(e) { logError(e) }
 }
 
 function parseDate(date, alternateValue) {
@@ -87,12 +98,24 @@ function parseDate(date, alternateValue) {
   return isNaN(dateVal) ? alternateValue : new Date(dateVal)
 }
 
-function timeOnly(dateTime) {
+function timeOnlyAsMilliseconds(dateTime) {
   try {
-    return dateTime.getHours() * 3600000 + dateTime.getMinutes() * 60000 + dateTime.getSeconds() * 1000 + dateTime.getMilliseconds()
-  } catch(e) {
-    logError(e)
-  }
+    let thisDateTime
+    if (!dateTime) {
+      thisDateTime = new Date()
+    } else if (typeof dateTime === "string") {
+      thisDateTime = new Date(dateTime)
+    } else {
+      thisDateTime = dateTime
+    }
+    return thisDateTime.getHours() * 3600000 + thisDateTime.getMinutes() * 60000 + thisDateTime.getSeconds() * 1000 + thisDateTime.getMilliseconds()
+  } catch(e) { logError(e) }
+}
+
+function combineDateAndTime(date, time) {
+  try {
+    return new Date(dateOnly(date).getTime() + timeOnlyAsMilliseconds(time))
+  } catch(e) { logError(e) }
 }
 
 function escapeRegex(string) {
@@ -163,5 +186,20 @@ function generateHmacHexString(secret, nonce, timestamp, params) {
     const value = [nonce, timestamp, JSON.stringify(orderedParams)].join(':')
     const sigAsByteArray = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_SHA_256, value, secret)
     return byteArrayToHexString(sigAsByteArray)
+  } catch(e) { logError(e) }
+}
+
+function getResource(endPoint, params) {
+  try {
+    params.version = endPoint.version
+    params.apiKey = endPoint.apiKey
+    let hmac = {}
+    hmac.nonce = Utilities.getUuid()
+    hmac.timestamp = JSON.parse(JSON.stringify(new Date()))
+    hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
+    
+    const options = {method: 'GET', contentType: 'application/json'}
+    const response = UrlFetchApp.fetch(endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac), options)
+    return response
   } catch(e) { logError(e) }
 }

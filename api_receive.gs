@@ -26,10 +26,10 @@ function doGet(e) {
       if (params.version === "v1") {
         if (params.resource === "runs") {
           content.status = "OK"
-          content.runs = shareRuns()
-        } else if (params.resource === "trips") {
+          content.results = shareRuns()
+        } else if (params.resource === "tripRequests") {
           content.status = "OK"
-          content.runs = shareTrips()
+          content.results = shareTrips()
         } else {
           content.status = "INVALID_REQUEST"
         }

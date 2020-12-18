@@ -51,7 +51,7 @@ function onEdit(e) {
   } catch(e) {
     logError(e)
   } finally {
-    log("onEdit duration:", new Date().getTime() - startTime.getTime())
+    if (debugLogging) log("onEdit duration:", new Date().getTime() - startTime.getTime())
   }
 }
 
@@ -281,7 +281,7 @@ function updateTripTimesOnEdit(range) {
     tripValues.forEach(row => {
       let newRowValues = {}
       if (isFinite(row["Est Hours"])) {
-        const estMilliseconds = timeOnly(row["Est Hours"])
+        const estMilliseconds = timeOnlyAsMilliseconds(row["Est Hours"])
         const estHours = estMilliseconds / 3600000
         const padding = getDocProp("tripPaddingPerHourInMinutes") * estHours * 60000
         const apptPadding = getDocProp("dropOffToAppointmentTimeInMinutes") * 60000
