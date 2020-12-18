@@ -20,7 +20,6 @@ function createManifests() {
     // tomorrow, at midnight
     defaultDate = dateOnly(dateAdd(new Date(), 1))
   }
-  log("Prompt ready:",(new Date()) - startTime)
   let promptResult = ui.prompt("Create Manifests", "Enter date for manifests. Leave blank for " + formatDate(defaultDate, null, null), ui.ButtonSet.OK_CANCEL)
   startTime = new Date()
   if (promptResult.getResponseText() == "") {
@@ -37,16 +36,13 @@ function createManifests() {
   }
   const templateDoc = DocumentApp.openById(getDocProp("driverManifestTemplateDocId"))
   prepareTemplate(templateDoc)
-  log("Template prepared:",(new Date()) - startTime)
   
   let runs = getManifestData(manifestDate)
-  log("Data acquired:",(new Date()) - startTime)
 
   runs.forEach((run, i) => {
     const driverManifestFolderId = getDocProp("driverManifestFolderId")
     const templateFileId = getDocProp("driverManifestTemplateDocId")
     const manifestDoc = createManifest(run, templateFileId, driverManifestFolderId)
-    log("Created manifest " + i + ":",(new Date()) - startTime)
     emptyBody(manifestDoc)
     populateManifest(manifestDoc, templateDoc, run)
     removeTempElement(manifestDoc)
@@ -54,9 +50,8 @@ function createManifests() {
     const manifestFile = DriveApp.getFileById(manifestDoc.getId())
     let manifestPDFFile = DriveApp.getFolderById(driverManifestFolderId).createFile(manifestFile.getBlob().getAs("application/pdf"))
     manifestPDFFile.setName(manifestFile + ".pdf")
-    log("Populated manifest " + i + ":",(new Date()) - startTime)
   })
-  log(`All manifests created:`,(new Date()) - startTime)
+  log('All manifests created',(new Date()).getTime() - startTime.getTime())
 }
 
 function createManifest(run, templateFileId, driverManifestFolderId) {
@@ -65,19 +60,6 @@ function createManifest(run, templateFileId, driverManifestFolderId) {
   const manifestFile     = DriveApp.getFileById(templateFileId).makeCopy(manifestFolder).setName(manifestFileName)
   const manifestDoc      = DocumentApp.openById(manifestFile.getId())
   return manifestDoc
-}
-                                                  
-function testCreateManifest() {
-  //const driverManifestTemplateDocId = "https://docs.google.com/document/d/1SPjf_8oVA2BM6wTzSf3Ww521Slet1p6NOorKtDn_HOQ/edit"
-  const driverManifestTemplateDocId = "1SPjf_8oVA2BM6wTzSf3Ww521Slet1p6NOorKtDn_HOQ"
-  //const driverManifestFolderId = "https://drive.google.com/drive/folders/1MuBNXLE-ziUEDY56gWR-OZ1Y9fKYild0"
-  const driverManifestFolderId = "1MuBNXLE-ziUEDY56gWR-OZ1Y9fKYild0"
-  //const manifestFileName = `${formatDate(run["Trip Date"], null, "yyyy-MM-dd")} manifest for ${run["Driver Name"]} on ${run["Vehicle Name"]}`
-  const manifestFileName = "Test Manifest"
-  const manifestFolder   = DriveApp.getFolderById(driverManifestFolderId)
-  const manifestFile     = DriveApp.getFileById(driverManifestTemplateDocId).makeCopy(manifestFolder).setName(manifestFileName)
-  const manifestDoc      = DocumentApp.openByUrl() (manifestFile.getId())
-  log(manifestDoc.getName())
 }
                                                   
 function populateManifest(manifestDoc, templateDoc, run) {
@@ -98,15 +80,12 @@ function populateManifest(manifestDoc, templateDoc, run) {
   }
 
   // Add the header elements
-  //log ("Header")
   replaceTextInRange(templateDoc.getNamedRanges("HEADER")[0].getRange(), manifestBody, run["Events"][0])
   // Add all the PU and DO elements. Use the section name of each event to decide whether to add a PU or DO range.
   run["Events"].forEach((event, i) => {
-    //log ("Event " + i)
     replaceTextInRange(templateDoc.getNamedRanges(event["Section Name"])[0].getRange(), manifestBody, event)
   })
   // Add the footer elements
- // log ("Footer")
   replaceTextInRange(templateDoc.getNamedRanges("FOOTER")[0].getRange(), manifestBody, run["Events"][run["Events"].length - 1])
 }
 
@@ -136,7 +115,6 @@ function replaceText(element, data) {
     } else {
       datum = data[field]
     }
-    //log("Field: " + field, "Data: " + data[field], "Type: " + Object.prototype.toString.call(data[field]))
     if (Object.keys(data).indexOf(field) != -1) {
       element.replaceText("{" + field + "}", datum)
       if (field.match(/\baddress\b/i)) {
@@ -148,8 +126,6 @@ function replaceText(element, data) {
             text.setLinkUrl(addressRange.getStartOffset(), addressRange.getEndOffsetInclusive(), url)
             addressRange = text.findText(datum, addressRange)
           } while (addressRange)
-        } else {
-          //log(text.getText(), datum)
         }
       } 
     }
@@ -275,15 +251,12 @@ function deleteAllNamedRanges(doc) {
 }
 
 function prepareTemplate(doc) {
-  //clearLog()
   //let doc = DocumentApp.openById(driverManifestTemplateDocId)
   deleteAllNamedRanges(doc)
   let body = doc.getBody()
   for (let i = 0, c = body.getNumChildren(); i < c; i++) {
     let element = body.getChild(i) 
-    //log("Got element " + i, element.getType(), elementHasText(element))
     if (elementHasText(element)) {
-      //log(i,"Not in a section, searching for a BEGIN statement")
       const match = element.getText().match(/^\s*\[BEGIN (?<sectionName>.+?)\]\s*$/)
       if (match) {
         // We're at the beginning of a section. 
@@ -298,28 +271,20 @@ function prepareTemplate(doc) {
         let sectionName = match.groups["sectionName"]
         let regex = new RegExp(`^\\s*\\[END ${sectionName}\\]\\s*$`)
         let rangeBuilder = doc.newRange()
-        //log(i, "Found start of section " + sectionName + ", starting to build named range.")
-        //log(i, "Will search for " + regex.toString())
         for (let stayInLoop = true; stayInLoop && i < c ; i++) {
           element = body.getChild(i) 
-          //log(i, element.getText(), (element.getText().match(regex)))
           if (elementHasText(element) && element.getText().match(regex)) {
             if (rangeBuilder.getRangeElements().length > 0) {
               doc.addNamedRange(sectionName, rangeBuilder.build())
-              //log(i, "Found end of section " + sectionName + ". Saved named range " + sectionName)
-            } else {
-              //log(i, "Found end of section " + sectionName + ". No elements found. No range saved.")
             }
             stayInLoop = false
           } else {
             rangeBuilder.addElement(element)
-            //log(i, "Adding element to " + sectionName)
           }
         }
       }
     }
   }
-  //log("End of document reached.")
 }
 
 function copyNamedRanges(source, destination) {
