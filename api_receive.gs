@@ -19,8 +19,8 @@ function doGet(e) {
       }
     }
   
-    let output = ContentService.createTextOutput()
-    output.setMimeType(ContentService.MimeType.JSON)
+    let response = ContentService.createTextOutput()
+    response.setMimeType(ContentService.MimeType.JSON)
     let content = {}
     if (validatedApiAccount) {
       if (params.version === "v1") {
@@ -39,8 +39,8 @@ function doGet(e) {
     } else {
       content.status = "UNAUTHORIZED"
     }
-    output.setContent(JSON.stringify(content))
-    return output
+    response.setContent(JSON.stringify(content))
+    return response
   } catch(e) { logError(e) }
 }
   

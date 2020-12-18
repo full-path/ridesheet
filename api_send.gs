@@ -1,4 +1,3 @@
-
 function getRuns() {
   try {
     let grid = [["Last Updated:", new Date(), new Date(), null]]
