@@ -124,19 +124,20 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
 // Takes a range and returns an array of objects, each object containing key/value pairs. 
 // If the range includes row 1 of the spreadsheet, that top row will be used as the keys. 
 // Otherwise row 1 will be collected separately and used as the source for keys.
-function getRangeValuesAsTable(range) {
+function getRangeValuesAsTable(range, {headerRowPosition = 1} = {}) {
   let topRowPosition = range.getRow()
   let data = range.getValues()
   let rangeHeaderNames
-  if (topRowPosition === 1) {
-    if (data.length > 1) {
-      rangeHeaderNames = data.shift()
-      topRowPosition = 2
+  if (topRowPosition <= headerRowPosition) {
+    if (data.length > (headerRowPosition + 1 - topRowPosition)) {
+      rangeHeaderNames = data[headerRowPosition - topRowPosition]
+      data.splice(0, headerRowPosition + 1 - topRowPosition)
+      topRowPosition = headerRowPosition + 1
     } else {
       return []
     }
-  } else {
-    rangeHeaderNames = getRangeHeaderNames(range)
+  } else if (topRowPosition > headerRowPosition) {
+    rangeHeaderNames = getRangeHeaderNames(range, {headerRowPosition: headerRowPosition})
   }
   let result = data.map((row, index) => {
     let rowMap = {}
@@ -181,43 +182,46 @@ function getValueByHeaderName(headerName, range) {
   }
 }
 
-function setValuesByHeaderNames(newValues, range) {
+function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1} = {}) {
   try {
-    const sheetHeaderNames = getSheetHeaderNames(range.getSheet())
-    const rangeHeaderNames = getRangeHeaderNames(range)
-    const rangeIncludesHeaderRow = (range.getRow() === 1)
-    const rowOffset = (rangeIncludesHeaderRow ? 1 : 0)
+    const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {headerRowPosition: headerRowPosition})
+    const rangeHeaderNames = getRangeHeaderNames(range, {headerRowPosition: headerRowPosition})
+    const topRangeRowPosition = range.getRow()
+    const topDataRowPosition = (topRangeRowPosition > headerRowPosition) ? topRangeRowPosition : headerRowPosition + 1
+    const numRows = range.getLastRow() - topDataRowPosition + 1
+    const newValuesToApply = newValues.slice(topDataRowPosition - topRangeRowPosition)
 
     // Get the full list of header names for columns to be updated
     let headerNamesInNewValues = []
-    newValues.forEach(row => {
+    newValuesToApply.forEach(row => {
       Object.keys(row).forEach(headerName => {
         if (headerNamesInNewValues.indexOf(headerName) === -1) headerNamesInNewValues.push(headerName)
       })
     })
     
-    // Find the smallest range that will update the columns that need to be updated
-    const headerNamePositions = headerNamesInNewValues.filter(headerName => rangeHeaderNames.indexOf(headerName) > -1 ).map(headerName => sheetHeaderNames.indexOf(headerName) + 1)
-    const firstRowPosition = range.getRow()
+    // Find the smallest range that will update the columns that need to be updated in one update action
+    const headerNamePositions = headerNamesInNewValues.filter(
+      headerName => rangeHeaderNames.indexOf(headerName) > -1 
+      ).map(headerName => sheetHeaderNames.indexOf(headerName) + 1)
     const firstColumnPosition = Math.min(...headerNamePositions)
-    const numRows = range.getLastRow() - firstRowPosition + 1
     const numColumns = Math.max(...headerNamePositions) - firstColumnPosition + 1
-    const narrowedRange = range.getSheet().getRange(firstRowPosition, firstColumnPosition, numRows, numColumns)
+    const narrowedRange = range.getSheet().getRange(topDataRowPosition, firstColumnPosition, numRows, numColumns)
     const narrowedRangeHeaderNames = getRangeHeaderNames(narrowedRange)
     let narrowedRangeValues = narrowedRange.getValues()
+
+    if (numRows !== newValuesToApply.length) {
+      throw new Error("Values array length does not match the number of range rows")
+    }
     
     // Update the array of arrays with the new values
     narrowedRangeValues.forEach((sheetRow, sheetRowIndex) => {
-      if (rangeIncludesHeaderRow && sheetRowIndex === 0) {
-        // skip header row
-      } else {
-        narrowedRangeHeaderNames.forEach((rangeHeaderName, rangeHeaderIndex) => {
-          if (Object.keys(newValues[sheetRowIndex - rowOffset]).indexOf(rangeHeaderName) > -1) {
-            sheetRow[rangeHeaderIndex] = newValues[sheetRowIndex - rowOffset][rangeHeaderName]
-          }
-        })
-      }
+      narrowedRangeHeaderNames.forEach((rangeHeaderName, rangeHeaderIndex) => {
+        if (Object.keys(newValuesToApply[sheetRowIndex]).indexOf(rangeHeaderName) > -1) {
+          sheetRow[rangeHeaderIndex] = newValuesToApply[sheetRowIndex][rangeHeaderName]
+        }
+      })
     })
+
     // Do the actual update
     return narrowedRange.setValues(narrowedRangeValues)
   } catch(e) { logError(e) }
@@ -232,10 +236,10 @@ function appendValuesByHeaderNames(values, sheet) {
 }
 
 // Cache header info in a global variable so it only needs to be collected once per sheet per onEdit call.
-function getSheetHeaderNames(sheet, {forceRefresh = false} = {}) {
+function getSheetHeaderNames(sheet, {forceRefresh = false, headerRowPosition = 1} = {}) {
   const sheetName = sheet.getName()
   if (!cachedHeaderNames[sheetName] || forceRefresh) {
-    const headerNames = sheet.getRange("A1:1").getValues()[0]
+    const headerNames = sheet.getRange("A" + headerRowPosition + ":" + headerRowPosition).getValues()[0]
     cachedHeaderNames[sheetName] = headerNames.map(headerName => !headerName ? " " : headerName)
   }
   return cachedHeaderNames[sheetName]
@@ -243,8 +247,8 @@ function getSheetHeaderNames(sheet, {forceRefresh = false} = {}) {
     
 // Get header information for column range only, rather than the entire sheet
 // Uses getSheetHeaderNames for caching purposes.
-function getRangeHeaderNames(range, {forceRefresh = false} = {}) {
-  const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {forceRefresh: forceRefresh})
+function getRangeHeaderNames(range, {forceRefresh = false, headerRowPosition = 1} = {}) {
+  const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {forceRefresh: forceRefresh, headerRowPosition: headerRowPosition})
   const rangeStartColumnIndex = range.getColumn() - 1
   return sheetHeaderNames.slice(rangeStartColumnIndex, rangeStartColumnIndex + range.getWidth())
 }
