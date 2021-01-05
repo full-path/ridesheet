@@ -130,26 +130,30 @@ function getRuns() {
 
 function getTrips() {
   try {
-    const lastColumnLetter = "O"
+    const lastColumnLetter = "R"
+    const headers = [
+      "Scheduled PU Time",
+      "Decline",
+      "Claim",
+      "Source",
+      "Trip Date",
+      "Earliest PU Time",
+      "Requested PU Time",
+      "Latest PU Time",
+      "Requested DO Time",
+      "Appt Time",
+      "PU Address",
+      "DO Address",
+      "Guests",
+      "Mobility Factors",
+      "Notes",
+      "Est Hours",
+      "Est Miles",
+      "Trip ID"
+    ]
     let grid = [
-      ["Last Updated:", new Date(), new Date()].concat(Array(12).fill(null)),
-      [
-        "Source",
-        "PU Time to Offer",
-        "Claim",
-        "Trip Date",
-        "Requested PU Time",
-        "Requested DO Time",
-        "Appt Time",
-        "PU Address",
-        "DO Address",
-        "Guests",
-        "Mobility Factors",
-        "Notes",
-        "Est Hours",
-        "Est Miles",
-        "Trip ID"
-      ]
+      ["Last Updated:", new Date(), new Date()].concat(Array(headers.length-3).fill(null)),
+      headers
     ]
     let currentRow = 3
     endPoints = getDocProp("apiGetAccess")
@@ -220,9 +224,9 @@ function getTrips() {
         }
         if (responseObject.status !== "OK") {
           grid.push(
-            [responseObject.status].concat(Array(14).fill(null))
+            [responseObject.status].concat(Array(headers.length-1).fill(null))
           )
-          const thisRange = "A" + currentRow + ":" + lastColumnLetter + currentRow
+          const thisRange = "D" + currentRow + ":" + lastColumnLetter + currentRow
           formatGroups.mergeCells.ranges.push(thisRange)
           currentRow += 1
         } else if (responseObject.results && responseObject.results.length) {
@@ -230,13 +234,16 @@ function getTrips() {
             const row = item.tripRequest
             const openAttributes = JSON.parse(row["@openAttribute"])
             grid.push([
-              endPoint.name,
               null,
               false,
+              false,
+              endPoint.name,
               new Date(row.pickupTime["@time"]),
+              row.pickupWindowStartTime ? new Date(row.pickupWindowStartTime["@time"]) : null,
               new Date(row.pickupTime["@time"]),
+              row.pickupWindowEndTime ? new Date(row.pickupWindowEndTime["@time"]) : null,
               new Date(row.dropoffTime["@time"]),
-              new Date(row.appointmentTime["@time"]),
+              row.appointmentTime ? new Date(row.appointmentTime["@time"]) : null,
               buildAddressFromSpec(row.pickupAddress),
               buildAddressFromSpec(row.dropoffAddress),
               openAttributes.guestCount,
@@ -247,12 +254,12 @@ function getTrips() {
               openAttributes.tripTicketId
             ])
           })
-          formatGroups.checkbox.ranges.push("C" + currentRow + ":C" + (currentRow + responseObject.results.length - 1))
-          formatGroups.date.ranges.push("D" + currentRow + ":D" + (currentRow + responseObject.results.length - 1))
-          formatGroups.time.ranges.push("E" + currentRow + ":G" + (currentRow + responseObject.results.length - 1))
-          formatGroups.integer.ranges.push("J" + currentRow + ":J" + (currentRow + responseObject.results.length - 1))
-          formatGroups.duration.ranges.push("M" + currentRow + ":M" + (currentRow + responseObject.results.length - 1))
-          formatGroups.distance.ranges.push("N" + currentRow + ":N" + (currentRow + responseObject.results.length - 1))
+          formatGroups.checkbox.ranges.push("B" + currentRow + ":C" + (currentRow + responseObject.results.length - 1))
+          formatGroups.date.ranges.push("E" + currentRow + ":E" + (currentRow + responseObject.results.length - 1))
+          formatGroups.time.ranges.push("F" + currentRow + ":I" + (currentRow + responseObject.results.length - 1))
+          formatGroups.integer.ranges.push("M" + currentRow + ":M" + (currentRow + responseObject.results.length - 1))
+          formatGroups.duration.ranges.push("P" + currentRow + ":P" + (currentRow + responseObject.results.length - 1))
+          formatGroups.distance.ranges.push("Q" + currentRow + ":Q" + (currentRow + responseObject.results.length - 1))
           currentRow += responseObject.results.length
 
           const ss = SpreadsheetApp.getActiveSpreadsheet()

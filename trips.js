@@ -69,19 +69,25 @@ function isCompleteTrip(trip) {
   return (trip["Trip Date"] && trip["Customer Name and ID"])
 }
 
+// Returns an array JSON objects, each element of which complies with Telegram 1:A of TCRP 210 Tranactional Data Spec
 function shareTrips() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
       return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true && tripRow["Source"] === ""
     })
-
     let result = trips.map(tripIn => {
       let tripOut = {}
-      tripOut.pickupAddress  = buildAddressToSpec(tripIn["PU Address"])
+      tripOut.pickupAddress = buildAddressToSpec(tripIn["PU Address"])
       tripOut.dropoffAddress = buildAddressToSpec(tripIn["DO Address"])
-      tripOut.pickupTime     = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["PU Time"])}
-      tripOut.dropoffTime    = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["DO Time"])}
+      if (tripIn["Earliest PU Time"]) {
+        tripOut.pickupWindowStartTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["Earliest PU Time"])}
+      }
+      if (tripIn["Lastest PU Time"]) {
+        tripOut.pickupWindowEndTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["Latest PU Time"])}
+      }
+      tripOut.pickupTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["PU Time"])}
+      tripOut.dropoffTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["DO Time"])}
       if (tripIn["Appt Time"]) {
         tripOut.appointmentTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["Appt Time"])}
       }
@@ -94,13 +100,23 @@ function shareTrips() {
       if (tripIn["Mobility Factors"]) openAttributes.mobilityFactors = tripIn["Mobility Factors"]
       if (tripIn["Notes"]) openAttributes.notes = tripIn["Notes"]
       tripOut["@openAttribute"] = JSON.stringify(openAttributes)
-      
+
       return {tripRequest: tripOut}
     })
     result.sort((a, b) => a.tripRequest.pickupTime["@time"].getTime() - b.tripRequest.pickupTime["@time"].getTime())
     console.log(JSON.stringify(result[1]))
-    //console.log(result)
+    console.log(JSON.stringify(result[0]))
     return result
+  } catch(e) { logError(e) }
+}
+
+function claimTrips() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const trips = getRangeValuesAsTable(ss.getSheetByName("Outside Trips").getDataRange()).filter(tripRow => {
+      return tripRow["Trip Date"] >= dateToday() && (tripRow["Claim"] === true || tripRow["Decline"] === true)
+    })
+
   } catch(e) { logError(e) }
 }
 
