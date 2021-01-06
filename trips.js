@@ -83,7 +83,7 @@ function shareTrips() {
       if (tripIn["Earliest PU Time"]) {
         tripOut.pickupWindowStartTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["Earliest PU Time"])}
       }
-      if (tripIn["Lastest PU Time"]) {
+      if (tripIn["Latest PU Time"]) {
         tripOut.pickupWindowEndTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["Latest PU Time"])}
       }
       tripOut.pickupTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["PU Time"])}

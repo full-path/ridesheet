@@ -272,6 +272,7 @@ function getTrips() {
           sheet.setFrozenRows(2)
           sheet.setFrozenColumns(3)
           sheet.autoResizeColumns(1,grid[0].length)
+          sheet.autoResizeRows(1,2)
         } else {
           grid.push(
             [endPoint.name + " responded with no trip requests"].concat(Array(14).fill(null))
