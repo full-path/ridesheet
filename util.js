@@ -197,8 +197,23 @@ function getResource(endPoint, params) {
     hmac.nonce = Utilities.getUuid()
     hmac.timestamp = JSON.parse(JSON.stringify(new Date()))
     hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
-    
+
     const options = {method: 'GET', contentType: 'application/json'}
+    const response = UrlFetchApp.fetch(endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac), options)
+    return response
+  } catch(e) { logError(e) }
+}
+
+function postResource(endPoint, params, payload) {
+  try {
+    params.version = endPoint.version
+    params.apiKey = endPoint.apiKey
+    let hmac = {}
+    hmac.nonce = Utilities.getUuid()
+    hmac.timestamp = JSON.parse(JSON.stringify(new Date()))
+    hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
+
+    const options = {method: 'POST', contentType: 'application/json', payload: payload}
     const response = UrlFetchApp.fetch(endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac), options)
     return response
   } catch(e) { logError(e) }

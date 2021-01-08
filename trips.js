@@ -283,7 +283,7 @@ function sendTripRequestResponses() {
         !(tripRow["Decline"]   === true && tripRow["Claim"] === true)
       )
     })
-    let result = trips.map(tripIn => {
+    let payload = trips.map(tripIn => {
       let tripOut = {}
       tripOut.tripAvailable = (tripRow["Claim"] === true)
       if (tripOut.tripAvailable && trips["Scheduled PU Time"]) {
@@ -296,6 +296,9 @@ function sendTripRequestResponses() {
 
       return {tripRequestResponse: tripOut}
     })
+
+    let response = postResource(endPoint, params, payload)
+
     return result
   } catch(e) { logError(e) }
 }
@@ -304,8 +307,10 @@ function sendTripRequestResponses() {
 // (whether service for each tripRequest is available or not) from provider.
 // Message is an array JSON objects, each element of which complies with
 // Telegram 1B of TCRP 210 Transactional Data Spec.
-function receiveTripRequestResponses() {
-
+function receiveTripRequestResponses(payload, apiAccount) {
+  let response = {}
+  response.status = "OK"
+  return response
 }
 
 function handleReceivedTripClaims() {
@@ -330,8 +335,10 @@ function sendClientOrderConfirmations() {
 // Message is an array JSON objects, each element of which complies with
 // Telegram 2A of TCRP 210 Transactional Data Spec.
 // This will include "confirmations" that returns rescinded orders.
-function receiveClientOrderConfirmations() {
-
+function receiveClientOrderConfirmations(payload, apiAccount) {
+  let response = {}
+  response.status = "OK"
+  return response
 }
 
 // Provider (this RideSheet instance) sends providerOrderConfirmations
@@ -346,8 +353,10 @@ function sendProviderOrderConfirmations() {
 // from provider.
 // Message is an array JSON objects, each element of which complies with
 // Telegram 2B of TCRP 210 Transactional Data Spec.
-function receiveProviderOrderConfirmations() {
-
+function receiveProviderOrderConfirmations(payload, apiAccount) {
+  let response = {}
+  response.status = "OK"
+  return response
 }
 
 // Ordering client (this RideSheet instance) sends customerInfo records
@@ -362,8 +371,10 @@ function sendCustomerInfo() {
 // from ordering client.
 // Message is an array JSON objects, each element of which complies with
 // Telegram 2A1 of TCRP 210 Transactional Data Spec.
-function receiveCustomerInfo() {
-
+function receiveCustomerInfo(payload, apiAccount) {
+  let response = {}
+  response.status = "OK"
+  return response
 }
 
 function isCompleteTrip(trip) {
