@@ -83,7 +83,137 @@ function updateRunDetails(runsMap) {
   }
 }
 
-function shareRuns() {
+function sendRequestForRuns() {
+  try {
+    let grid = [["Last Updated:", new Date(), new Date(), null]]
+    let currentRow = 2
+    endPoints = getDocProp("apiGetAccess")
+    endPoints.forEach(endPoint => {
+      if (endPoint.hasRuns) {
+        let params = {resource: "runs"}
+        let response = getResource(endPoint, params)
+        let responseObject
+        try {
+          responseObject = JSON.parse(response.getContentText())
+        } catch(e) {
+          logError(e)
+          responseObject = {status: "LOCAL_ERROR::" + e.name}
+        }
+
+        let formatGroups = {
+          header: {
+            ranges: ["A1:D1"],
+            formats: function(rl) {
+              rl.setBackground(headerBackgroundColor)
+              rl.setFontWeight("bold")
+              rl.setBorder(true, true, true, true, null, null, "black", SpreadsheetApp.BorderStyle.SOLID_MEDIUM)
+            }
+          },
+          date: {
+            ranges: ["C1"],
+            formats: function(rl) {
+              rl.setNumberFormat("mm/dd/yyyy")
+              rl.setHorizontalAlignment("left")
+            }
+          },
+          time: {
+            ranges: ["B1"],
+            formats: function(rl) {
+              rl.setNumberFormat("h:mm am/pm")
+              rl.setFontWeight("bold")
+            }
+          },
+          runAttributes: {
+            ranges: [],
+            formats: function(rl) {
+              rl.setBackground(headerBackgroundColor)
+              rl.setBorder(true, true, true, true, null, null, "black", SpreadsheetApp.BorderStyle.SOLID_MEDIUM)
+            }
+          },
+          label: {
+            ranges: [],
+            formats: function(rl) {
+              rl.setFontWeight("bold")
+            }
+          },
+          seat: {
+            ranges: [],
+            formats: function(rl) {
+              rl.setNumberFormat("0")
+              rl.setHorizontalAlignment("left")
+            }
+          },
+          riderChange: {
+            ranges: [],
+            formats: function(rl) {
+              rl.setNumberFormat("0")
+            }
+          },
+          mergeCells: {
+            ranges: [],
+            formats: function(rl) {
+              rl.getRanges().forEach(range => range.merge())
+            }
+          }
+        }
+
+        if (responseObject.status !== "OK") {
+          grid.push(
+            [null, null, null, null],
+            [responseObject.status, null, null, null]
+          )
+          const thisRange = "A" + (currentRow + 1) + ":D" + (currentRow + 1)
+          formatGroups.header.ranges.push(thisRange)
+          formatGroups.mergeCells.ranges.push(thisRange)
+          currentRow += 2
+        } else if (responseObject.results && responseObject.results.length) {
+          responseObject.results.forEach(row => {
+            grid.push(
+              [null, null, null, null],
+              ["Source", endPoint.name, "Run Date", new Date(row.runDate)],
+              ["Seats", row.ambulatorySpacePoints, "Wheelchair spaces", row.standardWheelchairSpacePoints],
+              ["Lift", row.hasLift ? "Yes" : "No", "Ramp", row.hasLift ? "Yes" : "No"],
+              ["Start location", row.startLocation, "End location", row.endLocation],
+              [null, "Stop Time", "Stop City", "Rider Change"]
+            )
+            formatGroups.label.ranges.push("A" + (currentRow + 1) + ":A" + (currentRow + 4), "C" + (currentRow + 1) + ":C" + (currentRow + 4))
+            formatGroups.date.ranges.push("D" + (currentRow + 1))
+            formatGroups.seat.ranges.push("B" + (currentRow + 2), "D" + (currentRow + 2))
+            formatGroups.runAttributes.ranges.push("A" + (currentRow + 1) + ":D" + (currentRow + 5))
+            formatGroups.header.ranges.push("A" + (currentRow + 5) + ":D" + (currentRow + 5))
+            currentRow += 6
+            row.stops.forEach(stop => {
+              grid.push([null, new Date(stop.time), stop.city, stop.riderChange])
+            })
+            formatGroups.time.ranges.push("B" + currentRow + ":B" + (currentRow + row.stops.length -1))
+            formatGroups.riderChange.ranges.push("D" + currentRow + ":D" + (currentRow + row.stops.length -1))
+            currentRow += row.stops.length
+          })
+        } else {
+          grid.push(
+            [null, null, null, null],
+            [endPoint.name + " responded with no runs", null, null, null]
+          )
+          const thisRange = "A" + (currentRow + 1) + ":D" + (currentRow + 1)
+          formatGroups.header.ranges.push(thisRange)
+          formatGroups.mergeCells.ranges.push(thisRange)
+          currentRow += 2
+        }
+       const ss = SpreadsheetApp.getActiveSpreadsheet()
+       const runSheet = ss.getSheetByName("Outside Runs") || ss.insertSheet("Outside Runs")
+       runSheet.getDataRange().clear().breakApart()
+       let range = runSheet.getRange(1,1,grid.length,grid[0].length)
+       range.setValues(grid)
+       range.clearFormat()
+       applyFormats(formatGroups, runSheet)
+       runSheet.setFrozenRows(1)
+       runSheet.autoResizeColumns(1,grid[0].length)
+      }
+    })
+  } catch(e) { logError(e) }
+}
+
+function receiveRequestForRuns() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const runs = getRangeValuesAsTable(ss.getSheetByName("Runs").getDataRange()).filter(runRow => {

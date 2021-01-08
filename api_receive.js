@@ -26,10 +26,22 @@ function doGet(e) {
       if (params.version === "v1") {
         if (params.resource === "runs") {
           content.status = "OK"
-          content.results = shareRuns()
+          content.results = receiveRequestForRuns()
         } else if (params.resource === "tripRequests") {
           content.status = "OK"
-          content.results = shareTrips()
+          content.results = receiveRequestForTripRequests()
+        } else if (params.resource === "tripRequestResponses") {
+          content.status = "OK"
+          content.results = receiveTripRequestResponses()
+        } else if (params.resource === "clientOrderConfirmations") {
+          content.status = "OK"
+          content.results = receiveClientOrderConfirmations()
+        } else if (params.resource === "providerOrderConfirmations") {
+          content.status = "OK"
+          content.results = receiveProviderOrderConfirmations()
+        } else if (params.resource === "customerInfo") {
+          content.status = "OK"
+          content.results = receiveCustomerInfo()
         } else {
           content.status = "INVALID_REQUEST"
         }

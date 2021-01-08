@@ -65,12 +65,171 @@ function moveTripsToArchive() {
   moveRows(runReviewSheet, runArchiveSheet, runFilter)  
 }
   
-function isCompleteTrip(trip) {
-  return (trip["Trip Date"] && trip["Customer Name and ID"])
+// Provider (this RideSheet instance) sends request for tripRequests to ordering client.
+// Received format is an array JSON objects, each element of which complies with
+// Telegram 1A of TCRP 210 Transactional Data Spec.
+function sendRequestForTripRequests() {
+  try {
+    const lastColumnLetter = "R"
+    const headers = [
+      "Scheduled PU Time",
+      "Decline",
+      "Claim",
+      "Source",
+      "Trip Date",
+      "Earliest PU Time",
+      "Requested PU Time",
+      "Latest PU Time",
+      "Requested DO Time",
+      "Appt Time",
+      "PU Address",
+      "DO Address",
+      "Guests",
+      "Mobility Factors",
+      "Notes",
+      "Est Hours",
+      "Est Miles",
+      "Trip ID"
+    ]
+    let grid = [
+      ["Last Updated:", new Date(), new Date()].concat(Array(headers.length-3).fill(null)),
+      headers
+    ]
+    let currentRow = 3
+    endPoints = getDocProp("apiGetAccess")
+    endPoints.forEach(endPoint => {
+      if (endPoint.hasTrips) {
+        let params = {resource: "tripRequests"}
+        let response = getResource(endPoint, params)
+        let responseObject
+        try {
+          responseObject = JSON.parse(response.getContentText())
+        } catch(e) {
+          logError(e)
+          responseObject = {status: "LOCAL_ERROR:" + e.name}
+        }
+        let formatGroups = {
+          mergeCells: {
+            ranges: [],
+            formats: function(rl) {
+              rl.getRanges().forEach(range => range.merge())
+            }
+          },
+          header: {
+            ranges: ["A1:" + lastColumnLetter + "2"],
+            formats: function(rl) {
+              rl.setBackground(headerBackgroundColor)
+              rl.setFontWeight("bold")
+              rl.setBorder(true, true, true, true, null, null, "black", SpreadsheetApp.BorderStyle.SOLID_MEDIUM)
+            }
+          },
+          date: {
+            ranges: ["C1"],
+            formats: function(rl) {
+              rl.setNumberFormat("mm/dd/yyyy")
+              rl.setHorizontalAlignment("left")
+            }
+          },
+          time: {
+            ranges: ["B1"],
+            formats: function(rl) {
+              rl.setNumberFormat("h:mm am/pm")
+            }
+          },
+          duration: {
+            ranges: [],
+            formats: function(rl) {
+              rl.setNumberFormat("h:mm")
+            }
+          },
+          distance: {
+            ranges: [],
+            formats: function(rl) {
+              rl.setNumberFormat("0.00")
+            }
+          },
+          integer: {
+            ranges: [],
+            formats: function(rl) {
+              rl.setNumberFormat("0")
+              rl.setHorizontalAlignment("right")
+            }
+          },
+          checkbox: {
+            ranges: [],
+            formats: function(rl) {
+              rl.insertCheckboxes()
+            }
+          }
+        }
+        if (responseObject.status !== "OK") {
+          grid.push(
+            [responseObject.status].concat(Array(headers.length-1).fill(null))
+          )
+          const thisRange = "D" + currentRow + ":" + lastColumnLetter + currentRow
+          formatGroups.mergeCells.ranges.push(thisRange)
+          currentRow += 1
+        } else if (responseObject.results && responseObject.results.length) {
+          responseObject.results.forEach(item => {
+            const row = item.tripRequest
+            const openAttributes = JSON.parse(row["@openAttribute"])
+            grid.push([
+              null,
+              false,
+              false,
+              endPoint.name,
+              new Date(row.pickupTime["@time"]),
+              row.pickupWindowStartTime ? new Date(row.pickupWindowStartTime["@time"]) : null,
+              new Date(row.pickupTime["@time"]),
+              row.pickupWindowEndTime ? new Date(row.pickupWindowEndTime["@time"]) : null,
+              new Date(row.dropoffTime["@time"]),
+              row.appointmentTime ? new Date(row.appointmentTime["@time"]) : null,
+              buildAddressFromSpec(row.pickupAddress),
+              buildAddressFromSpec(row.dropoffAddress),
+              openAttributes.guestCount,
+              openAttributes.mobilityFactors,
+              openAttributes.notes,
+              openAttributes.estimatedTripDurationInSeconds / 86400,
+              openAttributes.estimatedTripDistanceInMiles,
+              openAttributes.tripTicketId
+            ])
+          })
+          formatGroups.checkbox.ranges.push("B" + currentRow + ":C" + (currentRow + responseObject.results.length - 1))
+          formatGroups.date.ranges.push("E" + currentRow + ":E" + (currentRow + responseObject.results.length - 1))
+          formatGroups.time.ranges.push("F" + currentRow + ":I" + (currentRow + responseObject.results.length - 1))
+          formatGroups.integer.ranges.push("M" + currentRow + ":M" + (currentRow + responseObject.results.length - 1))
+          formatGroups.duration.ranges.push("P" + currentRow + ":P" + (currentRow + responseObject.results.length - 1))
+          formatGroups.distance.ranges.push("Q" + currentRow + ":Q" + (currentRow + responseObject.results.length - 1))
+          currentRow += responseObject.results.length
+
+          const ss = SpreadsheetApp.getActiveSpreadsheet()
+          const sheet = ss.getSheetByName("Outside Trips") || ss.insertSheet("Outside Trips")
+          sheet.getDataRange().clear().breakApart()
+          let range = sheet.getRange(1, 1, grid.length, grid[0].length)
+          range.clearFormat()
+          range.setValues(grid)
+          applyFormats(formatGroups, sheet)
+          sheet.setFrozenRows(2)
+          sheet.setFrozenColumns(3)
+          sheet.autoResizeColumns(1,grid[0].length)
+          sheet.autoResizeRows(1,2)
+        } else {
+          grid.push(
+            [endPoint.name + " responded with no trip requests"].concat(Array(14).fill(null))
+          )
+          const thisRange = "A" + currentRow + ":" + lastColumnLetter + currentRow
+          formatGroups.mergeCells.ranges.push(thisRange)
+          currentRow += 1
+        }
+      }
+    })
+  } catch(e) { logError(e) }
 }
 
-// Returns an array JSON objects, each element of which complies with Telegram 1:A of TCRP 210 Tranactional Data Spec
-function shareTrips() {
+// Ordering client (this RideSheet instance) receives request for tripRequests from provider and
+// returns an array JSON objects, each element of which complies with
+// Telegram 1A of TCRP 210 Transactional Data Spec.
+function receiveRequestForTripRequests() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
@@ -110,14 +269,105 @@ function shareTrips() {
   } catch(e) { logError(e) }
 }
 
-function claimTrips() {
+// Provider (this RideSheet instance) sends tripRequestResponses
+// (whether service for each tripRequest is available or not) to ordering client.
+// Message is an array JSON objects, each element of which complies with
+// Telegram 1:B of TCRP 210 Transactional Data Spec.
+function sendTripRequestResponses() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const trips = getRangeValuesAsTable(ss.getSheetByName("Outside Trips").getDataRange()).filter(tripRow => {
-      return tripRow["Trip Date"] >= dateToday() && (tripRow["Claim"] === true || tripRow["Decline"] === true)
+      return (
+          tripRow["Trip Date"] >=  dateToday() &&
+        ( tripRow["Decline"]   === true || tripRow["Claim"] === true) &&
+        !(tripRow["Decline"]   === true && tripRow["Claim"] === true)
+      )
     })
+    let result = trips.map(tripIn => {
+      let tripOut = {}
+      tripOut.tripAvailable = (tripRow["Claim"] === true)
+      if (tripOut.tripAvailable && trips["Scheduled PU Time"]) {
+        tripOut["scheduledPickupTime"] = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["Scheduled PU Time"])}
+      }
 
+      let openAttributes = {}
+      openAttributes.tripTicketId = tripIn["Trip ID"]
+      tripOut["@openAttribute"] = JSON.stringify(openAttributes)
+
+      return {tripRequestResponse: tripOut}
+    })
+    return result
   } catch(e) { logError(e) }
+}
+
+// Ordering client (this RideSheet instance) receives tripRequestResponses
+// (whether service for each tripRequest is available or not) from provider.
+// Message is an array JSON objects, each element of which complies with
+// Telegram 1B of TCRP 210 Transactional Data Spec.
+function receiveTripRequestResponses() {
+
+}
+
+function handleReceivedTripClaims() {
+
+}
+
+function handleReceivedTripDenials() {
+
+}
+
+// Ordering client (this RideSheet instance) sends clientOrderConfirmations
+// to provider.
+// Message is an array JSON objects, each element of which complies with
+// Telegram 2A of TCRP 210 Transactional Data Spec.
+// This will include "confirmations" that returns rescinded orders.
+function sendClientOrderConfirmations() {
+
+}
+
+// Provider (this RideSheet instance) receives clientOrderConfirmations
+// from ordering client.
+// Message is an array JSON objects, each element of which complies with
+// Telegram 2A of TCRP 210 Transactional Data Spec.
+// This will include "confirmations" that returns rescinded orders.
+function receiveClientOrderConfirmations() {
+
+}
+
+// Provider (this RideSheet instance) sends providerOrderConfirmations
+// to ordering client.
+// Message is an array JSON objects, each element of which complies with
+// Telegram 2B of TCRP 210 Transactional Data Spec.
+function sendProviderOrderConfirmations() {
+
+}
+
+// Ordering client (this RideSheet instance) receives providerOrderConfirmations
+// from provider.
+// Message is an array JSON objects, each element of which complies with
+// Telegram 2B of TCRP 210 Transactional Data Spec.
+function receiveProviderOrderConfirmations() {
+
+}
+
+// Ordering client (this RideSheet instance) sends customerInfo records
+// to provider.
+// Message is an array JSON objects, each element of which complies with
+// Telegram 2A1 of TCRP 210 Transactional Data Spec.
+function sendCustomerInfo() {
+
+}
+
+// Provider (this RideSheet instance) receives customerInfo records
+// from ordering client.
+// Message is an array JSON objects, each element of which complies with
+// Telegram 2A1 of TCRP 210 Transactional Data Spec.
+function receiveCustomerInfo() {
+
+}
+
+function isCompleteTrip(trip) {
+  return (trip["Trip Date"] && trip["Customer Name and ID"])
 }
 
 function buildAddressToSpec(address) {
