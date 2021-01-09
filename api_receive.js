@@ -73,12 +73,8 @@ function doPost(e) {
       if (params.version === "v1") {
         if (params.resource === "tripRequestResponses") {
           content = receiveTripRequestResponses(payload, validatedApiAccount)
-        } else if (params.resource === "clientOrderConfirmations") {
-          content = receiveClientOrderConfirmations(payload, validatedApiAccount)
         } else if (params.resource === "providerOrderConfirmations") {
           content = receiveProviderOrderConfirmations(payload, validatedApiAccount)
-        } else if (params.resource === "customerInfo") {
-          content = receiveCustomerInfo(payload, validatedApiAccount)
         } else {
           content.status = "INVALID_REQUEST"
         }
