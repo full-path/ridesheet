@@ -724,6 +724,10 @@ const defaultNamedRanges = {
     "sheetName":"Customers",
     "headerName":"Customer ID"
   },
+  "codeTripActionButton1": {
+    "sheetName":"Trips",
+    "headerName":"Go"
+  },
   "codeUpdateTripVehicle": {
     "sheetName":"Trips",
     "headerName":"Driver ID"
