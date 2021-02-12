@@ -1,35 +1,45 @@
-function createReturnTrip() {
-  const ss              = SpreadsheetApp.getActiveSpreadsheet()
-  const tripSheet       = ss.getActiveSheet()
-  const sourceTripRange = getFullRow(tripSheet.getActiveCell())
-  const sourceTripRow   = sourceTripRange.getRow()
-  const sourceTripData  = getRangeValuesAsTable(sourceTripRange)[0]
-  let   returnTripData  = {...sourceTripData}
-  if (tripSheet.getName() === "Trips" && isCompleteTrip(sourceTripData)) {
-    returnTripData["PU Address"] = sourceTripData["DO Address"]
-    returnTripData["DO Address"] = sourceTripData["PU Address"]
-    if (sourceTripData["Appt Time"]) {
-      returnTripData["PU Time"] = timeAdd(sourceTripData["Appt Time"], 60*60*1000)
-    } else if (sourceTripData["DO Time"]) {
-      returnTripData["PU Time"] = timeAdd(sourceTripData["DO Time"], 60*60*1000)
+function copyTrip(sourceTripRange, isReturnTrip) {
+  try {
+    const ss              = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet       = ss.getActiveSheet()
+    if (!sourceTripRange) sourceTripRange = getFullRow(tripSheet.getActiveCell())
+    const sourceTripRow   = sourceTripRange.getRow()
+    const sourceTripData  = getRangeValuesAsTable(sourceTripRange)[0]
+    let   newTripData     = {...sourceTripData}
+    if (tripSheet.getName() === "Trips" && isCompleteTrip(sourceTripData)) {
+      newTripData["PU Address"] = sourceTripData["DO Address"]
+      newTripData["DO Address"] = (isReturnTrip ? sourceTripData["PU Address"] : null)
+      if (sourceTripData["Appt Time"]) {
+        newTripData["PU Time"] = timeAdd(sourceTripData["Appt Time"], 60*60*1000)
+      } else if (sourceTripData["DO Time"]) {
+        newTripData["PU Time"] = timeAdd(sourceTripData["DO Time"], 60*60*1000)
+      } else {
+        newTripData["PU Time"] = null
+      }
+      newTripData["Earliest PU Time"] = null
+      newTripData["Latest PU Time"]   = null
+      newTripData["DO Time"]          = null
+      newTripData["Appt Time"]        = null
+      newTripData["Est Hours"]        = null
+      newTripData["Est Miles"]        = null
+      newTripData["Trip ID"]          = Utilities.getUuid()
+      newTripData["Calendar ID"]      = null
+      tripSheet.insertRowAfter(sourceTripRow)
+      let newTripRange = getFullRow(tripSheet.getRange(sourceTripRow + 1, 1))
+      setValuesByHeaderNames([newTripData],newTripRange)
+      if (isReturnTrip) {
+        fillHoursAndMilesOnEdit(newTripRange)
+        updateTripTimesOnEdit(newTripRange)
+      }
     } else {
-      returnTripData["PU Time"] = null
+      ss.toast("Select a cell in a trip to create its return trip.","Trip Creation Failed")
     }
-    returnTripData["DO Time"]     = null
-    returnTripData["Appt Time"]   = null
-    returnTripData["Est Hours"]   = null
-    returnTripData["Est Miles"]   = null
-    returnTripData["Trip ID"]     = Utilities.getUuid()
-    returnTripData["Calendar ID"] = null
-    tripSheet.insertRowAfter(sourceTripRow)
-    let returnTripRange = getFullRow(tripSheet.getRange(sourceTripRow + 1, 1))
-    setValuesByHeaderNames([returnTripData],returnTripRange)
-    fillHoursAndMilesOnEdit(returnTripRange)
-    updateTripTimesOnEdit(returnTripRange)
-  } else {
-    ss.toast("Select a cell in a trip to create its return trip.")
-  }
+  } catch(e) { logError(e) }
 }
+
+function createReturnTrip() { copyTrip(null, true) }
+
+function addStop() { copyTrip(null, false) }
 
 function moveTripsToReview() {
   const ss              = SpreadsheetApp.getActiveSpreadsheet()

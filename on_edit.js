@@ -7,6 +7,10 @@ const finalSheetTriggers = {
 }
 
 const rangeTriggers = {
+  codeTripActionButton: {
+    functionCall: tripActionButton,
+    callOncePerRow: true
+  },
   codeFillRequestCells: {
     functionCall: fillTripCellsOnEdit,
     callOncePerRow: true
@@ -42,7 +46,7 @@ const rangeTriggers = {
  * @param {event} e The onEdit event.
  */
 function onEdit(e) {
-  try {  
+  try {
     const startTime = new Date()
     const sheetName = e.range.getSheet().getName()
     callSheetTriggers(e, sheetName, initialSheetTriggers)
@@ -144,9 +148,7 @@ function callCellTriggers(e) {
         rangeTriggers[rangeTrigger]["functionCall"](range)
       })
     })
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function formatAddressOnEdit(range) {
@@ -172,9 +174,7 @@ function formatAddressOnEdit(range) {
       backgroundColor.setRgbColor(defaultBackgroundColor)
     }
     range.setBackgroundObject(backgroundColor.build())
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function fillTripCellsOnEdit(range) {
@@ -193,13 +193,10 @@ function fillTripCellsOnEdit(range) {
       if (tripValues["Trip ID"] == '')    { valuesToChange["Trip ID"]    = Utilities.getUuid() }
       setValuesByHeaderNames([valuesToChange], tripRow)
       if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { 
-        //log("fillTripCellsOnEdit called")
         fillHoursAndMilesOnEdit(range) 
       }
     }
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function fillHoursAndMilesOnEdit(range) {
@@ -214,12 +211,11 @@ function fillHoursAndMilesOnEdit(range) {
       if (tripEstimate["days"]) {
         SpreadsheetApp.getActiveSpreadsheet().toast("Travel estimate saved")
       }
+      updateTripTimesOnEdit(range)
     } else {
-      setValuesByHeaderNames([{"Est Hours": "", "Est Miles": ""}], tripRow)
+      setValuesByHeaderNames([{"Est Hours": null, "Est Miles": null}], tripRow)
     }
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 /**
@@ -268,9 +264,7 @@ function setCustomerKeyOnEdit(range) {
       }
       setValuesByHeaderNames([newValues], customerRow)
     }
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function updateTripTimesOnEdit(range) {
@@ -299,9 +293,7 @@ function updateTripTimesOnEdit(range) {
       newValues.push(newRowValues)
     })
     setValuesByHeaderNames(newValues, tripRows)
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function updateTripVehicleOnEdit(range) {
@@ -318,9 +310,7 @@ function updateTripVehicleOnEdit(range) {
         setValuesByHeaderNames([valuesToChange], tripRow)
       }
     }  
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function scanForDuplicatesOnEdit(range) {
@@ -337,9 +327,7 @@ function scanForDuplicatesOnEdit(range) {
     if (duplicateRows.length == 1) range.setNote("This value is already used in row "  + duplicateRows[0]) 
     if (duplicateRows.length > 1)  range.setNote("This value is already used in rows " + duplicateRows.join(", ")) 
     if (duplicateRows.length == 0) range.clearNote()
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 // When a trip is pasted in, change the Trip ID to avoid duplicate IDs
@@ -353,24 +341,43 @@ function updateTripID(e) {
       })
       setValuesByHeaderNames(tripValues, e.range)
     }
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
+}
+
+function tripActionButton(goCheckBoxRange) {
+  try {
+    const goCheckboxValue = goCheckBoxRange.getValue()
+    const actionCell = goCheckBoxRange.getSheet().getRange(goCheckBoxRange.getRow(), goCheckBoxRange.getColumn()-1)
+    const actionText = actionCell.getValue()
+    if (goCheckboxValue && actionText) {
+      if (actionText == "Add return trip") {
+        goCheckBoxRange.setValue(null)
+        actionCell.setValue(null)
+        createReturnTrip()
+      } else if (actionText == "Add stop") {
+        goCheckBoxRange.setValue(null)
+        actionCell.setValue(null)
+        addStop()
+      } else {
+        goCheckBoxRange.setValue(null)
+        actionCell.setValue(null)
+      }
+    } else {
+      goCheckBoxRange.setValue(null)
+      actionCell.setValue(null)
+    }
+  } catch(e) { logError(e) }
 }
 
 function updatePropertiesOnEdit(e) {
   try {
     updateProperties(e)
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function tripSheetTrigger(e) {
   try {
     updateTripID(e)
     updateRuns(e)
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }

@@ -7,20 +7,26 @@ function createManifests() {
   const ui = SpreadsheetApp.getUi()
   let defaultDate
   let manifestDate
+  let runDate
   if (activeSheet.getName() == "Trips") {
-    tripRow = getFullRows(activeSheet.getActiveCell())
-    tripDate = getValueByHeaderName("Trip Date",tripRow)
-    if (isValidDate(tripDate)) {
-      defaultDate = tripDate
-    } else {
-      // tomorrow, at midnight
-      defaultDate = dateOnly(dateAdd(new Date(), 1))
-    }
+    runDate = getValueByHeaderName("Trip Date", getFullRows(activeSheet.getActiveCell()))
+  } else if (activeSheet.getName() == "Runs") {
+    runDate = getValueByHeaderName("Run Date", getFullRows(activeSheet.getActiveCell()))
+  } else {
+    // tomorrow, at midnight
+    runDate = dateOnly(dateAdd(new Date(), 1))
+  }
+
+  if (isValidDate(runDate)) {
+    defaultDate = runDate
   } else {
     // tomorrow, at midnight
     defaultDate = dateOnly(dateAdd(new Date(), 1))
   }
-  let promptResult = ui.prompt("Create Manifests", "Enter date for manifests. Leave blank for " + formatDate(defaultDate, null, null), ui.ButtonSet.OK_CANCEL)
+
+  let promptResult = ui.prompt("Create Manifests",
+      "Enter date for manifests. Leave blank for " + formatDate(defaultDate, null, null),
+      ui.ButtonSet.OK_CANCEL)
   startTime = new Date()
   if (promptResult.getResponseText() == "") {
     manifestDate = defaultDate
@@ -31,18 +37,74 @@ function createManifests() {
     ui.alert("Invalid date, action cancelled.")
     return
   } else if (promptResult.getSelectedButton() !== ui.Button.OK) {
-    ui.alert("Action cancelled.")
+    ui.alert("Action cancelled as requested.")
     return
   }
+
   const templateDoc = DocumentApp.openById(getDocProp("driverManifestTemplateDocId"))
   prepareTemplate(templateDoc)
-  
   let runs = getManifestData(manifestDate)
+  runs.forEach(run => {
+    createManifest(run, templateDoc)
+  })
+  log('All manifests created',(new Date()).getTime() - startTime.getTime())
+}
 
-  runs.forEach((run, i) => {
+function createSelectedManifests() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const activeSheet = ss.getActiveSheet()
+    const activeSheetName = activeSheet.getName()
+    if (activeSheetName != "Trips" && activeSheetName != "Runs") {
+      ss.toast("Nothing selected, no manifests created.")
+      return
+    }
+    const rangeList = activeSheet.getActiveRangeList().getRanges()
+    const templateDoc = DocumentApp.openById(getDocProp("driverManifestTemplateDocId"))
+    let rows = []
+    rangeList.forEach(range => {rows.push(...getRangeValuesAsTable(getFullRows(range)))})
+    let uniqRuns = []
+    rows.forEach(row => {
+      let thisRun = {}
+      thisRun.date = (activeSheetName == "Trips" ? row["Trip Date"] : row["Run Date"])
+      thisRun.driverId = row["Driver ID"]
+      thisRun.vehicleId = row["Vehicle ID"]
+      const found = uniqRuns.find(uniqRun => {
+        return uniqRun.date.getTime() == thisRun.date.getTime() &&
+               uniqRun.driverId == thisRun.driverId &&
+               uniqRun.vehicleId == thisRun.vehicleId
+      })
+      if (!found) uniqRuns.push(thisRun)
+    })
+    prepareTemplate(templateDoc)
+    let manifestCount = 0
+    uniqRuns.forEach(uniqRun => {
+      if (isValidDate(uniqRun.date) && uniqRun.driverId && uniqRun.vehicleId) {
+        let runsData = getManifestData(uniqRun.date, uniqRun.driverId, uniqRun.vehicleId)
+        if (runsData.length) {
+          runsData.forEach(runData => {
+            manifestCount++
+            createManifest(runData, templateDoc)
+          })
+        }
+      }
+    })
+    ss.toast(manifestCount + " created.","Manifest creation complete.")
+  } catch(e) { logError(e) }
+}
+
+function copyTemplateManifest(run, templateFileId, driverManifestFolderId) {
+  const manifestFileName = `${formatDate(run["Trip Date"], null, "yyyy-MM-dd")} manifest for ${run["Driver Name"]} on ${run["Vehicle Name"]}`
+  const manifestFolder   = DriveApp.getFolderById(driverManifestFolderId)
+  const manifestFile     = DriveApp.getFileById(templateFileId).makeCopy(manifestFolder).setName(manifestFileName)
+  const manifestDoc      = DocumentApp.openById(manifestFile.getId())
+  return manifestDoc
+}
+
+function createManifest(run, templateDoc) {
     const driverManifestFolderId = getDocProp("driverManifestFolderId")
     const templateFileId = getDocProp("driverManifestTemplateDocId")
-    const manifestDoc = createManifest(run, templateFileId, driverManifestFolderId)
+    const manifestDoc = copyTemplateManifest(run, templateFileId, driverManifestFolderId)
     emptyBody(manifestDoc)
     populateManifest(manifestDoc, templateDoc, run)
     removeTempElement(manifestDoc)
@@ -50,16 +112,6 @@ function createManifests() {
     const manifestFile = DriveApp.getFileById(manifestDoc.getId())
     let manifestPDFFile = DriveApp.getFolderById(driverManifestFolderId).createFile(manifestFile.getBlob().getAs("application/pdf"))
     manifestPDFFile.setName(manifestFile + ".pdf")
-  })
-  log('All manifests created',(new Date()).getTime() - startTime.getTime())
-}
-
-function createManifest(run, templateFileId, driverManifestFolderId) {
-  const manifestFileName = `${formatDate(run["Trip Date"], null, "yyyy-MM-dd")} manifest for ${run["Driver Name"]} on ${run["Vehicle Name"]}`
-  const manifestFolder   = DriveApp.getFolderById(driverManifestFolderId)
-  const manifestFile     = DriveApp.getFileById(templateFileId).makeCopy(manifestFolder).setName(manifestFileName)
-  const manifestDoc      = DocumentApp.openById(manifestFile.getId())
-  return manifestDoc
 }
                                                   
 function populateManifest(manifestDoc, templateDoc, run) {
@@ -146,7 +198,7 @@ function removeTempElement(doc) {
   if (body.getChild(0).asText().getText() === tempText) body.removeChild(body.getChild(0))
 }
 
-function getManifestData(date) {
+function getManifestData(date, driverId, vehicleId) {
   if (!date) date = new Date(2020, 5, 1)
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   
@@ -155,7 +207,9 @@ function getManifestData(date) {
   const vehicles = getRangeValuesAsTable(ss.getSheetByName("Vehicles").getDataRange())
   const customers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
   const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange())
-  const manifestTrips = trips.filter(row => new Date(row["Trip Date"]).valueOf() == date.valueOf())
+  let manifestTrips = trips.filter(row => new Date(row["Trip Date"]).valueOf() == date.valueOf())
+  if (driverId) manifestTrips = manifestTrips.filter(row => row["Driver ID"] == driverId)
+  if (vehicleId) manifestTrips = manifestTrips.filter(row => row["Vehicle ID"] == vehicleId)
   
   // Pull in the lookup table data
   manifestTrips.forEach(tripRow => {
