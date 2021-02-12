@@ -40,9 +40,7 @@ function buildNamedRanges() {
         buildNamedRange(ss, rangeName,newRange.sheetName, newRange.column, newRange.headerName)
       }
     })
-  } catch(e) {
-    log("buildNamedRanges", e.name + ': ' + e.message)
-  }
+  } catch(e) { logError(e) }
 }
 
 function buildNamedRange(ss, name, sheetName, column, headerName) {
