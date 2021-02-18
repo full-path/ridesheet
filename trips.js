@@ -23,8 +23,8 @@ function fillTripCells(range) {
         valuesToChange["PU Address"] = customerRow["Home Address"]
       }
       setValuesByHeaderNames([valuesToChange], tripRow)
-      if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { 
-        fillHoursAndMilesOnEdit(range) 
+      if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) {
+        fillHoursAndMilesOnEdit(range)
       }
     }
   } catch(e) { logError(e) }
