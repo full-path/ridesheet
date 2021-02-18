@@ -1,3 +1,35 @@
+// Once a customer is selected for a trip, fill in trip data with essential data to all trips
+// (customer ID and Trip ID), and then any default values from the custome record.
+// Home address is a special case if there isn't a designated default PU address.
+function fillTripCells(range) {
+  try {
+    if (range.getValue()) {
+      const flagForDefaultValue = "Default "
+      const flagLength = flagForDefaultValue.length
+      const ss = SpreadsheetApp.getActiveSpreadsheet()
+      const tripRow = getFullRow(range)
+      const tripValues = getRangeValuesAsTable(tripRow)[0]
+      const filter = function(row) { return row["Customer Name and ID"] === tripValues["Customer Name and ID"] }
+      const customerRow = findFirstRowByHeaderNames(ss.getSheetByName("Customers"), filter)
+      const defaultValueHeaderNames = Object.keys(customerRow).filter(fieldName => fieldName.slice(0,flagLength) === "Default ")
+      let valuesToChange = {}
+      valuesToChange["Customer ID"] = customerRow["Customer ID"]
+      if (tripValues["Trip ID"] == '') { valuesToChange["Trip ID"] = Utilities.getUuid() }
+      defaultValueHeaderNames.forEach (defaultValueHeaderName => {
+        const tripHeaderName = defaultValueHeaderName.slice(flagLength)
+        if (tripValues[tripHeaderName] == '') { valuesToChange[tripHeaderName] = customerRow[defaultValueHeaderName] }
+      })
+      if (tripValues["PU Address"] == '' && defaultValueHeaderNames.indexOf(flagForDefaultValue + "PU Address") == -1) {
+        valuesToChange["PU Address"] = customerRow["Home Address"]
+      }
+      setValuesByHeaderNames([valuesToChange], tripRow)
+      if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { 
+        fillHoursAndMilesOnEdit(range) 
+      }
+    }
+  } catch(e) { logError(e) }
+}
+
 function copyTrip(sourceTripRange, isReturnTrip) {
   try {
     const ss              = SpreadsheetApp.getActiveSpreadsheet()

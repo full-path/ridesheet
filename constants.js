@@ -193,7 +193,7 @@ const defaultColumns = {
     },
     "Mailing Address": {},
     "Home Address": {},
-    "Default Destination": {},
+    "Default DO Address": {},
     "Default Service ID": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -702,7 +702,7 @@ const defaultNamedRanges = {
   },
   "codeFormatAddress4": {
     "sheetName":"Customers",
-    "headerName":"Default Destination"
+    "headerName":"Default DO Address"
   },
   "codeFormatAddress5": {
     "sheetName":"Vehicles",

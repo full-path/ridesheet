@@ -179,23 +179,7 @@ function formatAddressOnEdit(range) {
 
 function fillTripCellsOnEdit(range) {
   try {
-    if (range.getValue()) {
-      const ss = SpreadsheetApp.getActiveSpreadsheet()
-      const tripRow = getFullRow(range)
-      const tripValues = getRangeValuesAsTable(tripRow)[0]
-      const filter = function(row) { return row["Customer Name and ID"] === tripValues["Customer Name and ID"] }
-      const customerRow = findFirstRowByHeaderNames(ss.getSheetByName("Customers"), filter)
-      let valuesToChange = {}
-      valuesToChange["Customer ID"] = customerRow["Customer ID"]
-      if (tripValues["PU Address"] == '') { valuesToChange["PU Address"] = customerRow["Home Address"] }
-      if (tripValues["DO Address"] == '') { valuesToChange["DO Address"] = customerRow["Default Destination"] }
-      if (tripValues["Service ID"] == '') { valuesToChange["Service ID"] = customerRow["Default Service ID"] }
-      if (tripValues["Trip ID"] == '')    { valuesToChange["Trip ID"]    = Utilities.getUuid() }
-      setValuesByHeaderNames([valuesToChange], tripRow)
-      if (valuesToChange["PU Address"] || valuesToChange["DO Address"]) { 
-        fillHoursAndMilesOnEdit(range) 
-      }
-    }
+    fillTripCells(range)
   } catch(e) { logError(e) }
 }
 
