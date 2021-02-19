@@ -1,8 +1,8 @@
 // Make sure that all named ranges go to the correct last row, and add any missing named ranges
 
 function buildMenus() {
-  let ui = SpreadsheetApp.getUi()
-  let menu = ui.createMenu('RideSheet')
+  const ui = SpreadsheetApp.getUi()
+  const menu = ui.createMenu('RideSheet')
   menu.addItem('Refresh driver calendars', 'updateDriverCalendars')
   menu.addItem('Refresh outside runs', 'sendRequestForRuns')
   menu.addItem('Add return trip', 'createReturnTrip')
@@ -13,7 +13,8 @@ function buildMenus() {
   menu.addItem('Move reviewed data to archive', 'moveTripsToArchive')
   menu.addSeparator()
   let settingsMenu = ui.createMenu('Settings')
-  settingsMenu.addItem('View or reload properties', 'presentProperties')
+  settingsMenu.addItem('Application properties', 'presentProperties')
+  settingsMenu.addItem('Scheduled calendar updates', 'presentCalendarTrigger')
   menu.addSubMenu(settingsMenu)
   menu.addToUi()
 }
@@ -98,42 +99,4 @@ function buildDocumentPropertiesFromDefaults() {
     }
   })
   setDocProps(newProps)
-}
-
-function buildOnChangeTrigger() {
-  const allTriggers = ScriptApp.getProjectTriggers()
-  const allTriggersLength = allTriggers.length
-  let exists = false
-  for (var i = 0; i < allTriggersLength; i++) {
-    if (allTriggers[i].getEventType() == ScriptApp.EventType.ON_CHANGE &&
-        allTriggers[i].getHandlerFunction() == "onChange") { 
-      exists = true
-      break
-    }
-  }
-  if (!exists) {
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
-    ScriptApp.newTrigger("onChange").forSpreadsheet(ss).onChange().create();
-  }
-}
-
-function addAndPopulateTripIdColumn() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const tripSheet = ss.getSheetByName("Trips")
-  if (getSheetHeaderNames(tripSheet).indexOf("Trip ID") === -1) {
-    const lastRowPosition = tripSheet.getLastRow()
-    let lastColumnPosition = tripSheet.getLastColumn()
-    tripSheet.insertColumnAfter(lastColumnPosition)
-    lastColumnPosition++
-    tripSheet.getRange(1, lastColumnPosition).setValue("Trip ID")
-    getSheetHeaderNames(tripSheet, {forceRefresh: true})
-    const dataRange = tripSheet.getRange(2, 1, lastRowPosition - 1, lastColumnPosition)
-    let values = getRangeValuesAsTable(dataRange)
-    values.forEach((row) => {
-      if (row["Trip Date"] && row["Customer ID"]) {
-        row["Trip ID"] = Utilities.getUuid()
-      }
-    })
-    setValuesByHeaderNames(values, dataRange)
-  }
 }
