@@ -125,9 +125,9 @@ function populateManifest(manifestDoc, templateDoc, run) {
   for (let i = 0, c = manifestParent.getNumChildren(); i < c; i++) {
     let section = manifestParent.getChild(i)
     if (section.getType() === DocumentApp.ElementType.HEADER_SECTION) {
-      replaceText(section, run["Events"][0])
+      replaceElementText(section, run["Events"][0])
     } else if (section.getType() === DocumentApp.ElementType.FOOTER_SECTION) {
-      replaceText(section, run["Events"][run["Events"].length - 1])
+      replaceElementText(section, run["Events"][run["Events"].length - 1])
     }  
   }
 
@@ -145,12 +145,12 @@ function replaceTextInRange(range, docSection, data) {
   let elements = range.getRangeElements()
   elements.forEach(element => {
     newElement = element.getElement().copy()
-    replaceText(newElement, data)
+    replaceElementText(newElement, data)
     appendElement(docSection, newElement)
   })
 }
 
-function replaceText(element, data) {
+function replaceElementText(element, data) {
   let text = element.getText()
   //text = "This is {a} test {with} words in {braces]"
   let pattern = /{(.*?)}/g

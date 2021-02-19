@@ -146,6 +146,33 @@ function getType(value) {
   }
 }
 
+function replaceText(templateString, data) {
+  try {
+    //templateString = "This is {a} test {with} words in {braces]"
+    let result = templateString
+    const pattern = /{(.*?)}/g
+    const innerMatches = [...templateString.matchAll(pattern)].map(match => match[1])
+    Logger.log(innerMatches)
+    innerMatches.forEach(field => {
+      if (isValidDate(data[field])) {
+        if (field.match(/\bdate\b/i)) {
+          datum = formatDate(data[field])
+        } else if (field.match(/\btime\b/i)) {
+          datum = formatDate(data[field], null, "h:mm aa")
+        } else {
+          datum = formatDate(data[field], null, "h:mm aa M/d/yy")
+        }
+      } else {
+        datum = data[field]
+      }
+      if (Object.keys(data).indexOf(field) != -1) {
+        result = result.replace("{" + field + "}", datum)
+      }
+    })
+    return result
+  } catch(e) { logError(e) }
+}
+
 function getCustomerNameAndId(first, last, id) {
   return `${last}, ${first} (${id})`
 }
