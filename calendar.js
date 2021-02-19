@@ -1,14 +1,19 @@
 function updateDriverCalendars() {
   const startTime = new Date()
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Trips")
-    
     // Update all trips with matching calendar events
-    let range = sheet.getDataRange()
-    let values = getRangeValuesAsTable(range)
-    let newValues = []
-    let newValuesToSave = []
-    values.forEach(row => {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const range = ss.getSheetByName("Trips").getDataRange()
+    const trips = getRangeValuesAsTable(range)
+    const drivers = getRangeValuesAsTable(ss.getSheetByName("Drivers").getDataRange())
+    const vehicles = getRangeValuesAsTable(ss.getSheetByName("Vehicles").getDataRange())
+    const customers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
+    let newValuesToSave = [] // This gets saved back to the Trips sheet
+    let newValues = []       // This is used to create the list of trips not to delete later
+    trips.forEach(row => {
+      mergeAttributes(row, drivers,   "Driver ID"  )
+      mergeAttributes(row, vehicles,  "Vehicle ID" )
+      mergeAttributes(row, customers, "Customer ID")
       let rowValuesToSave = updateTripCalendarEvent(row)
       let rowNewValues = {...rowValuesToSave}
       rowNewValues["Trip Date"] = row["Trip Date"]
@@ -18,6 +23,7 @@ function updateDriverCalendars() {
     setValuesByHeaderNames(newValuesToSave,range)
     
     // Remove any calendar events that might have gotten left around, unattached to trips
+    // First, gather all the events that where just created so we don't delete those ones
     let calendarIds = getDriverCalendarIds()
     calendarIds.push(getDocProp("calendarIdForUnassignedTrips"))
     let tripEvents = {}
@@ -27,18 +33,19 @@ function updateDriverCalendars() {
         tripEvents[row["Driver Calendar ID"]].push(row["Trip Event ID"])
       }
     })
+    // Next go through all the events from today forward and delete the ones that aren't in our list.
     calendarIds.forEach(calendarId => {
       const calendar = getCalendarById(calendarId)
       if (calendar) {
         const events = calendar.getEvents(dateToday(), dateAdd(dateToday(), 30))
         events.forEach(event => {
-          if (tripEvents[calendarId].indexOf(event.getId()) === -1 && event.getTag("RideSheet") === "RideSheet") event.deleteEvent()
+          if (tripEvents[calendarId].indexOf(event.getId()) === -1 && event.getTag("RideSheet") === "RideSheet") {
+            event.deleteEvent()
+          }
         })
       }
     })
-  } catch(e) {
-    logError(e)
-  } finally {
+  } catch(e) { logError(e) } finally {
     log("updateDriverCalendars duration:",(new Date()) - startTime)
   }
 }
@@ -50,34 +57,25 @@ function updateTripCalendarEvent(tripValues) {
     if (tripValues["Trip Date"] >= dateToday()) {
       if (tripValues["PU Time"] && tripValues["DO Time"] && tripValues["Customer Name and ID"]) {
         if (tripValues["Driver ID"]) {
-          const ss = SpreadsheetApp.getActiveSpreadsheet()
-          const driverSheet = ss.getSheetByName("Drivers")
-          const driverValues = findFirstRowByHeaderNames(driverSheet, function(row) { return row["Driver ID"] === tripValues["Driver ID"] })
-          if (driverValues) calendarId = driverValues["Driver Calendar ID"]
-          //log("Got driver calendar ID " + calendarId)
+          calendarId = tripValues["Driver Calendar ID"]
         } else {
           calendarId = getDocProp("calendarIdForUnassignedTrips")
         }
         if (calendarId) {
-          //log("About to try to create event with Calendar ID: " + calendarId)
           newTripValues["Driver Calendar ID"] = calendarId
           newTripValues["Trip Event ID"] = createTripCalendarEvent(calendarId, tripValues)
           //log("Created new calendar event with ID",newTripValues["Trip Event ID"])
         } else {
-          //log("No event 1")
           newTripValues["Driver Calendar ID"] = null
           newTripValues["Trip Event ID"] = null
         }
       } else {
-        //log("No event 2")
         newTripValues["Driver Calendar ID"] = null
         newTripValues["Trip Event ID"] = null
       }
     }
     return newTripValues
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function createTripCalendarEvent(calendarId, tripValues) {
@@ -87,7 +85,8 @@ function createTripCalendarEvent(calendarId, tripValues) {
     const endTime = new Date(tripValues["Trip Date"].getTime() + timeOnlyAsMilliseconds(tripValues["DO Time"]))
     const calendar = getCalendarById(calendarId)
     if (calendar) {
-      const event = calendar.createEvent(tripValues["Customer Name and ID"], startTime, endTime, {
+      const eventTitle = replaceText(getDocProp("tripCalendarEntryTitleTemplate"),tripValues)
+      const event = calendar.createEvent(eventTitle, startTime, endTime, {
         description: "Generated automatically by RideSheet"
       })
       event.setTag("RideSheet","RideSheet")
@@ -95,9 +94,7 @@ function createTripCalendarEvent(calendarId, tripValues) {
     } else {
       //log("Didn't get calendar object for " + calendarId)
     }
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function deleteTripCalendarEvent(tripValues) {
@@ -113,9 +110,7 @@ function deleteTripCalendarEvent(tripValues) {
       }
     }
     return newTripValues
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function getDriverCalendarIds() {
@@ -123,7 +118,7 @@ function getDriverCalendarIds() {
   let driverValues = getRangeValuesAsTable(driverSheet.getDataRange())
   let result = []
   driverValues.forEach(row => {
-    if (row["Driver Calendar ID"]) result.push(row["Driver Calendar ID"])
+    if (row["Driver Calendar ID"] && result.indexOf(row["Driver Calendar ID"]) == -1) result.push(row["Driver Calendar ID"])
   })
   return result
 }
@@ -137,19 +132,13 @@ function isCalendarEventActive(calendar, eventId) {
     } else {
       return false
     }
-  } catch(e) {
-    logError(e)
-  }    
+  } catch(e) { logError(e) }
 }
 
 function getCalendarById(calendarId) {
   try {
     return CalendarApp.getCalendarById(calendarId)
-  } catch(e) {
-    msg = "Calendar error: " + e.name + ' — ' + e.message
-    SpreadsheetApp.getActiveSpreadsheet().toast(msg)
-    log(calendarId, msg)
-  }
+  } catch(e) { logError(e) }
 }
 
 function testCal() {
