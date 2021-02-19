@@ -1,4 +1,6 @@
 const propDescSuffix = "__description__"
+var cachedDocProps = {}
+var allDocPropsCached = false
 
 function getProperties(showPrivateProperties) {
   let docProps = PropertiesService.getDocumentProperties().getProperties()
@@ -98,30 +100,50 @@ function setDocProps(props) {
   PropertiesService.getDocumentProperties().setProperties(docProps)
 }
 
-function getDocProp(propName, altValue) {
-  const prop = PropertiesService.getDocumentProperties().getProperty(propName)
-  if (prop) {
-    return deserializeProp(prop)
-  } else {
-    return addDocProp(propName)
-  }
+function getDocProp(propName) {
+  try {
+    if (cachedDocProps[propName]) {
+      return cachedDocProps[propName]
+    } else {
+      const prop = PropertiesService.getDocumentProperties().getProperty(propName)
+      if (prop) {
+        let result = deserializeProp(prop)
+        cachedDocProps[propName] = result
+        return result
+      } else {
+        let result = addDocProp(propName)
+        cachedDocProps[propName] = result
+        return result
+      }
+    }
+  } catch(e) { logError(e) }
 }
 
 function getDocProps(props) {
-  const docProps = PropertiesService.getDocumentProperties().getProperties()
-  let result = {}
-  props.forEach(prop => {
-    if (getType(prop) === "object") {
-      if (prop.name in docProps) {
-        result[prop.name] = deserializeProp(docProps[prop.name])
+  try {
+    const docProps = PropertiesService.getDocumentProperties().getProperties()
+    let result = {}
+    props.forEach(prop => {
+      let propName
+      if (getType(prop) === "object") {
+        propName = prop.name
       } else {
-        result[prop.name] = addDocProp(prop.name)
+        propName = prop
       }
-    } else {
-      result[prop] = deserializeProp(docProps[prop])
-    }
-  })
-  return result
+      if (cachedDocProps[propName]) {
+        result[propName] = cachedDocProps[propName]
+      } else if (propName in docProps) {
+        let thisResult = deserializeProp(docProps[propName])
+        cachedDocProps[propName] = thisResult
+        result[propName] = thisResult
+      } else {
+        let thisResult = addDocProp(propName)
+        cachedDocProps[propName] = thisResult
+        result[propName] = thisResult
+      }
+    })
+    return result
+  } catch(e) { logError(e) }
 }
 
 function serializeProp(value) {
