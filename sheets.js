@@ -142,6 +142,7 @@ function getRangeValuesAsTable(range, {headerRowPosition = 1} = {}) {
   let result = data.map((row, index) => {
     let rowMap = {}
     rowMap.rowPosition = index + topRowPosition
+    rowMap.rowIndex = index
     rangeHeaderNames.forEach((headerName, i) => rowMap[headerName] = row[i])
     return rowMap
   })
@@ -184,18 +185,19 @@ function getValueByHeaderName(headerName, range) {
 
 function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1} = {}) {
   try {
+    if (newValues.every(row => Object.keys(row).length === 0 )) return
     const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {headerRowPosition: headerRowPosition})
     const rangeHeaderNames = getRangeHeaderNames(range, {headerRowPosition: headerRowPosition})
     const topRangeRowPosition = range.getRow()
     const topDataRowPosition = (topRangeRowPosition > headerRowPosition) ? topRangeRowPosition : headerRowPosition + 1
     const numRows = range.getLastRow() - topDataRowPosition + 1
-    const newValuesToApply = newValues.slice(topDataRowPosition - topRangeRowPosition)
+    const newValuesToApply = (numRows === newValues.length) ? newValues : newValues.slice(topDataRowPosition - topRangeRowPosition)
 
     // Get the full list of header names for columns to be updated
     let headerNamesInNewValues = []
     newValuesToApply.forEach(row => {
       Object.keys(row).forEach(headerName => {
-        if (headerNamesInNewValues.indexOf(headerName) === -1) headerNamesInNewValues.push(headerName)
+        if (!headerNamesInNewValues.includes(headerName)) headerNamesInNewValues.push(headerName)
       })
     })
     
