@@ -152,7 +152,6 @@ function replaceText(templateString, data) {
     let result = templateString
     const pattern = /{(.*?)}/g
     const innerMatches = [...templateString.matchAll(pattern)].map(match => match[1])
-    Logger.log(innerMatches)
     innerMatches.forEach(field => {
       if (isValidDate(data[field])) {
         if (field.match(/\bdate\b/i)) {
@@ -165,8 +164,10 @@ function replaceText(templateString, data) {
       } else {
         datum = data[field]
       }
-      if (Object.keys(data).indexOf(field) != -1) {
+      if (Object.keys(data).includes(field)) {
         result = result.replace("{" + field + "}", datum)
+      } else {
+        result = result.replace("{" + field + "}", field + " not specified")
       }
     })
     return result
