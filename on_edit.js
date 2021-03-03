@@ -258,7 +258,7 @@ function updateTripTimesOnEdit(range) {
     let newValues = []
     tripValues.forEach(row => {
       let newRowValues = {}
-      if (isFinite(row["Est Hours"])) {
+      if (row["Est Hours"] && isFinite(row["Est Hours"])) {
         const estMilliseconds = timeOnlyAsMilliseconds(row["Est Hours"])
         const estHours = estMilliseconds / 3600000
         const padding = getDocProp("tripPaddingPerHourInMinutes") * estHours * 60000

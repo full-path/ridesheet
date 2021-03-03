@@ -382,12 +382,13 @@ function mergeAttributes(primaryRow, secondaryTable, primaryKeyName, secondaryKe
   secondaryKeyName = secondaryKeyName || primaryKeyName
   if (primaryRow[primaryKeyName]) {
     let matchingSecondaryRow = secondaryTable.find(secondaryRow => primaryRow[primaryKeyName] == secondaryRow[secondaryKeyName])
-    if (matchingSecondaryRow) { 
-      Object.keys(matchingSecondaryRow).forEach(key => { 
-        if (!primaryRow.hasOwnProperty()) { 
-          primaryRow[key] = matchingSecondaryRow[key] 
-        } 
-      }) 
+    if (matchingSecondaryRow) {
+      primaryRow["_" + primaryKeyName + "-attributes"] = matchingSecondaryRow
+      Object.keys(matchingSecondaryRow).forEach(key => {
+        if (!primaryRow.hasOwnProperty(key)) {
+          primaryRow[key] = matchingSecondaryRow[key]
+        }
+      })
     }
   }
 }
