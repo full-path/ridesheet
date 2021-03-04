@@ -19,7 +19,7 @@ function updateDriverCalendars() {
         row["Customer Name and ID"] &&
         row["PU Time"] &&
         row["DO Time"] &&
-        row["PU Time"].valueOf() < row["DO Time"].valueOf() &&
+        timeOnlyAsMilliseconds(row["PU Time"]) < timeOnlyAsMilliseconds(row["DO Time"]) &&
         (
           !row["Trip Result"] ||
           row["Trip Result"] === "Completed"
@@ -79,10 +79,6 @@ function updateDriverCalendars() {
           row["Driver Calendar ID"] != drivers.find(driver => driver["Driver ID"] == row["Driver ID"])["Driver Calendar ID"]
         )
       ) {
-        console.log("Fixing", row.rowIndex)
-        console.log(row["Driver ID"])
-        console.log(row["Driver Calendar ID"])
-        console.log(drivers.find(driver => driver["Driver ID"] == row["Driver ID"])["Driver Calendar ID"])
         row["Driver Calendar ID"] = null
       }
     })
@@ -182,7 +178,7 @@ function updateDriverCalendars() {
           let tripValuesToSave = updateTripCalendarEvent(trip)
           if (tripValuesToSave[Object.keys(tripValuesToSave)[0]] === -1) {
             deleteOrCreateEvents = false
-            ss.toast("Not all events could be deleted / created. " + eventDeleteOrCreateCount +
+            ss.toast("Not all events could be created. " + eventDeleteOrCreateCount +
               " successful. Please try again later for the rest.","Error")
           } else {
             eventDeleteOrCreateCount++
@@ -191,7 +187,6 @@ function updateDriverCalendars() {
         }
       })
     }
-    console.log(tripChanges)
     setValuesByHeaderNames(tripChanges, range)
   } catch(e) {
     logError(e)
@@ -209,7 +204,7 @@ function updateTripCalendarEvent(tripValues) {
       if (
         tripValues["PU Time"] &&
         tripValues["DO Time"] &&
-        tripValues["PU Time"].valueOf() < tripValues["DO Time"].valueOf() &&
+        timeOnlyAsMilliseconds(tripValues["PU Time"]) < timeOnlyAsMilliseconds(tripValues["DO Time"]) &&
         tripValues["Customer Name and ID"]
       ) {
         if (tripValues["Driver ID"]) {
@@ -254,6 +249,7 @@ function createTripCalendarEvent(calendarId, tripValues) {
           description: "Generated automatically by RideSheet"
         })
       } catch(e) {
+        console.log(e)
         return -1
       }
       event.setTag("RideSheet","RideSheet")
