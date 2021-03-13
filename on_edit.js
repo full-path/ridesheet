@@ -158,7 +158,7 @@ function formatAddressOnEdit(range) {
     if (range.getValue() && range.getValue().trim()) {
       addressParts = parseAddress(range.getValue())
       let formattedAddress = getGeocode(addressParts.geocodeAddress, "formatted_address")
-      if (addressParts.parenText) formattedAddress = formattedAddress + " " + addressParts.parenText
+      if (addressParts.parenText) formattedAddress = formattedAddress + " (" + addressParts.parenText + ")"
       if (formattedAddress.startsWith("Error")) {
         const msg = "Address " + formattedAddress
         range.setNote(msg)
