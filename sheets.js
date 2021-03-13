@@ -8,13 +8,15 @@ var cachedHeaderNames = {}
  * @return {boolean}
  */
 function isInRange(innerRange, outerRange) {
-  return (
-    innerRange.getSheet().getName() == outerRange.getSheet().getName() &&
-    innerRange.getRow()             >= outerRange.getRow() &&
-    innerRange.getLastRow()         <= outerRange.getLastRow() &&
-    innerRange.getColumn()          >= outerRange.getColumn() &&
-    innerRange.getLastColumn()      <= outerRange.getLastColumn()
-  )
+  try {
+    return (
+      innerRange.getSheet().getName() == outerRange.getSheet().getName() &&
+      innerRange.getRow()             >= outerRange.getRow() &&
+      innerRange.getLastRow()         <= outerRange.getLastRow() &&
+      innerRange.getColumn()          >= outerRange.getColumn() &&
+      innerRange.getLastColumn()      <= outerRange.getLastColumn()
+    )
+  } catch(e) { logError(e) }
 }
 
 /**
@@ -25,6 +27,7 @@ function isInRange(innerRange, outerRange) {
  * @return {boolean}
  */
 function rangesOverlap(firstRange, secondRange) {
+  try {
     return (
       firstRange.getSheet().getName() === secondRange.getSheet().getName() &&
       firstRange.getRow()              <= secondRange.getLastRow()         &&
@@ -32,6 +35,7 @@ function rangesOverlap(firstRange, secondRange) {
       firstRange.getColumn()           <= secondRange.getLastColumn()      &&
       firstRange.getLastColumn()       >= secondRange.getColumn()
     )
+  } catch(e) { logError(e) }
 }
 
 /**
@@ -41,8 +45,10 @@ function rangesOverlap(firstRange, secondRange) {
  * @return {range}
  */
 function getFullRow(range) {
-  const rowPosition = range.getRow()
-  return range.getSheet().getRange("A" + rowPosition + ":" + rowPosition)
+  try {
+    const rowPosition = range.getRow()
+    return range.getSheet().getRange("A" + rowPosition + ":" + rowPosition)
+  } catch(e) { logError(e) }
 }
 
 /**
@@ -51,7 +57,9 @@ function getFullRow(range) {
  * @return {range}
  */
 function getFullRows(range) {
-  return range.getSheet().getRange("A" + range.getRow() + ":" + range.getLastRow())
+  try {
+    return range.getSheet().getRange("A" + range.getRow() + ":" + range.getLastRow())
+  } catch(e) { logError(e) }
 }
 
 /**
@@ -62,21 +70,25 @@ function getFullRows(range) {
  * @return {number}
  */
 function findFirstRowByHeaderNames(sheet, filter) {
-  const data = getRangeValuesAsTable(sheet.getDataRange())  
-  const matchingRows = data.filter(row => filter(row))
-  if (matchingRows.length > 0) {
-    return matchingRows[0]
-  }
+  try {
+    const data = getRangeValuesAsTable(sheet.getDataRange())
+    const matchingRows = data.filter(row => filter(row))
+    if (matchingRows.length > 0) {
+      return matchingRows[0]
+    }
+  } catch(e) { logError(e) }
 }
 
 function moveRows(sourceSheet, destSheet, filter) {
-  const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange())
-  const rowsToMove = sourceData.filter(row => filter(row))
-  const lastRowPosition = sourceSheet.getLastRow()
-  rowsToMove.forEach(row => appendDataRow(sourceSheet, destSheet, row))
-  if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
-  const rowsToDelete = rowsToMove.map(row => row.rowPosition).sort((a,b)=>b-a)
-  rowsToDelete.forEach(rowPosition => sourceSheet.deleteRow(rowPosition))
+  try {
+    const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange())
+    const rowsToMove = sourceData.filter(row => filter(row))
+    const lastRowPosition = sourceSheet.getLastRow()
+    rowsToMove.forEach(row => appendDataRow(sourceSheet, destSheet, row))
+    if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
+    const rowsToDelete = rowsToMove.map(row => row.rowPosition).sort((a,b)=>b-a)
+    rowsToDelete.forEach(rowPosition => sourceSheet.deleteRow(rowPosition))
+  } catch(e) { logError(e) }
 }
 
 // Take an incoming map of values and append them to the sheet, matching column names to map key names
@@ -84,69 +96,73 @@ function moveRows(sourceSheet, destSheet, filter) {
 // Those columns will be added to the destination sheet, right after the column they're after in the
 // source sheet.
 function appendDataRow(sourceSheet, destSheet, dataMap) {
-  const sourceColumnNames = Object.keys(dataMap)
-  const destColumnNamesOriginalState = getSheetHeaderNames(destSheet)
-  let destColumnNamesCurrentState = destColumnNamesOriginalState
-  let missingDestColumns = []
-  sourceColumnNames.forEach((sourceColumnName, i) => {
-    if (destColumnNamesOriginalState.indexOf(sourceColumnName) === -1 && sourceColumnName !== "rowPosition") {
-      let colPosition = 1
-      if (i === 0) {
-        destSheet.insertColumns(colPosition)
-      } else {
-        let positionOfColumnToInsertAfter = destColumnNamesCurrentState.indexOf(sourceColumnNames[i-1]) + 1
-        if (positionOfColumnToInsertAfter === 0) {
+  try {
+    const sourceColumnNames = Object.keys(dataMap)
+    const destColumnNamesOriginalState = getSheetHeaderNames(destSheet)
+    let destColumnNamesCurrentState = destColumnNamesOriginalState
+    let missingDestColumns = []
+    sourceColumnNames.forEach((sourceColumnName, i) => {
+      if (destColumnNamesOriginalState.indexOf(sourceColumnName) === -1 && sourceColumnName !== "rowPosition") {
+        let colPosition = 1
+        if (i === 0) {
           destSheet.insertColumns(colPosition)
         } else {
-          colPosition = positionOfColumnToInsertAfter + 1
-          destSheet.insertColumnAfter(positionOfColumnToInsertAfter)
+          let positionOfColumnToInsertAfter = destColumnNamesCurrentState.indexOf(sourceColumnNames[i-1]) + 1
+          if (positionOfColumnToInsertAfter === 0) {
+            destSheet.insertColumns(colPosition)
+          } else {
+            colPosition = positionOfColumnToInsertAfter + 1
+            destSheet.insertColumnAfter(positionOfColumnToInsertAfter)
+          }
         }
+        let sourceRange = sourceSheet.getRange(2, getSheetHeaderNames(sourceSheet).indexOf(sourceColumnName) + 1)
+        let destHeaderRange = destSheet.getRange(1, colPosition)
+        let destDataRange = destSheet.getRange(2, colPosition, destSheet.getMaxRows()-1)
+
+        destHeaderRange.setValue(sourceColumnName)
+        sourceRange.copyFormatToRange(destSheet, colPosition, colPosition, 2, destSheet.getMaxRows())
+        let rule = sourceRange.getDataValidation()
+        if (rule == null) {
+          destDataRange.clearDataValidations()
+        } else {
+          destDataRange.setDataValidation(rule)
+        }
+        destColumnNamesCurrentState = getSheetHeaderNames(destSheet, {forceRefresh: true})
       }
-      let sourceRange = sourceSheet.getRange(2, getSheetHeaderNames(sourceSheet).indexOf(sourceColumnName) + 1)
-      let destHeaderRange = destSheet.getRange(1, colPosition)
-      let destDataRange = destSheet.getRange(2, colPosition, destSheet.getMaxRows()-1)
-      
-      destHeaderRange.setValue(sourceColumnName)
-      sourceRange.copyFormatToRange(destSheet, colPosition, colPosition, 2, destSheet.getMaxRows())
-      let rule = sourceRange.getDataValidation()
-      if (rule == null) {
-        destDataRange.clearDataValidations()
-      } else {
-        destDataRange.setDataValidation(rule)
-      }
-      destColumnNamesCurrentState = getSheetHeaderNames(destSheet, {forceRefresh: true})
-    }
-  })
-  const dataArray = destColumnNamesCurrentState.map(colName => dataMap[colName])
-  destSheet.appendRow(dataArray)
+    })
+    const dataArray = destColumnNamesCurrentState.map(colName => dataMap[colName])
+    destSheet.appendRow(dataArray)
+  } catch(e) { logError(e) }
 }
 
 // Takes a range and returns an array of objects, each object containing key/value pairs. 
 // If the range includes row 1 of the spreadsheet, that top row will be used as the keys. 
 // Otherwise row 1 will be collected separately and used as the source for keys.
 function getRangeValuesAsTable(range, {headerRowPosition = 1} = {}) {
-  let topRowPosition = range.getRow()
-  let data = range.getValues()
-  let rangeHeaderNames
-  if (topRowPosition <= headerRowPosition) {
-    if (data.length > (headerRowPosition + 1 - topRowPosition)) {
-      rangeHeaderNames = data[headerRowPosition - topRowPosition]
-      data.splice(0, headerRowPosition + 1 - topRowPosition)
-      topRowPosition = headerRowPosition + 1
-    } else {
-      return []
+  try {
+    let topRowPosition = range.getRow()
+    let data = range.getValues()
+    let rangeHeaderNames
+    if (topRowPosition <= headerRowPosition) {
+      if (data.length > (headerRowPosition + 1 - topRowPosition)) {
+        rangeHeaderNames = data[headerRowPosition - topRowPosition]
+        data.splice(0, headerRowPosition + 1 - topRowPosition)
+        topRowPosition = headerRowPosition + 1
+      } else {
+        return []
+      }
+    } else if (topRowPosition > headerRowPosition) {
+      rangeHeaderNames = getRangeHeaderNames(range, {headerRowPosition: headerRowPosition})
     }
-  } else if (topRowPosition > headerRowPosition) {
-    rangeHeaderNames = getRangeHeaderNames(range, {headerRowPosition: headerRowPosition})
-  }
-  let result = data.map((row, index) => {
-    let rowMap = {}
-    rowMap.rowPosition = index + topRowPosition
-    rowMap.rowIndex = index
-    rangeHeaderNames.forEach((headerName, i) => rowMap[headerName] = row[i])
-    return rowMap
-  })
-  return result            
+    let result = data.map((row, index) => {
+      let rowMap = {}
+      rowMap.rowPosition = index + topRowPosition
+      rowMap.rowIndex = index
+      rangeHeaderNames.forEach((headerName, i) => rowMap[headerName] = row[i])
+      return rowMap
+    })
+    return result
+  } catch(e) { logError(e) }
 }
 
 /**
@@ -158,12 +174,14 @@ function getRangeValuesAsTable(range, {headerRowPosition = 1} = {}) {
  * @return {object}
  */
 function getDisplayValueByHeaderName(headerName, range) {
-  const columnIndex = getRangeHeaderNames(range).indexOf(headerName)
-  if (columnIndex == -1) {
-    return null
-  } else {
-    return range.getDisplayValues()[0][columnIndex]
-  }
+  try {
+    const columnIndex = getRangeHeaderNames(range).indexOf(headerName)
+    if (columnIndex == -1) {
+      return null
+    } else {
+      return range.getDisplayValues()[0][columnIndex]
+    }
+  } catch(e) { logError(e) }
 }
 
 /**
@@ -175,12 +193,14 @@ function getDisplayValueByHeaderName(headerName, range) {
  * @return {object}
  */
 function getValueByHeaderName(headerName, range) {
-  let columnIndex = getRangeHeaderNames(range).indexOf(headerName)
-  if (columnIndex > -1) {
-    return range.getValues()[0][columnIndex]
-  } else {
-    return null
-  }
+  try {
+    let columnIndex = getRangeHeaderNames(range).indexOf(headerName)
+    if (columnIndex > -1) {
+      return range.getValues()[0][columnIndex]
+    } else {
+      return null
+    }
+  } catch(e) { logError(e) }
 }
 
 function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1} = {}) {
@@ -230,34 +250,42 @@ function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1} = {}) 
 }
 
 function appendValuesByHeaderNames(values, sheet) {
-  const sheetHeaderColumnNames = getSheetHeaderNames(sheet)
-  values.forEach(row => {
-    const rowArray = sheetHeaderColumnNames.map(colName => row[colName])
-    sheet.appendRow(rowArray)
-  })
+  try {
+    const sheetHeaderColumnNames = getSheetHeaderNames(sheet)
+    values.forEach(row => {
+      const rowArray = sheetHeaderColumnNames.map(colName => row[colName])
+      sheet.appendRow(rowArray)
+    })
+  } catch(e) { logError(e) }
 }
 
 // Cache header info in a global variable so it only needs to be collected once per sheet per onEdit call.
 function getSheetHeaderNames(sheet, {forceRefresh = false, headerRowPosition = 1} = {}) {
-  const sheetName = sheet.getName()
-  if (!cachedHeaderNames[sheetName] || forceRefresh) {
-    const headerNames = sheet.getRange("A" + headerRowPosition + ":" + headerRowPosition).getValues()[0]
-    cachedHeaderNames[sheetName] = headerNames.map(headerName => !headerName ? " " : headerName)
-  }
-  return cachedHeaderNames[sheetName]
+  try {
+    const sheetName = sheet.getName()
+    if (!cachedHeaderNames[sheetName] || forceRefresh) {
+      const headerNames = sheet.getRange("A" + headerRowPosition + ":" + headerRowPosition).getValues()[0]
+      cachedHeaderNames[sheetName] = headerNames.map(headerName => !headerName ? " " : headerName)
+    }
+    return cachedHeaderNames[sheetName]
+  } catch(e) { logError(e) }
 }
     
 // Get header information for column range only, rather than the entire sheet
 // Uses getSheetHeaderNames for caching purposes.
 function getRangeHeaderNames(range, {forceRefresh = false, headerRowPosition = 1} = {}) {
-  const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {forceRefresh: forceRefresh, headerRowPosition: headerRowPosition})
-  const rangeStartColumnIndex = range.getColumn() - 1
-  return sheetHeaderNames.slice(rangeStartColumnIndex, rangeStartColumnIndex + range.getWidth())
+  try {
+    const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {forceRefresh: forceRefresh, headerRowPosition: headerRowPosition})
+    const rangeStartColumnIndex = range.getColumn() - 1
+    return sheetHeaderNames.slice(rangeStartColumnIndex, rangeStartColumnIndex + range.getWidth())
+  } catch(e) { logError(e) }
 }
 
 function getMaxValueInRange(range) {
-  let values = range.getValues().flat().filter(Number.isFinite)
-  return values.reduce((a, b) => Math.max(a, b))
+  try {
+    let values = range.getValues().flat().filter(Number.isFinite)
+    return values.reduce((a, b) => Math.max(a, b))
+  } catch(e) { logError(e) }
 }
 
 function applyFormats(formatGroups, sheet) {
