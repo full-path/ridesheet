@@ -69,44 +69,74 @@ function copyTrip(sourceTripRange, isReturnTrip) {
   } catch(e) { logError(e) }
 }
 
-function createReturnTrip() { copyTrip(null, true) }
+function createReturnTrip() {
+  try {
+    copyTrip(null, true)
+  } catch(e) { logError(e) }
+}
 
-function addStop() { copyTrip(null, false) }
+function addStop() {
+  try {
+    copyTrip(null, false)
+  } catch(e) { logError(e) }
+}
 
 function moveTripsToReview() {
-  const ss              = SpreadsheetApp.getActiveSpreadsheet()
-  const tripSheet       = ss.getSheetByName("Trips")
-  const tripReviewSheet = ss.getSheetByName("Trip Review")
-  const tripFilter      = function(row) { return row["Trip Date"] && row["Trip Date"] < dateToday() }
-  moveRows(tripSheet, tripReviewSheet, tripFilter)  
-  
-  const runSheet        = ss.getSheetByName("Runs")
-  const runReviewSheet  = ss.getSheetByName("Run Review")
-  const runFilter       = function(row) { return row["Run Date"] && row["Run Date"] < dateToday() }
-  moveRows(runSheet, runReviewSheet, runFilter)  
+  try {
+    const ss              = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet       = ss.getSheetByName("Trips")
+    const tripReviewSheet = ss.getSheetByName("Trip Review")
+    const tripFilter      = function(row) { return row["Trip Date"] && row["Trip Date"] < dateToday() }
+    moveRows(tripSheet, tripReviewSheet, tripFilter)
+
+    const runSheet        = ss.getSheetByName("Runs")
+    const runReviewSheet  = ss.getSheetByName("Run Review")
+    const runFilter       = function(row) { return row["Run Date"] && row["Run Date"] < dateToday() }
+    moveRows(runSheet, runReviewSheet, runFilter)
+  } catch(e) { logError(e) }
 }
 
 function moveTripsToArchive() {
-  const ss               = SpreadsheetApp.getActiveSpreadsheet()
-  const tripReviewSheet  = ss.getSheetByName("Trip Review")
-  const tripArchiveSheet = ss.getSheetByName("Trip Archive")
-  const tripFilter       = function(row) { 
-    const columns = getDocProp("tripReviewRequiredFields")
-    blankColumns = columns.filter(column => !row[column])
-    return blankColumns.length === 0
-  }
-  moveRows(tripReviewSheet, tripArchiveSheet, tripFilter)  
+  try {
+    const ss               = SpreadsheetApp.getActiveSpreadsheet()
+    const tripReviewSheet  = ss.getSheetByName("Trip Review")
+    const tripArchiveSheet = ss.getSheetByName("Trip Archive")
+    const tripFilter       = function(row) {
+      const columns = getDocProp("tripReviewRequiredFields")
+      blankColumns = columns.filter(column => !row[column])
+      return blankColumns.length === 0
+    }
+    moveRows(tripReviewSheet, tripArchiveSheet, tripFilter)
 
-  const runReviewSheet  = ss.getSheetByName("Run Review")
-  const runArchiveSheet = ss.getSheetByName("Run Archive")
-  const runFilter       = function(row) { 
-    const columns = getDocProp("runReviewRequiredFields")
-    blankColumns = columns.filter(column => !row[column])
-    return blankColumns.length === 0
-  }
-  moveRows(runReviewSheet, runArchiveSheet, runFilter)  
+    const runReviewSheet  = ss.getSheetByName("Run Review")
+    const runArchiveSheet = ss.getSheetByName("Run Archive")
+    const runFilter       = function(row) {
+      const columns = getDocProp("runReviewRequiredFields")
+      blankColumns = columns.filter(column => !row[column])
+      return blankColumns.length === 0
+    }
+    moveRows(runReviewSheet, runArchiveSheet, runFilter)
+  } catch(e) { logError(e) }
 }
 
 function isCompleteTrip(trip) {
-  return (trip["Trip Date"] && trip["Customer Name and ID"])
+  try {
+    return (trip["Trip Date"] && trip["Customer Name and ID"])
+  } catch(e) { logError(e) }
+}
+
+function isTripWithValidTimes(trip) {
+  try {
+    return (
+      trip["PU Time"] &&
+      trip["DO Time"] &&
+      Number.isFinite(trip["PU Time"].valueOf()) &&
+      Number.isFinite(trip["DO Time"].valueOf()) &&
+      trip["DO Time"].valueOf() - trip["PU Time"].valueOf() < 24*60*60*1000 &&
+      trip["DO Time"].valueOf() - trip["PU Time"].valueOf() > 0
+    )
+  } catch(e) {
+    logError(e)
+    return false
+  }
 }
