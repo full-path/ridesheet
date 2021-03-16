@@ -17,9 +17,6 @@ function updateDriverCalendars() {
     const isValidTrip = function(row) {
       return (
         row["Customer Name and ID"] &&
-        row["PU Time"] &&
-        row["DO Time"] &&
-        timeOnlyAsMilliseconds(row["PU Time"]) < timeOnlyAsMilliseconds(row["DO Time"]) &&
         (
           !row["Trip Result"] ||
           row["Trip Result"] === "Completed"
@@ -89,7 +86,12 @@ function updateDriverCalendars() {
     trips.filter(isTodayOrFutureTrip).filter(isValidTrip).filter(hasValidLinkToEvent).forEach(row => {
       initialCalendarEventLinks[row["Driver Calendar ID"]].push(row["Trip Event ID"])
     })
-    console.log("initialCalendarEventLinks",Object.keys(initialCalendarEventLinks, initialCalendarEventLinks).map(k => initialCalendarEventLinks[k].length).reduce((a, b) => a + b))
+    console.log(
+      "initialCalendarEventLinks",
+      Object.keys(initialCalendarEventLinks, initialCalendarEventLinks).map(
+        k => initialCalendarEventLinks[k].length
+      ).reduce((a, b) => a + b)
+    )
 
     // Gather all the calendar entries that need to be deleted because the trip
     // (or at least the link to a calendar entry) is cancelled or otherwise gone
@@ -99,7 +101,11 @@ function updateDriverCalendars() {
         return !initialCalendarEventLinks[calendarId].includes(eventId)
       })
     })
-    console.log("eventsToDelete",Object.keys(eventsToDelete, eventsToDelete).map(k => eventsToDelete[k].length).reduce((a, b) => a + b))
+    console.log(
+      "eventsToDelete",
+      Object.keys(eventsToDelete, eventsToDelete).map(
+        k => eventsToDelete[k].length
+      ).reduce((a, b) => a + b))
 
     // Get a list of all the matches between entries and data in trips. These will need to be checked for possible updates.
     let eventsToUpdate = {}
@@ -145,7 +151,8 @@ function updateDriverCalendars() {
       tripChanges[trip.rowIndex] = newTripValues
     })
 
-    // 
+    // The two actions below (editing and creating calendar events) are the only ones that need
+    // vehicle and customer data gathered.
     if (countOfEventsToUpdate + tripsForNewEvents.length) {
       const vehicles = getRangeValuesAsTable(ss.getSheetByName("Vehicles").getDataRange())
       const customers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
@@ -159,10 +166,19 @@ function updateDriverCalendars() {
           mergeAttributes(trip, vehicles,  "Vehicle ID" )
           mergeAttributes(trip, customers, "Customer ID")
           const eventTitle = replaceText(getDocProp("tripCalendarEntryTitleTemplate"), trip)
-          const startTime  = new Date(trip["Trip Date"].getTime() + timeOnlyAsMilliseconds(trip["PU Time"]))
-          const endTime    = new Date(trip["Trip Date"].getTime() + timeOnlyAsMilliseconds(trip["DO Time"]))
-          if (startTime.valueOf() != event.getStartTime().valueOf() || endTime.valueOf() != event.getEndTime().valueOf()) {
-            event.setTime(startTime, endTime)
+
+          if (isTripWithValidTimes(trip)) {
+            const startTime  = new Date(trip["Trip Date"].getTime() + timeOnlyAsMilliseconds(trip["PU Time"]))
+            const endTime    = new Date(trip["Trip Date"].getTime() + timeOnlyAsMilliseconds(trip["DO Time"]))
+            if (
+              event.isAllDayEvent() ||
+              startTime.valueOf() != event.getStartTime().valueOf() ||
+              endTime.valueOf() != event.getEndTime().valueOf()
+              ) {
+              event.setTime(startTime, endTime)
+            }
+          } else if (!event.isAllDayEvent()) {
+            event.setAllDayDate(trip["Trip Date"])
           }
           if (eventTitle != event.getTitle()) {
             event.setTitle(eventTitle)
@@ -237,17 +253,22 @@ function updateTripCalendarEvent(tripValues) {
 
 function createTripCalendarEvent(calendarId, tripValues) {
   try {
-    let newTripValues = {}
-    const startTime = new Date(tripValues["Trip Date"].getTime() + timeOnlyAsMilliseconds(tripValues["PU Time"]))
-    const endTime = new Date(tripValues["Trip Date"].getTime() + timeOnlyAsMilliseconds(tripValues["DO Time"]))
     const calendar = getCalendarById(calendarId)
     if (calendar) {
       const eventTitle = replaceText(getDocProp("tripCalendarEntryTitleTemplate"),tripValues)
       let event
       try {
-        event = calendar.createEvent(eventTitle, startTime, endTime, {
-          description: "Generated automatically by RideSheet"
-        })
+        if (isTripWithValidTimes(tripValues)) {
+          const startTime = new Date(tripValues["Trip Date"].getTime() + timeOnlyAsMilliseconds(tripValues["PU Time"]))
+          const endTime = new Date(tripValues["Trip Date"].getTime() + timeOnlyAsMilliseconds(tripValues["DO Time"]))
+          event = calendar.createEvent(eventTitle, startTime, endTime, {
+            description: "Generated automatically by RideSheet"
+          })
+        } else {
+          event = calendar.createAllDayEvent(eventTitle, tripValues["Trip Date"], {
+            description: "Generated automatically by RideSheet"
+          })
+        }
       } catch(e) {
         console.log(e)
         return -1
