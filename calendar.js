@@ -148,7 +148,7 @@ function updateDriverCalendars() {
       let newTripValues = {}
       if (trip["Driver Calendar ID"]) newTripValues["Driver Calendar ID"] = null
       if (trip["Trip Event ID"]) newTripValues["Trip Event ID"] = null
-      tripChanges[trip.rowIndex] = newTripValues
+      tripChanges[trip._rowIndex] = newTripValues
     })
 
     // The two actions below (editing and creating calendar events) are the only ones that need
@@ -198,7 +198,7 @@ function updateDriverCalendars() {
               " successful. Please try again later for the rest.","Error")
           } else {
             eventDeleteOrCreateCount++
-            tripChanges[trip.rowIndex] = tripValuesToSave
+            tripChanges[trip._rowIndex] = tripValuesToSave
           }
         }
       })

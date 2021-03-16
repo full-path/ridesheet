@@ -86,7 +86,7 @@ function moveRows(sourceSheet, destSheet, filter) {
     const lastRowPosition = sourceSheet.getLastRow()
     rowsToMove.forEach(row => appendDataRow(sourceSheet, destSheet, row))
     if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
-    const rowsToDelete = rowsToMove.map(row => row.rowPosition).sort((a,b)=>b-a)
+    const rowsToDelete = rowsToMove.map(row => row._rowPosition).sort((a,b)=>b-a)
     rowsToDelete.forEach(rowPosition => sourceSheet.deleteRow(rowPosition))
   } catch(e) { logError(e) }
 }
@@ -102,7 +102,7 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
     let destColumnNamesCurrentState = destColumnNamesOriginalState
     let missingDestColumns = []
     sourceColumnNames.forEach((sourceColumnName, i) => {
-      if (destColumnNamesOriginalState.indexOf(sourceColumnName) === -1 && sourceColumnName !== "rowPosition") {
+      if (destColumnNamesOriginalState.indexOf(sourceColumnName) === -1 && sourceColumnName.slice(0,1) !== "_") {
         let colPosition = 1
         if (i === 0) {
           destSheet.insertColumns(colPosition)
@@ -115,6 +115,7 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
             destSheet.insertColumnAfter(positionOfColumnToInsertAfter)
           }
         }
+        console.log(sourceColumnName)
         let sourceRange = sourceSheet.getRange(2, getSheetHeaderNames(sourceSheet).indexOf(sourceColumnName) + 1)
         let destHeaderRange = destSheet.getRange(1, colPosition)
         let destDataRange = destSheet.getRange(2, colPosition, destSheet.getMaxRows()-1)
@@ -156,8 +157,8 @@ function getRangeValuesAsTable(range, {headerRowPosition = 1} = {}) {
     }
     let result = data.map((row, index) => {
       let rowMap = {}
-      rowMap.rowPosition = index + topRowPosition
-      rowMap.rowIndex = index
+      rowMap._rowPosition = index + topRowPosition
+      rowMap._rowIndex = index
       rangeHeaderNames.forEach((headerName, i) => rowMap[headerName] = row[i])
       return rowMap
     })
