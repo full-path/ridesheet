@@ -124,6 +124,7 @@ function updateDriverCalendars() {
     // Get a list of valid trips for which entries that need to be created because the trips are new or the calender entry cannot be found
     let tripsForNewEvents = trips.filter(isTodayOrFutureTrip).filter(isValidTrip).filter(hasNoValidLinkToEvent)
     console.log("tripsForNewEvents", tripsForNewEvents.length)
+    console.log("tripsForNewEvents", tripsForNewEvents)
     //return
 
     // TAKE ACTION
@@ -218,9 +219,6 @@ function updateTripCalendarEvent(tripValues) {
     let calendarId = "Unset"
     if (tripValues["Trip Date"] >= dateToday()) {
       if (
-        tripValues["PU Time"] &&
-        tripValues["DO Time"] &&
-        timeOnlyAsMilliseconds(tripValues["PU Time"]) < timeOnlyAsMilliseconds(tripValues["DO Time"]) &&
         tripValues["Customer Name and ID"]
       ) {
         if (tripValues["Driver ID"]) {
