@@ -81,7 +81,7 @@ function findFirstRowByHeaderNames(sheet, filter) {
 
 function moveRows(sourceSheet, destSheet, filter) {
   try {
-    const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange())
+    const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
     const rowsToMove = sourceData.filter(row => filter(row))
     const lastRowPosition = sourceSheet.getLastRow()
     rowsToMove.forEach(row => appendDataRow(sourceSheet, destSheet, row))
@@ -93,7 +93,7 @@ function moveRows(sourceSheet, destSheet, filter) {
 
 // Take an incoming map of values and append them to the sheet, matching column names to map key names
 // If columns present in the source data are missing in the destination sheet,
-// Those columns will be added to the destination sheet, right after the column they're after in the
+// those columns will be added to the destination sheet, right after the column they're after in the
 // source sheet.
 function appendDataRow(sourceSheet, destSheet, dataMap) {
   try {
@@ -139,28 +139,35 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
 // Takes a range and returns an array of objects, each object containing key/value pairs. 
 // If the range includes row 1 of the spreadsheet, that top row will be used as the keys. 
 // Otherwise row 1 will be collected separately and used as the source for keys.
-function getRangeValuesAsTable(range, {headerRowPosition = 1} = {}) {
+function getRangeValuesAsTable(range, {headerRowPosition = 1, includeFormulaValues = true} = {}) {
   try {
-    let topRowPosition = range.getRow()
-    let data = range.getValues()
+    let topDataRowPosition = range.getRow()
+    let values = range.getValues()
+    let formulas
+    if (!includeFormulaValues) formulas = range.getFormulas()
     let rangeHeaderNames
-    if (topRowPosition <= headerRowPosition) {
-      if (data.length > (headerRowPosition + 1 - topRowPosition)) {
-        rangeHeaderNames = data[headerRowPosition - topRowPosition]
-        data.splice(0, headerRowPosition + 1 - topRowPosition)
-        topRowPosition = headerRowPosition + 1
+    if (topDataRowPosition <= headerRowPosition) {
+      if (values.length > (headerRowPosition + 1 - topDataRowPosition)) {
+        rangeHeaderNames = values[headerRowPosition - topDataRowPosition]
+        values.splice(0, headerRowPosition + 1 - topDataRowPosition)
+        if (!includeFormulaValues) formulas.splice(0, headerRowPosition + 1 - topDataRowPosition)
+        topDataRowPosition = headerRowPosition + 1
       } else {
         return []
       }
-    } else if (topRowPosition > headerRowPosition) {
+    } else if (topDataRowPosition > headerRowPosition) {
       rangeHeaderNames = getRangeHeaderNames(range, {headerRowPosition: headerRowPosition})
     }
-    let result = data.map((row, index) => {
-      let rowMap = {}
-      rowMap._rowPosition = index + topRowPosition
-      rowMap._rowIndex = index
-      rangeHeaderNames.forEach((headerName, i) => rowMap[headerName] = row[i])
-      return rowMap
+    let result = values.map((row, rowIndex) => {
+      let rowObject = {}
+      rowObject._rowPosition = rowIndex + topDataRowPosition
+      rowObject._rowIndex = rowIndex
+      rangeHeaderNames.forEach((headerName, columnIndex) => {
+        if (includeFormulaValues || (!includeFormulaValues && !formulas[rowIndex][columnIndex])) {
+          rowObject[headerName] = row[columnIndex]
+        }
+      })
+      return rowObject
     })
     return result
   } catch(e) { logError(e) }
