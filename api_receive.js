@@ -29,7 +29,7 @@ function doGet(e) {
           content.results = receiveRequestForRuns()
         } else if (params.resource === "tripRequests") {
           content.status = "OK"
-          content.results = receiveRequestForTripRequests()
+          content.results = receiveRequestForTripRequestsReturnTripRequests()
         } else {
           content.status = "INVALID_REQUEST"
         }
@@ -72,9 +72,9 @@ function doPost(e) {
       let payload = e.postData.contents
       if (params.version === "v1") {
         if (params.resource === "tripRequestResponses") {
-          content = receiveTripRequestResponses(payload, validatedApiAccount)
+          content = receiveTripRequestResponsesReturnClientOrderConfirmations(payload, validatedApiAccount)
         } else if (params.resource === "providerOrderConfirmations") {
-          content = receiveProviderOrderConfirmations(payload, validatedApiAccount)
+          content = receiveProviderOrderConfirmationsReturnCustomerInformation(payload, validatedApiAccount)
         } else {
           content.status = "INVALID_REQUEST"
         }

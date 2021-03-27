@@ -91,6 +91,18 @@ function moveRows(sourceSheet, destSheet, filter) {
   } catch(e) { logError(e) }
 }
 
+function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
+  try {
+    const sourceSheet = sourceRange.getSheet()
+    const sourceData = getRangeValuesAsTable(sourceRange, {includeFormulaValues: false})[0]
+    Object.keys(extraFields).forEach(key => sourceData[key] = extraFields[key])
+    const lastRowPosition = sourceSheet.getLastRow()
+    appendDataRow(sourceSheet, destSheet, sourceData)
+    if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
+    sourceSheet.deleteRow(sourceData._rowPosition)
+  } catch(e) { logError(e) }
+}
+
 // Take an incoming map of values and append them to the sheet, matching column names to map key names
 // If columns present in the source data are missing in the destination sheet,
 // those columns will be added to the destination sheet, right after the column they're after in the
