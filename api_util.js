@@ -27,7 +27,30 @@ function buildAddressFromSpec(address) {
 }
 
 function buildTimeFromSpec(date, time) {
-  return {"@time": combineDateAndTime(date, time)}
+  try {
+    return {"@time": combineDateAndTime(date, time)}
+  } catch(e) { logError(e) }
+}
+
+// Takes a value and removes all characters that are not 0-9 and converts to integer
+function buildPhoneNumberToSpec(value) {
+  try {
+    return parseInt([...value.toString()].map(char => isNaN(+char) ? '' : char.trim()).join(''))
+  } catch(e) { logError(e) }
+}
+
+function buildPhoneNumberFromSpec(value) {
+  try {
+    if (!value) return ""
+    const v = value.toString()
+
+    if (v.length === 7) return `${v.slice(0,3)}-${v.slice(-4)}`
+    if (v.length === 10) return `(${v.slice(0,3)})${v.slice(3,6)}-${v.slice(-4)}`
+    if (v.length === 11 && v.slice(0,1) === '1') return `1(${v.slice(1,4)})${v.slice(4,7)}-${v.slice(-4)}`
+    if (v.length > 11 && v.slice(0,1) === '1') return `1(${v.slice(1,4)})${v.slice(4,7)}-${v.slice(7,11)} x${v.slice(11)}`
+    if (v.length > 10) return `(${v.slice(0,3)})${v.slice(3,6)}-${v.slice(6,10)} x${v.slice(10)}`
+    return v
+  } catch(e) { logError(e) }
 }
 
 function urlQueryString(params) {

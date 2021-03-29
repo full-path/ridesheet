@@ -54,7 +54,8 @@ function receiveTripRequestResponsesReturnClientOrderConfirmations(payload, apiA
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const tripSheet = ss.getSheetByName("Trips")
     const sentTripSheet = ss.getSheetByName("Sent Trips")
-    const allTrips = getRangeValuesAsTable(tripSheet.getDataRange())
+    const tripRange = tripSheet.getDataRange()
+    const allTrips = getRangeValuesAsTable(tripRange)
     const claimTime = new Date()
     let response = {}
     response.status = "OK"
@@ -77,15 +78,15 @@ function receiveTripRequestResponsesReturnClientOrderConfirmations(payload, apiA
     //    Response: Send the rescission
     //    Local action: none
     // 3. Accept the decline
-    //    Response: none (?)
+    //    Response: none
     //    Local action: log the decline if the trip is still in a shared status so that it's useful to the user and also prevents 
     //                  resending the tripRequest to the same provider again.
 
-    const filterTripRequestResponseClaims          = function(row) { return row.tripAvailable }
-    const filterTripRequestResponseClaimsToAccept  = function(row) { return row.tripAvailable && allTrips.filter(tripsToBeClaimed).includes(row.tripID) }
-    const tripRequestResponseClaimsToRescind = function(row) { return row.tripAvailable && !allTrips.filter(tripsToBeClaimed).includes(row.tripID) }
-    const tripRequestResponseDeclines        = function(row) { return !row.tripAvailable }
-    const tripsToBeClaimed = function(row) {
+    const filterTripRequestResponseClaims          = row => row.tripAvailable
+    const filterTripRequestResponseClaimsToAccept  = row => row.tripAvailable && allTrips.filter(filterTripsToBeClaimed).map(trip => trip["Trip ID"]).includes(row.tripID)
+    const filterTripRequestResponseClaimsToRescind = row => row.tripAvailable && !allTrips.filter(filterTripsToBeClaimed).map(trip => trip["Trip ID"]).includes(row.tripID)
+    const filterTripRequestResponseDeclines        = row => !row.tripAvailable
+    const filterTripsToBeClaimed = row => {
       return (
         tripRequestResponses.filter(filterTripRequestResponseClaims).map(t => t.tripID).includes(row["Trip ID"]) && 
         row["Trip Date"] >= dateToday() && 
@@ -95,37 +96,89 @@ function receiveTripRequestResponsesReturnClientOrderConfirmations(payload, apiA
     }
 
     const tripRequestResponseClaimsToAccept = tripRequestResponses.filter(filterTripRequestResponseClaimsToAccept)
+    const tripRequestResponseClaimsToRescind = tripRequestResponses.filter(filterTripRequestResponseClaimsToRescind)
+    const tripRequestResponseDeclines = tripRequestResponses.filter(filterTripRequestResponseDeclines)
+
     let allCustomers
-    if (tripRequestResponseClaimsToAccept > 1) allCustomers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
+    if (tripRequestResponseClaimsToAccept.length) {
+      allCustomers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
+    }
     tripRequestResponseClaimsToAccept.forEach(claim => {
-      trip = allTrips.find(row => row["Trip ID"] === claim.tripTicketId)
-      customer = allCustomers.find(row => row["Customer ID"] === trip["Customer ID"])
-      let tripInfo = {}
-      tripInfo.tripTicketId = claim.tripTicketId
-      tripInfo["@customerId"] = 1
-      tripInfo.customerName = customer["Customer Last Name"] + ", " + customer["Customer First Name"]
-      if (customer["Phone Number"]) {
-        tripInfo.customerMobilePhone = customer["Phone Number"]
+      let trip = allTrips.find(row => row["Trip ID"] === claim.tripTicketId)
+      let customer = allCustomers.find(row => row["Customer ID"] === trip["Customer ID"])
+      let confirmationOut = {}
+      confirmationOut.tripAvailable = false
+      confirmationOut.tripTicketId = claim.tripTicketId
+      confirmationOut["@customerId"] = trip["Customer ID"]
+      confirmationOut.customerName = customer["Customer Last Name"] + ", " + customer["Customer First Name"]
+      if (customer["Mobile Phone"]) {
+        confirmationOut.customerMobilePhone = customer["Phone Number"]
       }
-      tripInfo.numOtherReservedPassengers = trip["Riders"] - 1
-      if (tripIn["Earliest PU Time"]) {
-        tripInfo.pickupWindowStartTime = buildTimeFromSpec(trip["Trip Date"], trip["Earliest PU Time"])
+      confirmationOut.numOtherReservedPassengers = trip["Riders"] - 1
+      if (trip["Earliest PU Time"]) {
+        confirmationOut.pickupWindowStartTime = buildTimeFromSpec(trip["Trip Date"], trip["Earliest PU Time"])
       }
-      if (tripIn["Latest PU Time"]) {
-        tripInfo.pickupWindowEndTime = buildTimeFromSpec(trip["Trip Date"], trip["Latest PU Time"])
+      if (trip["Latest PU Time"]) {
+        confirmationOut.pickupWindowEndTime = buildTimeFromSpec(trip["Trip Date"], trip["Latest PU Time"])
       }
       if (claim.scheduledPickupTime) {
-        tripInfo.negotiatedPickupTime = claim.scheduledPickupTime
+        confirmationOut.negotiatedPickupTime = claim.scheduledPickupTime
       }
-      tripInfo.pickupTime = buildTimeFromSpec(trip["Trip Date"], trip["Latest PU Time"])
-      tripInfo.dropoffTime = buildTimeFromSpec(trip["Trip Date"], trip["Latest DO Time"])
-      if (trip["Appt Time"]) tripInfo.appointmentTime = buildTimeFromSpec(trip["Trip Date"], trip["Latest PU Time"])
-      tripInfo.dropoffAddress = buildAddressToSpec(trip["PU Address"])
-      tripInfo.pickupAddress = buildAddressToSpec(trip["DO Address"])
-      response.results.push({clientOrderConfirmations: tripInfo})
+      confirmationOut.pickupTime = buildTimeFromSpec(trip["Trip Date"], trip["Latest PU Time"])
+      confirmationOut.dropoffTime = buildTimeFromSpec(trip["Trip Date"], trip["Latest DO Time"])
+      if (trip["Appt Time"]) confirmationOut.appointmentTime = buildTimeFromSpec(trip["Trip Date"], trip["Latest PU Time"])
+      confirmationOut.dropoffAddress = buildAddressToSpec(trip["PU Address"])
+      confirmationOut.pickupAddress = buildAddressToSpec(trip["DO Address"])
+      let openAttributes = {}
+      openAttributes.estimatedTripDurationInSeconds = timeOnlyAsMilliseconds(trip["Est Hours"] || 0)/1000
+      openAttributes.estimatedTripDistanceInMiles = trip["Est Miles"]
+      if (trip["Mobility Factors"]) openAttributes.mobilityFactors = trip["Mobility Factors"]
+      if (trip["Notes"]) openAttributes.notes = trip["Notes"]
+      confirmationOut["@openAttribute"] = JSON.stringify(openAttributes)
+      response.results.push({clientOrderConfirmations: confirmationOut})
+
+      let customerInfoOut = {}
+      customerInfoOut.customerId = trip["Customer ID"]
+      customerInfoOut.customerName = customer["Customer Last Name"] + ", " + customer["Customer First Name"]
+      if (customer["Home Address"]) customerInfoOut.customerAddress = buildAddressToSpec(customer["Home Address"])
+      if (customer["Phone Number"]) customerInfoOut.customerPhone = buildPhoneNumberToSpec(customer["Phone Number"])
+      if (customer["Mobile Phone"]) customerInfoOut.customerMobilePhone = buildPhoneNumberToSpec(customer["Mobile Phone"])
+      if (customer["Gender"]) customerInfoOut.gender = customer["Gender"]
+      if (customer["Caregiver Contact Info"]) customerInfoOut.caregiverContactInformation = customer["Caregiver Contact Info"]
+      if (customer["Emergency Phone Number"]) customerInfoOut.customerEmergencyPhoneNumber = customer["Emergency Phone Number"]
+      if (customer["Emergency Contact Name"]) customerInfoOut.customerEmergencyContactName = customer["Emergency Contact Name"]
+      if (customer["Required Care Comments"]) customerInfoOut.requiredCareComments = customer["Required Care Comments"]
+      if (customer["Notes"]) customerInfoOut.notesForDriver = customer["Notes"]
+      response.results.push({customerInfo: customerInfoOut})
+
       let sentTripData = {"Claim Time": claimTime, "Claiming Agency": apiAccount.name, "Sched PU Time": claim.scheduledPickupTime}
       moveRow(tripSheet.getRange("A" + trip._rowPosition + ":" + trip._rowPosition), sentTripSheet, {extraFields: sentTripData})
     })
+
+    tripRequestResponseClaimsToRescind.forEach(claim => {
+      let confirmationOut = {}
+      confirmationOut.tripTicketId = claim.tripTicketId
+      confirmationOut.tripAvailable = false
+      response.results.push({clientOrderConfirmations: confirmationOut})
+    })
+
+    if (tripRequestResponseDeclines.length) {
+      let tripUpdates = allTrips.map(row => {return {}})
+      tripRequestResponseDeclines.forEach(decline => {
+        let trip = allTrips.find(row => row["Trip ID"] === decline.tripTicketId)
+        tripUpdates[trip._rowIndex] = {}
+        if (trip["Declined By"]) {
+          let declinedBy = JSON.parse(trip["Declined By"])
+          if (!declinedBy.includes(apiAccount.name)) {
+            declinedBy.push(apiAccount.name)
+            tripUpdates["Declined By"] = declinedBy
+          }
+        } else {
+          tripUpdates["Declined By"] = JSON.stringify([apiAccount.name])
+        }
+      })
+      setValuesByHeaderNames(tripUpdates, tripRange)
+    }
 
     return response
   } catch(e) { logError(e) }
