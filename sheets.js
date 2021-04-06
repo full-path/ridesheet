@@ -225,47 +225,63 @@ function getValueByHeaderName(headerName, range) {
 
 function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1} = {}) {
   try {
-    if (newValues.every(row => Object.keys(row).length === 0 )) return
+    // Gather a list of the indexes of all the rows with data.
+    const indexesOfRowsWithData = newValuesToApply.map((r, i) => Object.keys(r).length === 0 ? -1 : i).filter(r => r > -1)
+    // If there's no actual data, quit now
+    if (indexesOfRowsWithData.length === 0 ) return range
+
     const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {headerRowPosition: headerRowPosition})
     const rangeHeaderNames = getRangeHeaderNames(range, {headerRowPosition: headerRowPosition})
     const topRangeRowPosition = range.getRow()
     const topDataRowPosition = (topRangeRowPosition > headerRowPosition) ? topRangeRowPosition : headerRowPosition + 1
-    const numRows = range.getLastRow() - topDataRowPosition + 1
-    const newValuesToApply = (numRows === newValues.length) ? newValues : newValues.slice(topDataRowPosition - topRangeRowPosition)
+    const initialNumRows = range.getLastRow() - topDataRowPosition + 1
+    const newValuesToApply = (initialNumRows === newValues.length) ? newValues : newValues.slice(topDataRowPosition - topRangeRowPosition)
+    if (initialNumRows !== newValuesToApply.length) {
+      throw new Error("Values array length does not match the number of range rows")
+    }
 
-    // Get the full list of header names for columns to be updated
+    // Find the smallest series of rows that will update the columns that need to be updated in one update action
+    const startDataRowIndex = Math.min(...indexesOfRowsWithData)
+    const endDataRowIndex = Math.max(...indexesOfRowsWithData) + 1
+    // Narrow the data accordingly
+    const narrowedNewValuesToApply = newValuesToApply.slice(startDataRowIndex, endDataRowIndex)
+
+    // Get the full list of header names to be updated across all rows
     let headerNamesInNewValues = []
     newValuesToApply.forEach(row => {
       Object.keys(row).forEach(headerName => {
         if (!headerNamesInNewValues.includes(headerName)) headerNamesInNewValues.push(headerName)
       })
     })
-    
-    // Find the smallest range that will update the columns that need to be updated in one update action
+    // Find the smallest series of columns that will update all the columns that need to be updated in one update action
     const headerNamePositions = headerNamesInNewValues.filter(
-      headerName => rangeHeaderNames.indexOf(headerName) > -1 
+      headerName => rangeHeaderNames.includes(headerName)
       ).map(headerName => sheetHeaderNames.indexOf(headerName) + 1)
+    // If none of the header names are in the range passed in, quit now
+    if (headerNamePositions.length === 0) return range
+
+    // Create the narrowed range, based on narrowed row and column data
+    const firstRowPosition = topDataRowPosition + startDataRowIndex
     const firstColumnPosition = Math.min(...headerNamePositions)
+    const numRows = endDataRowIndex - startDataRowIndex
     const numColumns = Math.max(...headerNamePositions) - firstColumnPosition + 1
-    const narrowedRange = range.getSheet().getRange(topDataRowPosition, firstColumnPosition, numRows, numColumns)
+    const narrowedRange = range.getSheet().getRange(firstRowPosition, firstColumnPosition, numRows, numColumns)
     const narrowedRangeHeaderNames = getRangeHeaderNames(narrowedRange)
     let narrowedRangeValues = narrowedRange.getValues()
 
-    if (numRows !== newValuesToApply.length) {
-      throw new Error("Values array length does not match the number of range rows")
-    }
-    
     // Update the array of arrays with the new values
     narrowedRangeValues.forEach((sheetRow, sheetRowIndex) => {
       narrowedRangeHeaderNames.forEach((rangeHeaderName, rangeHeaderIndex) => {
-        if (Object.keys(newValuesToApply[sheetRowIndex]).indexOf(rangeHeaderName) > -1) {
-          sheetRow[rangeHeaderIndex] = newValuesToApply[sheetRowIndex][rangeHeaderName]
+        if (Object.keys(narrowedNewValuesToApply[sheetRowIndex]).indexOf(rangeHeaderName) > -1) {
+          sheetRow[rangeHeaderIndex] = narrowedNewValuesToApply[sheetRowIndex][rangeHeaderName]
         }
       })
     })
 
     // Do the actual update
-    return narrowedRange.setValues(narrowedRangeValues)
+    narrowedRange.setValues(narrowedRangeValues)
+    // Return the original range, for chaining
+    return range
   } catch(e) { logError(e) }
 }
 
