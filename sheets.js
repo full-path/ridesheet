@@ -225,11 +225,6 @@ function getValueByHeaderName(headerName, range) {
 
 function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1} = {}) {
   try {
-    // Gather a list of the indexes of all the rows with data.
-    const indexesOfRowsWithData = newValuesToApply.map((r, i) => Object.keys(r).length === 0 ? -1 : i).filter(r => r > -1)
-    // If there's no actual data, quit now
-    if (indexesOfRowsWithData.length === 0 ) return range
-
     const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {headerRowPosition: headerRowPosition})
     const rangeHeaderNames = getRangeHeaderNames(range, {headerRowPosition: headerRowPosition})
     const topRangeRowPosition = range.getRow()
@@ -239,6 +234,11 @@ function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1} = {}) 
     if (initialNumRows !== newValuesToApply.length) {
       throw new Error("Values array length does not match the number of range rows")
     }
+
+    // Gather a list of the indexes of all the rows with data.
+    const indexesOfRowsWithData = newValuesToApply.map((r, i) => Object.keys(r).length === 0 ? -1 : i).filter(r => r > -1)
+    // If there's no actual data, quit now
+    if (indexesOfRowsWithData.length === 0 ) return range
 
     // Find the smallest series of rows that will update the columns that need to be updated in one update action
     const startDataRowIndex = Math.min(...indexesOfRowsWithData)
