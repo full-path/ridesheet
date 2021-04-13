@@ -1,65 +1,96 @@
 function updateRuns(e) {
-  let newRun
-  let runsRange
-  let runsData
-  let ss = SpreadsheetApp.getActiveSpreadsheet()
-  let trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
-    return tripRow["Trip Date"] && tripRow["Driver ID"] && tripRow["Vehicle ID"]
-  })
-  let runsSheet = ss.getSheetByName("Runs")
-  let runsLastRow = runsSheet.getLastRow()
-  if (runsLastRow > 1) {
-    runsRange = runsSheet.getRange(2, 1, runsLastRow-1, runsSheet.getLastColumn())
-    runsData = getRangeValuesAsTable(runsRange)
-  } else {
-    runsData = []
-  }
-  let runsMap = new Map()
-  let newRunsMap = new Map()
-  runsData.forEach(runRow => runsMap.set(runRow,[]))
-  trips.forEach((tripRow, tripIndex) => {
-    let found = false
-    runsMap.forEach((value, runRow) => {
-      if (tripRow["Trip Date"]  >=  runRow["Run Date"] &&
-          tripRow["Trip Date"]  <=  runRow["Run Date"] &&
-          tripRow["Driver ID"]  === runRow["Driver ID"] &&
-          tripRow["Vehicle ID"] === runRow["Vehicle ID"]) {
-        found = true
-        runsMap.get(runRow).push(tripRow)
+  try {
+    let newRun
+    let runsRange
+    let runsData
+    let ss = SpreadsheetApp.getActiveSpreadsheet()
+
+    // Gather all needed trip data
+    let trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
+      return tripRow["Trip Date"] && tripRow["Driver ID"] && tripRow["Vehicle ID"]
+    })
+    // Gather all run data
+    let runsSheet = ss.getSheetByName("Runs")
+    let runsLastRow = runsSheet.getLastRow()
+    let runsLastColumn = runsSheet.getLastColumn()
+    if (runsLastRow > 1) {
+      runsRange = runsSheet.getDataRange()
+      runsData = getRangeValuesAsTable(runsRange)
+    } else {
+      runsData = []
+    }
+
+    // Iterate through trip data, associating it with the matching run row
+    // Using a map here rather than an object, as the map allows us to use the entire
+    // run row as a key.
+    // The result here is two maps: one for runs already present, and one for runs that need to be
+    // added
+    let runsOut = new Map()
+    let newRunsOut = new Map()
+    let uniqueRuns = []
+    runsData.forEach(runRow => {
+      let runFingerprint = JSON.stringify(runRow["Run Date"]) + runRow["Driver ID"] + runRow["Vehicle ID"]
+      if (!uniqueRuns.includes(runFingerprint)) {
+        uniqueRuns.push(runFingerprint)
+        runsOut.set(runRow,[])
       }
     })
-    if (!found) {
-      newRunsMap.forEach((value, runRow) => {
+    trips.forEach((tripRow, tripIndex) => {
+      let found = false
+      runsOut.forEach((value, runRow) => {
         if (tripRow["Trip Date"]  >=  runRow["Run Date"] &&
             tripRow["Trip Date"]  <=  runRow["Run Date"] &&
             tripRow["Driver ID"]  === runRow["Driver ID"] &&
             tripRow["Vehicle ID"] === runRow["Vehicle ID"]) {
           found = true
-          newRunsMap.get(runRow).push(tripRow)
+          runsOut.get(runRow).push(tripRow)
         }
       })
+      if (!found) {
+        newRunsOut.forEach((value, runRow) => {
+          if (tripRow["Trip Date"]  >=  runRow["Run Date"] &&
+              tripRow["Trip Date"]  <=  runRow["Run Date"] &&
+              tripRow["Driver ID"]  === runRow["Driver ID"] &&
+              tripRow["Vehicle ID"] === runRow["Vehicle ID"]) {
+            found = true
+            newRunsOut.get(runRow).push(tripRow)
+          }
+        })
+      }
+      if (!found) {
+        newRun = {}
+        newRun["Run Date"] = tripRow["Trip Date"]
+        newRun["Driver ID"] = tripRow["Driver ID"]
+        newRun["Vehicle ID"] = tripRow["Vehicle ID"]
+        newRunsOut.set(newRun,[tripRow])
+      }
+    })
+
+    // Merge together the existing and new runs, sorting the merged data set by Run Date
+    const existingRuns = updateRunDetails(runsOut)
+    const newRuns = updateRunDetails(newRunsOut)
+    let runsToSave = [...existingRuns, ...newRuns].sort((a,b) => {
+      return a["Run Date"] - b["Run Date"]
+    })
+
+    // If the resulting run list is longer than the original one, get a larger range.
+    // If the resulting run list is shorter than the original one, clear out the values in the last rows
+    const countOfRowsUnfilled = runsData.length - runsToSave.length
+    let runsRangeOut = runsRange
+    if (countOfRowsUnfilled < 0) {
+      runsRangeOut = runsSheet.getRange(1, 1, runsToSave.length + 1, runsLastColumn)
+    } else if (countOfRowsUnfilled > 0) {
+      runsToSave = [...runsToSave, ...Array(countOfRowsUnfilled).fill({})]
     }
-    if (!found) {
-      newRun = {}
-      newRun["Run Date"] = tripRow["Trip Date"]
-      newRun["Driver ID"] = tripRow["Driver ID"]
-      newRun["Vehicle ID"] = tripRow["Vehicle ID"]
-      newRunsMap.set(newRun,[tripRow])
-    }
-  })
-  if (runsMap.size) {
-    let existingRuns = updateRunDetails(runsMap)
-    setValuesByHeaderNames(existingRuns, runsRange)
-  }
-  if (newRunsMap.size) {
-    let newRuns = updateRunDetails(newRunsMap)
-    appendValuesByHeaderNames(newRuns, runsSheet)
-  }
+    // log("runsToSave",JSON.stringify(runsToSave))
+    // log("runsRangeOut",runsRangeOut.getA1Notation())
+    if (runsRangeOut) setValuesByHeaderNames(runsToSave,runsRangeOut,{overwriteAll: true})
+  } catch(e) { logError(e) }
 }
 
 function updateRunDetails(runsMap) {
   try {
-    let runsArray = Array.from(runsMap.keys())
+    let runsArray = Array.from(runsMap.keys()).filter(runRow => runsMap.get(runRow).length > 0)
     runsArray.forEach(run => {
       let tripsArray = runsMap.get(run).filter(trip => trip["PU Time"])
       if (tripsArray.length === 0) {
@@ -78,9 +109,7 @@ function updateRunDetails(runsMap) {
       }
     })
     return runsArray
-  } catch(e) {
-    logError(e)
-  }
+  } catch(e) { logError(e) }
 }
 
 function sendRequestForRuns() {
