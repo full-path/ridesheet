@@ -98,21 +98,28 @@ function moveTripsToReview() {
 
 function moveTripsToArchive() {
   try {
-    const ss               = SpreadsheetApp.getActiveSpreadsheet()
-    const tripReviewSheet  = ss.getSheetByName("Trip Review")
-    const tripArchiveSheet = ss.getSheetByName("Trip Archive")
+    const ss                             = SpreadsheetApp.getActiveSpreadsheet()
+    const tripReviewSheet                = ss.getSheetByName("Trip Review")
+    const tripArchiveSheet               = ss.getSheetByName("Trip Archive")
+    const tripReviewRequiredFields       = getDocProp("tripReviewRequiredFields")
+    const tripReviewCompletedTripResults = getDocProp("tripReviewCompletedTripResults")
     const tripFilter       = function(row) {
-      const columns = getDocProp("tripReviewRequiredFields")
-      blankColumns = columns.filter(column => !row[column])
-      return blankColumns.length === 0
+      if (!row["Trip Result"]) {
+        return false
+      } else if (tripReviewCompletedTripResults.includes(row["Trip Result"])) {
+        blankColumns = tripReviewRequiredFields.filter(column => !row[column])
+        return blankColumns.length === 0
+      } else {
+        return true
+      }
     }
     moveRows(tripReviewSheet, tripArchiveSheet, tripFilter)
 
-    const runReviewSheet  = ss.getSheetByName("Run Review")
-    const runArchiveSheet = ss.getSheetByName("Run Archive")
+    const runReviewSheet          = ss.getSheetByName("Run Review")
+    const runArchiveSheet         = ss.getSheetByName("Run Archive")
+    const runReviewRequiredFields = getDocProp("runReviewRequiredFields")
     const runFilter       = function(row) {
-      const columns = getDocProp("runReviewRequiredFields")
-      blankColumns = columns.filter(column => !row[column])
+      blankColumns = runReviewRequiredFields.filter(column => !row[column])
       return blankColumns.length === 0
     }
     moveRows(runReviewSheet, runArchiveSheet, runFilter)

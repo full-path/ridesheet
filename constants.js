@@ -689,6 +689,14 @@ const defaultNamedRanges = {
     "sheetName":"Trips",
     "headerName":"DO Address"
   },
+  "codeFillHoursAndMiles3": {
+    "sheetName":"Trip Review",
+    "headerName":"PU Address"
+  },
+  "codeFillHoursAndMiles4": {
+    "sheetName":"Trip Review",
+    "headerName":"DO Address"
+  },
   "codeFillRequestCells1": {
     "sheetName":"Trips",
     "headerName":"Customer Name and ID"
@@ -712,6 +720,14 @@ const defaultNamedRanges = {
   "codeFormatAddress5": {
     "sheetName":"Vehicles",
     "headerName":"Garage Address"
+  },
+  "codeFormatAddress6": {
+    "sheetName":"Trip Review",
+    "headerName":"PU Address"
+  },
+  "codeFormatAddress7": {
+    "sheetName":"Trip Review",
+    "headerName":"DO Address"
   },
   "codeScanForDuplicates1": {
     "sheetName":"Customers",
