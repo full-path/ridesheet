@@ -16,7 +16,13 @@ function buildMenus() {
   settingsMenu.addItem('Application properties', 'presentProperties')
   settingsMenu.addItem('Scheduled calendar updates', 'presentCalendarTrigger')
   menu.addSubMenu(settingsMenu)
-  menu.addToUi()
+  if (getDocProp("apiShowMenuItems")) {
+    const menuApi = ui.createMenu('API')
+    menuApi.addItem('Get trip requests', 'sendRequestForTripRequests')
+    menuApi.addItem('Send responses to trip requests', 'sendTripRequestResponses')
+    menuApi.addToUi()
+  }
+  menu.addToUi
 }
 
 function buildNamedRanges() {

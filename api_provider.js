@@ -31,12 +31,14 @@ function sendRequestForTripRequests() {
     let currentRow = 3
     endPoints = getDocProp("apiGetAccess")
     endPoints.forEach(endPoint => {
+      log("Name",endPoint.name)
       if (endPoint.hasTrips) {
         let params = {resource: "tripRequests"}
         let response = getResource(endPoint, params)
         let responseObject
         try {
           responseObject = JSON.parse(response.getContentText())
+          log(responseObject)
         } catch(e) {
           logError(e)
           responseObject = {status: "LOCAL_ERROR:" + e.name}
@@ -147,11 +149,24 @@ function sendRequestForTripRequests() {
           sheet.autoResizeColumns(1,grid[0].length)
           sheet.autoResizeRows(1,2)
         } else {
+          log("No trip requests")
           grid.push(
-            [endPoint.name + " responded with no trip requests"].concat(Array(14).fill(null))
+            [null, null, null, endPoint.name + " responded with no trip requests"].concat(Array(14).fill(null))
           )
-          const thisRange = "A" + currentRow + ":" + lastColumnLetter + currentRow
+          const thisRange = "D" + currentRow + ":" + lastColumnLetter + currentRow
           formatGroups.mergeCells.ranges.push(thisRange)
+
+          const ss = SpreadsheetApp.getActiveSpreadsheet()
+          const sheet = ss.getSheetByName("Outside Trips") || ss.insertSheet("Outside Trips")
+          sheet.getDataRange().clear().breakApart()
+          let range = sheet.getRange(1, 1, grid.length, grid[0].length)
+          range.clearFormat()
+          range.setValues(grid)
+          applyFormats(formatGroups, sheet)
+          sheet.setFrozenRows(2)
+          sheet.setFrozenColumns(3)
+          sheet.autoResizeColumns(1,grid[0].length)
+          sheet.autoResizeRows(1,2)
           currentRow += 1
         }
       }
@@ -174,16 +189,16 @@ function sendTripRequestResponses() {
       if (endPoint.hasTrips) {
         let params = {resource: "tripRequestResponses"}
 
-        const trips = getRangeValuesAsTable(ss.getSheetByName("Outside Trips").getDataRange()).filter(tripRow => {
+        const trips = getRangeValuesAsTable(ss.getSheetByName("Outside Trips").getDataRange(), {headerRowPosition: 2}).filter(tripRow => {
           return (
-              tripRow["Trip Date"] >=  dateToday() &&
+            tripRow["Trip Date"] >=  dateToday() &&
             ( tripRow["Decline"]   === true || tripRow["Claim"] === true) &&
             !(tripRow["Decline"]   === true && tripRow["Claim"] === true)
           )
         })
         let payload = trips.map(tripIn => {
           let tripOut = {}
-          tripOut.tripAvailable = (tripRow["Claim"] === true)
+          tripOut.tripAvailable = (tripIn["Claim"] === true)
           if (tripOut.tripAvailable && trips["Scheduled PU Time"]) {
             tripOut["scheduledPickupTime"] = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["Scheduled PU Time"])}
           }
@@ -197,7 +212,7 @@ function sendTripRequestResponses() {
 
         // Here we're sending the tripRequestResponses in the payload.
         // responseObject, if validated, contains clientOrderConfirmations
-        let response = postResource(endPoint, params, payload)
+        let response = postResource(endPoint, params, JSON.stringify(payload))
         let responseObject
         try {
           responseObject = JSON.parse(response.getContentText())

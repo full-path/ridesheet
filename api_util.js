@@ -97,7 +97,9 @@ function getResource(endPoint, params) {
     hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
 
     const options = {method: 'GET', contentType: 'application/json'}
-    const response = UrlFetchApp.fetch(endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac), options)
+    const fetchUrl = endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac)
+    log(fetchUrl)
+    const response = UrlFetchApp.fetch(fetchUrl, options)
     return response
   } catch(e) { logError(e) }
 }
@@ -112,7 +114,9 @@ function postResource(endPoint, params, payload) {
     hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
 
     const options = {method: 'POST', contentType: 'application/json', payload: payload}
-    const response = UrlFetchApp.fetch(endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac), options)
+    const fetchUrl = endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac)
+    log(fetchUrl, JSON.stringify(payload))
+    const response = UrlFetchApp.fetch(fetchUrl, options)
     return response
   } catch(e) { logError(e) }
 }
