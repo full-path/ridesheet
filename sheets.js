@@ -84,10 +84,12 @@ function moveRows(sourceSheet, destSheet, filter) {
     const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
     const rowsToMove = sourceData.filter(row => filter(row))
     const lastRowPosition = sourceSheet.getLastRow()
-    rowsToMove.forEach(row => appendDataRow(sourceSheet, destSheet, row))
-    if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
-    const rowsToDelete = rowsToMove.map(row => row._rowPosition).sort((a,b)=>b-a)
-    rowsToDelete.forEach(rowPosition => sourceSheet.deleteRow(rowPosition))
+    const rowsMovedSuccessfully = rowsToMove.every(row => appendDataRow(sourceSheet, destSheet, row))
+    if (rowsMovedSuccessfully) {
+      if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
+      const rowsToDelete = rowsToMove.map(row => row._rowPosition).sort((a,b)=>b-a)
+      rowsToDelete.forEach(rowPosition => sourceSheet.deleteRow(rowPosition))
+    }
   } catch(e) { logError(e) }
 }
 
@@ -97,9 +99,10 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
     const sourceData = getRangeValuesAsTable(sourceRange, {includeFormulaValues: false})[0]
     Object.keys(extraFields).forEach(key => sourceData[key] = extraFields[key])
     const lastRowPosition = sourceSheet.getLastRow()
-    appendDataRow(sourceSheet, destSheet, sourceData)
-    if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
-    sourceSheet.deleteRow(sourceData._rowPosition)
+    if (appendDataRow(sourceSheet, destSheet, sourceData)) {
+      if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
+      sourceSheet.deleteRow(sourceData._rowPosition)
+    }
   } catch(e) { logError(e) }
 }
 
@@ -112,9 +115,12 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
     const sourceColumnNames = Object.keys(dataMap)
     const destColumnNamesOriginalState = getSheetHeaderNames(destSheet)
     let destColumnNamesCurrentState = destColumnNamesOriginalState
-    let missingDestColumns = []
-    sourceColumnNames.forEach((sourceColumnName, i) => {
-      if (destColumnNamesOriginalState.indexOf(sourceColumnName) === -1 && sourceColumnName.slice(0,1) !== "_") {
+    let allColumnsValid = true
+    sourceColumnNames.every((sourceColumnName, i) => {
+      if (sourceColumnName.trim() == "") {
+        SpreadsheetApp.getActiveSpreadsheet().toast("Empty column heading encountered in source sheet. Action Cancelled.","Error")
+        allColumnsValid = false
+      } else if (destColumnNamesOriginalState.indexOf(sourceColumnName) === -1 && sourceColumnName.slice(0,1) !== "_") {
         let colPosition = 1
         if (i === 0) {
           destSheet.insertColumns(colPosition)
@@ -127,7 +133,6 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
             destSheet.insertColumnAfter(positionOfColumnToInsertAfter)
           }
         }
-        console.log(sourceColumnName)
         let sourceRange = sourceSheet.getRange(2, getSheetHeaderNames(sourceSheet).indexOf(sourceColumnName) + 1)
         let destHeaderRange = destSheet.getRange(1, colPosition)
         let destDataRange = destSheet.getRange(2, colPosition, destSheet.getMaxRows()-1)
@@ -142,10 +147,17 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
         }
         destColumnNamesCurrentState = getSheetHeaderNames(destSheet, {forceRefresh: true})
       }
+      return allColumnsValid
     })
-    const dataArray = destColumnNamesCurrentState.map(colName => dataMap[colName])
-    destSheet.appendRow(dataArray)
-  } catch(e) { logError(e) }
+    if (allColumnsValid) {
+      const dataArray = destColumnNamesCurrentState.map(colName => dataMap[colName])
+      destSheet.appendRow(dataArray)
+    }
+    return allColumnsValid
+  } catch(e) {
+    logError(e)
+    return false
+  }
 }
 
 // Takes a range and returns an array of objects, each object containing key/value pairs. 
