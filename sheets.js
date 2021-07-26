@@ -344,3 +344,17 @@ function applyFormats(formatGroups, sheet) {
     })
   } catch(e) { logError(e) }
 }
+
+function getColumnLettersFromPosition(colPosition) {
+  try {
+    const letterSeriesStart = "A".charCodeAt()
+    const letterCount = "Z".charCodeAt() - letterSeriesStart + 1
+    let columnLetters = []
+    let remainder = colPosition - 1
+    while (remainder >= 0) {
+      columnLetters.unshift(String.fromCharCode((remainder % letterCount) + letterSeriesStart))
+      remainder = Math.floor(remainder / letterCount) - 1
+    }
+    return columnLetters.join("")
+  } catch(e) { logError(e) }
+}

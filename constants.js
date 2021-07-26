@@ -16,13 +16,30 @@ const defaultGeocoderBoundNeLongitude    = -116.463363
 const defaultDwellTimeInMinutes          = 10
 const defaultTripPaddingPerHourInMinutes = 5
 
+const defaultSheets = [
+  "Customers",
+  "Trips",
+  "Runs",
+  "Sent Trips",
+  "Trip Review",
+  "Run Review",
+  "Trip Archive",
+  "Run Archive",
+  "Vehicles",
+  "Drivers",
+  "Services",
+  "Outside Trips",
+  "Outside Runs",
+  "Lookups",
+  "Document Properties",
+  "Debug Log"
+]
+
 const sheetsWithHeaders = [
   "Customers",
   "Trips",
   "Runs",
   "Sent Trips",
-  "Incoming Trips",
-  "Recurring Trips",
   "Trip Review",
   "Run Review",
   "Trip Archive",
@@ -31,7 +48,7 @@ const sheetsWithHeaders = [
   "Drivers",
   "Services",
 ]
-  
+
 const defaultDocumentProperties = {
   lastCustomerID_: {
     type: "number",
@@ -172,6 +189,30 @@ const defaultDocumentProperties = {
       }  
     },
     description: "API information needed to allow agencies to connect to this sheet. We recommend using https://www.uuidgenerator.net/ to generate API keys."    
+  },
+  apiShowMenuItems: {
+    type: "boolean",
+    value: false,
+    description: "Show menu items for manually triggering API calls?"
+  },
+  extraHeaderNames: {
+    type: "object",
+    value: {
+      Customers: [],
+      Trips: [],
+      Runs: [],
+      "Sent Trips": [],
+      "Outside Trips": [],
+      "Outside Runs": [],
+      "Trip Review": [],
+      "Run Review": [],
+      "Trip Archive": [],
+      "Run Archive": [],
+      Vehicles: [],
+      Drivers: [],
+      Services: []
+    },
+    description: "Show menu items for manually triggering API calls?"
   }
 }
 
@@ -198,6 +239,7 @@ const defaultColumns = {
     },
     "Mailing Address": {},
     "Home Address": {},
+    "Default PU Address": {},
     "Default DO Address": {},
     "Default Service ID": {
       dataValidation: {
@@ -232,16 +274,29 @@ const defaultColumns = {
         helpText: "Value must be a valid customer name and ID.",
       },
     },
+    "Action": {},
+    "Go": {},
+    "Share": {},
+    "Declined By": {},
+    "Trip Result": {},
     "Source": {},
+    "Earliest PU Time": {
+      numberFormat: 'h":"mm am/pm'
+    },
     "PU Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
+    },
+    "Latest PU Time": {
+      numberFormat: 'h":"mm am/pm'
     },
     "DO Time": {
-      numberFormat: 'h":"mm am/pm'  
+      numberFormat: 'h":"mm am/pm'
     },
     "Appt Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
+    "PU Address": {},
+    "DO Address": {},
     "Driver ID": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -260,8 +315,6 @@ const defaultColumns = {
         helpText: "Value must be a valid vehicle ID.",
       },
     },
-    "PU Address": {},
-    "DO Address": {},
     "Service ID": {      
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -278,8 +331,8 @@ const defaultColumns = {
       numberFormat: "[h]:mm:ss"      
     },
     "Est Miles": {},
-    "Manifest ID": {},
-    "Calendar ID": {},
+    "Driver Calendar ID": {},
+    "Trip Event ID": {},
     "Trip ID": {},
     "Customer ID": {}
   },
@@ -318,6 +371,52 @@ const defaultColumns = {
     },
     "Scheduled End Time": {}
   },
+  "Sent Trips": {
+    "Claimed By": {},
+    "Trip Date": {
+      numberFormat: "M/d/yyyy",
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid date.",
+      },
+    },
+    "Customer Name and ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupCustomerNames",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid customer name and ID.",
+      },
+    },
+    "Declined By": {},
+    "Earliest PU Time": {
+      numberFormat: 'h":"mm am/pm'
+    },
+    "PU Time": {
+      numberFormat: 'h":"mm am/pm'
+    },
+    "Latest PU Time": {
+      numberFormat: 'h":"mm am/pm'
+    },
+    "DO Time": {
+      numberFormat: 'h":"mm am/pm'
+    },
+    "Appt Time": {
+      numberFormat: 'h":"mm am/pm'
+    },
+    "PU Address": {},
+    "DO Address": {},
+    "Guests": {},
+    "Mobility Factors": {},
+    "Notes": {},
+    "Est Hours": {
+      numberFormat: "[h]:mm:ss"
+    },
+    "Est Miles": {},
+    "Trip ID": {},
+    "Customer ID": {}
+  },
   "Trip Review": {
     "Trip Date": {
       numberFormat: "M/d/yyyy",
@@ -335,24 +434,27 @@ const defaultColumns = {
         helpText: "Value must be a valid customer name and ID.",
       },
     },
+    "Action": {},
+    "Go": {},
     "Trip Result": {},
+    "Share": {},
     "Actual PU Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Actual DO Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Start Odo": {},
     "End Odo": {},
     "Source": {},
     "PU Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "DO Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Appt Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Driver ID": {
       dataValidation: {
@@ -387,7 +489,7 @@ const defaultColumns = {
     "Mobility Factors": {},
     "Notes": {},
     "Est Hours": {
-      numberFormat: "[h]:mm:ss"      
+      numberFormat: "[h]:mm:ss"
     },
     "Est Miles": {},
     "Manifest ID": {},
@@ -421,22 +523,22 @@ const defaultColumns = {
       },
     },
     "Scheduled Start Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "First PU Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Last DO Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Scheduled End Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Actual Start Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Actual End Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Odometer Start": {},
     "Odometer End": {}
@@ -460,10 +562,10 @@ const defaultColumns = {
     },
     "Trip Result": {},
     "Actual PU Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Actual DO Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Start Odo": {},
     "End Odo": {},
@@ -471,13 +573,13 @@ const defaultColumns = {
     "Odo End": {},
     "Source": {},
     "PU Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "DO Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Appt Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Driver ID": {
       dataValidation: {
@@ -512,7 +614,7 @@ const defaultColumns = {
     "Mobility Factors": {},
     "Notes": {},
     "Est Hours": {
-      numberFormat: "[h]:mm:ssm"      
+      numberFormat: "[h]:mm:ss"
     },
     "Est Miles": {},
     "Manifest ID": {},
@@ -546,16 +648,16 @@ const defaultColumns = {
       },
     },
     "Scheduled Start Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Scheduled End Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Actual Start Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Actual End Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Odometer Start": {},
     "Odometer End": {}
@@ -564,13 +666,13 @@ const defaultColumns = {
     "Customer Name and ID": {},
     "Source": {},
     "PU Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "DO Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Appt Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm'
     },
     "Driver ID": {
       dataValidation: {
@@ -609,6 +711,12 @@ const defaultColumns = {
   "Vehicles": {
     "Vehicle ID": {},
     "Vehicle Name": {},
+    "Garage Address": {},
+    "Seating Capacity": {},
+    "Wheelchair Capacity": {},
+    "Scooter Capacity": {},
+    "Has Ramp": {},
+    "Has Lift": {},
     "Vehicle Start Date": {
       numberFormat: "M/d/yyyy",
       dataValidation: {
@@ -622,7 +730,7 @@ const defaultColumns = {
         criteriaType: "DATE_IS_VALID_DATE",
         helpText: "Value must be a valid date.",
       }
-    },
+    }
   },
   "Drivers": {
     "Driver ID": {},

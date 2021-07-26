@@ -100,3 +100,118 @@ function buildDocumentPropertiesFromDefaults() {
   })
   setDocProps(newProps)
 }
+
+function assessMetadata() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const extraHeaderNames = getDocProp("extraHeaderNames")
+    let results = {}
+    sheetsWithHeaders.forEach(sheetName => {
+      const sheet = ss.getSheetByName(sheetName)
+      const sheetHeaderNames = getSheetHeaderNames(sheet)
+      const defaultSheetHeaderNames = Object.keys(defaultColumns[sheetName] || {})
+      const extraSheetHeaderNames = extraHeaderNames[sheetName]
+
+      let sheetResults = {}
+      sheetResults["defaultPresent"] = defaultSheetHeaderNames.filter(x => sheetHeaderNames.includes(x))
+      sheetResults["defaultMissing"] = defaultSheetHeaderNames.filter(x => !sheetHeaderNames.includes(x))
+      const sheetHeaderNamesForConfig = sheetHeaderNames.filter(x => !sheetResults["defaultPresent"].includes(x))
+      sheetResults["configPresent"] = extraSheetHeaderNames.filter(x => sheetHeaderNamesForConfig.includes(x))
+      sheetResults["configMissing"] = extraSheetHeaderNames.filter(x => !sheetHeaderNamesForConfig.includes(x))
+      sheetResults["notTracked"] = sheetHeaderNamesForConfig.filter(x => !sheetResults["configPresent"].includes(x))
+      results[sheetName] = sheetResults
+    })
+    log(JSON.stringify(results))
+  } catch(e) { logError(e) }
+}
+
+function buildMetadata() {
+  try {
+    clearMetadata()
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const extraHeaderNames = getDocProp("extraHeaderNames")
+    defaultSheets.forEach(sheetName => {
+      const sheet = ss.getSheetByName(sheetName)
+      sheet.addDeveloperMetadata("sheetName",sheetName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+    })
+    sheetsWithHeaders.forEach(sheetName => {
+      const sheet = ss.getSheetByName(sheetName)
+      const sheetHeaderNames = getSheetHeaderNames(sheet)
+      const correctHeaderNames = [...Object.keys(defaultColumns[sheetName] || {}),...extraHeaderNames[sheetName]]
+      sheetHeaderNames.forEach((shn, i) => {
+        if (correctHeaderNames.includes(shn)) {
+          let letter = getColumnLettersFromPosition(i + 1)
+          let range = sheet.getRange(`${letter}:${letter}`)
+          range.addDeveloperMetadata("headerName",shn,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+        }
+      })
+    })
+  } catch(e) { logError(e) }
+}
+
+function clearMetadata() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    let mds = ss.createDeveloperMetadataFinder().find()
+    mds.forEach(md => {
+      md.remove()
+    })
+  } catch(e) { logError(e) }
+}
+
+function fixSheetNames() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    let mds = ss.createDeveloperMetadataFinder().
+      withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.SHEET).
+      withKey("sheetName").find()
+    mds.forEach(md => {
+      const sheet = md.getLocation().getSheet()
+      //log(md.getKey(), md.getValue(), md.getLocation().getSheet().getName())
+      if (sheet.getName() !== md.getValue()) {
+        log(`Sheet Name '${sheet.getName()}' updated to '${md.getValue()}'`)
+        sheet.setName(md.getValue())
+      }
+    })
+  } catch(e) { logError(e) }
+}
+
+function fixHeaderNames(range) {
+  try {
+    const sheet = range.getSheet()
+    const mds = range.createDeveloperMetadataFinder().
+      withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN).
+      onIntersectingLocations().
+      withKey("headerName").
+      find()
+    let columnsPositionsToFix = []
+    let headerNames = {}
+    mds.forEach(md => {
+      headerNames[md.getLocation().getColumn().getColumn()] = md.getValue()
+      if (md.getLocation().getColumn().getValue() !== md.getValue()) {
+        columnsPositionsToFix.push(md.getLocation().getColumn().getColumn())
+      }
+    })
+    if (columnsPositionsToFix.length) {
+      let firstColPos = Math.min(...columnsPositionsToFix)
+      let lastColPos = Math.max(...columnsPositionsToFix)
+      let range = sheet.getRange(1, firstColPos, 1, lastColPos - firstColPos + 1)
+      let values = [[]]
+      for (let i = firstColPos; i <= lastColPos; i++) values[0].push(headerNames[i])
+      range.setValues(values)
+    }
+  } catch(e) { logError(e) }
+}
+
+function findMetadata() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    let mds = ss.createDeveloperMetadataFinder().
+      withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN).
+      withKey("headerName").find()
+    mds.forEach(md => {
+      const sheet = md.getLocation().getSheet()
+      log(md.getKey(), md.getValue(), md.getLocation().getColumn().getSheet().getName() + "!" + md.getLocation().getColumn().getA1Notation())
+    })
+  } catch(e) { logError(e) }
+}
