@@ -22,7 +22,7 @@ function buildMenus() {
     menuApi.addItem('Send responses to trip requests', 'sendTripRequestResponses')
     menuApi.addToUi()
   }
-  menu.addToUi
+  menu.addToUi()
 }
 
 function buildNamedRanges() {
