@@ -72,7 +72,8 @@ function doPost(e) {
       let payload = e.postData.contents
       if (params.version === "v1") {
         if (params.resource === "tripRequestResponses") {
-          content = receiveTripRequestResponsesReturnClientOrderConfirmations(payload, validatedApiAccount)
+          const processedResponses = receiveTripRequestResponses(JSON.parse(payload))
+          content = returnClientOrderConfirmations(processedResponses, validatedApiAccount)
         } else if (params.resource === "providerOrderConfirmations") {
           content = receiveProviderOrderConfirmationsReturnCustomerInformation(payload, validatedApiAccount)
         } else {
