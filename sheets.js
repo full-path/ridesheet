@@ -101,25 +101,48 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
     const lastRowPosition = sourceSheet.getLastRow()
     if (appendDataRow(sourceSheet, destSheet, sourceData)) {
       if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
-      sourceSheet.deleteRow(sourceData._rowPosition)
+        sourceSheet.deleteRow(sourceData._rowPosition)
     }
   } catch(e) { logError(e) }
 }
 
-// Take an incoming map of values and append them to the sheet, matching column names to map key names
-// If columns present in the source data are missing in the destination sheet,
-// those columns will be added to the destination sheet, right after the column they're after in the
-// source sheet.
+// Expects an object of key/value pairs for data to be placed
+// in the destination sheet.
+// If any keys do not exist as column headers in the sheet,
+// create the new columns
+// Note: no longer passed source sheet, does not copy over
+// any column formulas
+function createRow(sheet, data) {
+  let columnNames = getSheetHeaderNames(sheet)
+  let numMetaCols = 6
+  Object.keys(data).forEach((key, idx) => {
+    if (columnNames.indexOf(key) === -1) {
+      let lastCol = sheet.getLastColumn() - numMetaCols
+      sheet.insertColumns(lastCol)
+      let destHeaderRange = sheet.getRange(1, lastCol)
+      destHeaderRange.setValue(key)
+    }
+  })
+  let newColumnNames = getSheetHeaderNames(sheet, {forceRefresh: true})
+  let dataArray = newColumnNames.map(colName => data[colName] ? data[colName] : "")
+  sheet.appendRow(dataArray)
+  sheet.autoResizeColumns(1, sheet.getMaxColumns())
+}
+
+// Deprecated
+// TODO: save until we determine whether we need some of this extra
+// functionality. Was buggy, and now column names are no longer in order
+// in the data, so fanciness is negated.
 function appendDataRow(sourceSheet, destSheet, dataMap) {
   try {
-    const sourceColumnNames = Object.keys(dataMap)
+    const sourceColumnNames = getSheetHeaderNames(sourceSheet)
     const destColumnNamesOriginalState = getSheetHeaderNames(destSheet)
     let destColumnNamesCurrentState = destColumnNamesOriginalState
     let allColumnsValid = true
     sourceColumnNames.every((sourceColumnName, i) => {
       if (sourceColumnName.trim() == "") {
         SpreadsheetApp.getActiveSpreadsheet().toast("Empty column heading encountered in source sheet. Action Cancelled.","Error")
-        allColumnsValid = false
+        allColumnsValid = false 
       } else if (destColumnNamesOriginalState.indexOf(sourceColumnName) === -1 && sourceColumnName.slice(0,1) !== "_") {
         let colPosition = 1
         if (i === 0) {
@@ -133,6 +156,7 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
             destSheet.insertColumnAfter(positionOfColumnToInsertAfter)
           }
         }
+        let rangeEnd = getSheetHeaderNames(sourceSheet).indexOf(sourceColumnName) + 1;
         let sourceRange = sourceSheet.getRange(2, getSheetHeaderNames(sourceSheet).indexOf(sourceColumnName) + 1)
         let destHeaderRange = destSheet.getRange(1, colPosition)
         let destDataRange = destSheet.getRange(2, colPosition, destSheet.getMaxRows()-1)

@@ -73,21 +73,20 @@ function returnClientOrderConfirmations(filteredResponses, apiAccount) {
   // Performance improvement: do local upkeep after sending the 
   // response back to the provider
   const {accept, rescind, decline} = filteredResponses
-  // TODO: These still don't work
-  //moveAcceptedClaimsToSentTrips(accept, apiAccount)
-  //logDeclinedTripRequests(decline, apiAccount)
 
-  log('Response', response)
+  moveAcceptedClaimsToSentTrips(accept, apiAccount)
+  logDeclinedTripRequests(decline, apiAccount)
+
+  log('Response results', response.results)
 
   return response
 }
 
 function testReceiveTripRequestResponses() {
-  const payload = [{"tripRequestResponse":{"tripAvailable":true,"@openAttribute":"{\"tripTicketId\":\"0c4d6861-43e8-4146-9613-97d62ea84bff\"}"}},{"tripRequestResponse":{"tripAvailable":false,"@openAttribute":"{\"tripTicketId\":\"f082d0b6-8409-4025-b8e7-f28f6762bfce\"}"}}]
+  const payload = [{"tripRequestResponse":{"tripAvailable":false,"@openAttribute":"{\"tripTicketId\":\"e0c7a017-ee04-48f2-8dc6-6924938cad6e\"}"}},{"tripRequestResponse":{"tripAvailable":true,"@openAttribute":"{\"tripTicketId\":\"08eb4058-eae2-4dff-bb2b-f481b8cdf876\"}"}},{"tripRequestResponse":{"tripAvailable":true,"@openAttribute":"{\"tripTicketId\":\"f72122f0-fd42-45fc-9866-519b4bca8356\"}"}}]
   const apiAccount = { name:"Agency B"}
   const processedResponses = receiveTripRequestResponses(payload)
   const response = returnClientOrderConfirmations(processedResponses, apiAccount)
-  console.log(response)
 }
 
 function formatTripRequestResponses(payload) {
@@ -228,13 +227,30 @@ function moveAcceptedClaimsToSentTrips(acceptedClaims, apiAccount) {
   const tripSheet = ss.getSheetByName("Trips")
   const allTrips = getAllTrips()
   const claimTime = new Date()
+
+  // Remove certain fields from the trip, while leaving in any custom
+  // columns that may have been created
+  let tripColumnNames = getSheetHeaderNames(tripSheet)
+  let ignoredFields = ["Action", "Go", "Share", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By"]
+  let sentTripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
+
   acceptedClaims.forEach(claim => {
     let trip = allTrips.find(row => row["Trip ID"] === claim.tripID)
-    let sentTripData = {"Claim Time": claimTime, "Claiming Agency": apiAccount.name, "Sched PU Time": claim.scheduledPickupTime}
-    moveRow(tripSheet.getRange("A" + trip._rowPosition + ":" + trip._rowPosition), sentTripSheet, {extraFields: sentTripData})
+    let sentTripData = {
+      "Claimed By" : apiAccount.name,
+      "Claim Time" : claimTime,
+      "Sched PU Time" : claim.scheduledPickupTime
+    }
+    sentTripFields.forEach(key => {
+      sentTripData[key] = trip[key]
+    });
+    createRow(sentTripSheet, sentTripData)
+    //TODO: reactivate this when done testing
+    //tripSheet.deleteRow(trip._rowPosition)
   })
 }
 
+// TODO: change "Declined By" into comma separated values, in order to be more human-readable
 function logDeclinedTripRequests(declinedTripRequests, apiAccount) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const allTrips = getAllTrips()
@@ -245,14 +261,25 @@ function logDeclinedTripRequests(declinedTripRequests, apiAccount) {
       declinedTripRequests.forEach(decline => {
         let trip = allTrips.find(row => row["Trip ID"] === decline.tripID)
         tripUpdates[trip._rowIndex] = {}
+        let declinedBy = trip["Declined By"] ? JSON.parse(trip["Declined By"]) : []
         if (trip["Declined By"]) {
-          let declinedBy = JSON.parse(trip["Declined By"])
           if (!declinedBy.includes(apiAccount.name)) {
             declinedBy.push(apiAccount.name)
-            tripUpdates["Declined By"] = declinedBy
+            tripUpdates[trip._rowIndex]["Declined By"] = declinedBy
           }
         } else {
-          tripUpdates["Declined By"] = JSON.stringify([apiAccount.name])
+          tripUpdates[trip._rowIndex]["Declined By"] = JSON.stringify([apiAccount.name])
+          declinedBy.push(apiAccount.name)
+        }
+        // if all attached api accounts have decline trip, highlight the row
+        // todo: what if get and give access are not symmetrical? POST request will always be from someone
+        // we GIVE access to, but Get access is in a more convenient array
+        const apiAccounts = getDocProp("apiGetAccess")
+        if (apiAccounts.length === declinedBy.length) {
+          let rowPosition = trip._rowPosition
+          let currentRow = tripSheet.getRange("A" + rowPosition + ":" + rowPosition)  
+          currentRow.setBackgroundRGB(255,255,204)
+          currentRow.getCell(1,1).setNote('Notice: Trip has been declined by all agencies')
         }
       })
       setValuesByHeaderNames(tripUpdates, tripRange)
