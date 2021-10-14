@@ -214,6 +214,7 @@ function sendTripRequestResponses() {
         let response = postResource(endPoint, params, JSON.stringify(payload))
         let responseObject
         try {
+          log('Response', response.getContentText())
           responseObject = JSON.parse(response.getContentText())
         } catch(e) {
           logError(e)
@@ -222,6 +223,7 @@ function sendTripRequestResponses() {
         if (responseObject.status === "OK") {
           // Process clientOrderConfirmations
           let {results} = responseObject
+          removeDeclinedTrips()
           processClientOrderResponse(results, endPoint.name)
           // confirm the confirmations
           sendProviderOrderConfirmations(responseObject, endPoint)
@@ -257,6 +259,15 @@ function testOrderConfirmations() {
   }]
   let endpoint = {name: "Agency A"}
   processClientOrderResponse(response, endpoint.name)
+}
+
+function removeDeclinedTrips() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const outsideTrips = ss.getSheetByName('Outside Trips')
+  const trips = getRangeValuesAsTable(outsideTrips.getDataRange(), {headerRowPosition: 2}).filter(tripRow => tripRow["Decline"] === true)
+  trips.forEach(trip => {
+    outsideTrips.deleteRow(trip._rowPosition)
+  })
 }
 
 function processClientOrderResponse(payload, source) {
