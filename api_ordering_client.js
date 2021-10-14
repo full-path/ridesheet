@@ -51,6 +51,7 @@ function receiveTripRequestResponses(payload) {
   const tripRequestResponses = formatTripRequestResponses(payload)
   const allTrips = getAllTrips()
   const filteredResponses = filterTripRequestResponses(tripRequestResponses, allTrips)
+  log('Filtered Responses', JSON.stringify(filteredResponses))
   return filteredResponses
 }
 
@@ -63,7 +64,7 @@ function receiveTripRequestResponses(payload) {
 // 3. Accept the decline
 //    Response: none
 //    Local action: log the decline if the trip is still in a shared status so that it's useful to the user and also prevents 
-//                  resending the tripRequest to the same provider again.
+//    resending the tripRequest to the same provider again.
 function returnClientOrderConfirmations(filteredResponses, apiAccount) {
   const orderConfirmations = processTripRequestResponses(filteredResponses)
   const response = {}
@@ -76,12 +77,10 @@ function returnClientOrderConfirmations(filteredResponses, apiAccount) {
 
   moveAcceptedClaimsToSentTrips(accept, apiAccount)
   logDeclinedTripRequests(decline, apiAccount)
-
-  log('Response results', response.results)
-
   return response
 }
 
+// To use, must update payload to valid tripTicketIds
 function testReceiveTripRequestResponses() {
   const payload = [{"tripRequestResponse":{"tripAvailable":false,"@openAttribute":"{\"tripTicketId\":\"e0c7a017-ee04-48f2-8dc6-6924938cad6e\"}"}},{"tripRequestResponse":{"tripAvailable":true,"@openAttribute":"{\"tripTicketId\":\"08eb4058-eae2-4dff-bb2b-f481b8cdf876\"}"}},{"tripRequestResponse":{"tripAvailable":true,"@openAttribute":"{\"tripTicketId\":\"f72122f0-fd42-45fc-9866-519b4bca8356\"}"}}]
   const apiAccount = { name:"Agency B"}
@@ -162,10 +161,10 @@ function processAcceptedClaims(acceptedClaims) {
     if (claim.scheduledPickupTime) {
       negotiatedPickupTime = claim.scheduledPickupTime
     }
-    let pickupTime = buildTimeFromSpec(trip["Trip Date"], trip["Latest PU Time"])
-    let dropoffTime = buildTimeFromSpec(trip["Trip Date"], trip["Latest DO Time"])
+    let pickupTime = buildTimeFromSpec(trip["Trip Date"], trip["PU Time"])
+    let dropoffTime = buildTimeFromSpec(trip["Trip Date"], trip["DO Time"])
     if (trip["Appt Time"]) { 
-      appointmentTime = buildTimeFromSpec(trip["Trip Date"], trip["Latest PU Time"]) 
+      appointmentTime = buildTimeFromSpec(trip["Trip Date"], trip["Appt Time"]) 
     }
     let dropoffAddress = buildAddressToSpec(trip["PU Address"])
     let pickupAddress = buildAddressToSpec(trip["DO Address"])
@@ -245,8 +244,7 @@ function moveAcceptedClaimsToSentTrips(acceptedClaims, apiAccount) {
       sentTripData[key] = trip[key]
     });
     createRow(sentTripSheet, sentTripData)
-    //TODO: reactivate this when done testing
-    //tripSheet.deleteRow(trip._rowPosition)
+    tripSheet.deleteRow(trip._rowPosition)
   })
 }
 
@@ -260,6 +258,10 @@ function logDeclinedTripRequests(declinedTripRequests, apiAccount) {
       let tripUpdates = allTrips.map(row => {return {}})
       declinedTripRequests.forEach(decline => {
         let trip = allTrips.find(row => row["Trip ID"] === decline.tripID)
+        if (!trip) {
+          log('Warning: Provider declining invalid trip', JSON.stringify(decline))
+          return
+        }
         tripUpdates[trip._rowIndex] = {}
         let declinedBy = trip["Declined By"] ? JSON.parse(trip["Declined By"]) : []
         if (trip["Declined By"]) {

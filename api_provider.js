@@ -183,7 +183,7 @@ function sendRequestForTripRequests() {
 function sendTripRequestResponses() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
-
+    //TODO: Update so that only the relevant endpoint (the source) receives the responses
     endPoints = getDocProp("apiGetAccess")
     endPoints.forEach(endPoint => {
       if (endPoint.hasTrips) {
@@ -209,7 +209,6 @@ function sendTripRequestResponses() {
 
           return {tripRequestResponse: tripOut}
         })
-
         // Here we're sending the tripRequestResponses in the payload.
         // responseObject, if validated, contains clientOrderConfirmations
         let response = postResource(endPoint, params, JSON.stringify(payload))
@@ -222,7 +221,8 @@ function sendTripRequestResponses() {
         }
         if (responseObject.status === "OK") {
           // Process clientOrderConfirmations
-
+          let {results} = responseObject
+          processClientOrderResponse(results, endPoint.name)
           // confirm the confirmations
           sendProviderOrderConfirmations(responseObject, endPoint)
         }
@@ -231,6 +231,204 @@ function sendTripRequestResponses() {
 
     return result
   } catch(e) { logError(e) }
+}
+
+function testOrderConfirmations() {
+  let response = [ { clientOrderConfirmations: 
+     { tripAvailable: true,
+       tripTicketId: '08eb4058-eae2-4dff-bb2b-f481b8cdf876',
+       '@customerId': 31,
+       '@openAttributes': '{"estimatedTripDurationInSeconds":10497,"estimatedTripDistanceInMiles":154.316245108}',
+       customerMobilePhone: '',
+       customerName: 'The Grey, Gandolf',
+       pickupWindowStartTime: null,
+       pickupWindowEndTime: null,
+       negotiatedPickupTime: null,
+       pickupTime: { '@time': '2021-10-30T20:31:36.107Z' },
+       dropoffTime: { '@time': '2021-10-30T20:31:36.108Z' },
+       appointmentTime: { '@time': '2021-10-30T20:31:36.108Z' },
+       dropoffAddress: { '@addressName': 'The Castle, Washington 98361, USA' },
+       pickupAddress: { '@addressName': '1005 W Burnside St, Portland, OR 97209, USA' } } },
+  { customerInfo: 
+     { customerId: 31,
+       customerName: 'The Grey, Gandolf',
+       customerAddress: { '@addressName': '18 S G St, Lakeview, OR 97630, USA' } 
+      }  
+  }]
+  let endpoint = {name: "Agency A"}
+  processClientOrderResponse(response, endpoint.name)
+}
+
+function processClientOrderResponse(payload, source) {
+  if (typeof payload === 'object' && payload.length) {
+    payload.forEach(telegram => {
+      if (telegram.clientOrderConfirmations) {
+        processClientOrderConfirmations(telegram.clientOrderConfirmations, source)
+      } else if (telegram.customerInfo) {
+        //processCustomerInfo(telegram.customerInfo, source)
+      } else {
+        log('Warning: response type not recognized', telegram )
+      }
+    })
+    reformatTrips()
+  }
+}
+
+function reformatTrips() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const trips = ss.getSheetByName('Trips')
+  let formatGroups = {
+    date: {
+      ranges: ["A:A"],
+      formats: function(rl) {
+        rl.setNumberFormat("mm/dd/yyyy")
+      }
+    },
+    time: {
+      ranges: ["G:G", "H:H", "I:I", "J:J", "K:K"],
+      formats: function(rl) {
+        rl.setNumberFormat("h:mm am/pm")
+      }
+    }
+  }
+  applyFormats(formatGroups, trips)
+}
+
+function processClientOrderConfirmations(confirmation, source) {
+  // If this trip is a decline (tripAvailable: false), remove it from "Outside trips"
+  // Otherwise, move it from Outside Trips to Trips,
+  // and add customer if they don't exist yet in the customers table
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const outsideTrips = ss.getSheetByName('Outside Trips')
+  const trips = ss.getSheetByName('Trips')
+  const tripRange = outsideTrips.getDataRange()
+  const allTrips = getRangeValuesAsTable(tripRange, {headerRowPosition: 2}) 
+  let trip = allTrips.find(row => row["Trip ID"] === confirmation.tripTicketId)
+  let {
+    tripAvailable,
+    tripTicketId,
+    customerMobilePhone,
+    customerName,
+    pickupWindowStartTime,
+    pickupWindowEndTime,
+    negotiatedPickupTime,
+    pickupTime,
+    dropoffTime,
+    appointmentTime,
+    dropoffAddress,
+    pickupAddress
+  } = confirmation
+  if (!tripAvailable) {
+    // Remove this trip from "Outside trips"
+    outsideTrips.deleteRow(trip._rowPosition)
+  }
+  // If customer doesn't exist, create them first
+  // Create customer ID with source agency appended, to avoid ID conflicts
+  // But what if the same customer exists at both agencies in their databases?
+  let openAttributes = JSON.parse(confirmation["@openAttributes"])
+  let customerID = getOutsideCustomerID(confirmation['@customerId'], source)
+  const customers = ss.getSheetByName('Customers')
+  const customerRange = customers.getDataRange()
+  const allCustomers = getRangeValuesAsTable(customerRange)
+  let customer = allCustomers.find(row => row["Customer ID"] === customerID) 
+  let customerNames = customerName.split(', ')
+  let customerNameAndID = customerName + ' (' + customerID + ')'
+  let customerData = {
+    'Customer ID' : customerID,
+    'Customer First Name' : customerNames[1],
+    'Customer Last Name' : customerNames[0],
+    'Phone Number' : customerMobilePhone,
+    'Customer Name and ID' : customerNameAndID
+  }
+  // Should we confirm that the customer data matches??
+  if (!customer) {
+    createRow(customers, customerData, false)
+  } else {
+    // Update data if it is different from what we have
+    // TODO: Add better verification
+    let headers = getSheetHeaderNames(customers)
+    Object.keys(customerData).forEach(header => {
+      let row = customer._rowPosition
+      let col = headers.indexOf(header) + 1
+      customers.getRange(row, col).setValue(customerData[header])
+    });
+  }
+  pickupTime = negotiatedPickupTime ? negotiatedPickupTime : pickupTime
+  let tripData = {
+    'Trip Date' : new Date(pickupTime['@time']),
+    'Source' : source,
+    'PU Time' : new Date(pickupTime['@time']),
+    'DO Time' : new Date(dropoffTime['@time']),
+    'PU Address' : buildAddressFromSpec(pickupAddress),
+    'DO Address' : buildAddressFromSpec(dropoffAddress),
+    'Trip ID' : tripTicketId,
+    'Customer Name and ID' : customerNameAndID,
+    'Earliest PU Time' : pickupWindowStartTime ? new Date(pickupWindowStartTime['@time']) : '',
+    'Latest PU Time' : pickupWindowEndTime ? new Date(pickupWindowEndTime['@time']) : '',
+    'Appt Time' : appointmentTime ? new Date(appointmentTime['@time']) : '',
+    'Est Hours' : openAttributes.estimatedTripDurationInSeconds / (60 * 60 * 24),
+    'Est Miles' : openAttributes.estimatedTripDistanceInMiles,
+    'Notes' : openAttributes.notes,
+    'Mobility Factors' : openAttributes.mobilityFactors
+  }
+  createRow(trips, tripData, false)
+  outsideTrips.deleteRow(trip._rowPosition)
+}
+
+//TODO: Make a better version of this function
+// Takes an ID from another agency and prefixes
+// Question: does Customer ID need to be an integer?
+function getOutsideCustomerID(id, source) {
+  return getAgencyPrefix(source) + ':' + id.toString()
+}
+
+function getAgencyPrefix(name) {
+  let agencyWords = name.split(' ')
+  if (agencyWords.length > 1) {
+    return agencyWords.map(word => word[0]).join('')
+  } 
+  if (name.length > 2) {
+    return name.slice(0,3).toUpperCase()
+  }
+  return name.toUpperCase()
+}
+
+// TODO: coordinate on additional customer info. Currently, the sheet only
+// supports the same fields that are already in the clientOrderConfirmations
+function processCustomerInfo(customerInfo, source) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const customers = ss.getSheetByName('Customers')
+  const customerRange = customers.getDataRange()
+  const allCustomers = getRangeValuesAsTable(customerRange)
+  let customerID = getOutsideCustomerID(customerInfo.customerId, source)
+  let customer = allCustomers.find(row => row["Customer ID"] === customerID) 
+  let {
+    customerName,
+    customerAddress,
+    customerPhone,
+    customerMobilePhone,
+    gender,
+    caregiverContactInformation,
+    customerEmergencyPhoneNumber,
+    customerEmergencyContactName,
+    requiredCareComments,
+    notesForDriver
+  } = customerInfo
+  let customerNameAndID = customerName + ' (' + customerID + ')'
+  let customerNames = customerName.split(', ')
+  let customerData = {
+    'Customer Name and ID' : customerNameAndID,
+    'Customer ID' : customerID,
+    'Customer First Name' :  customerNames[1],
+    'Customer Last Name' : customerNames[0],
+    'Phone Number' : customerMobilePhone,
+    'Home Address' : customerAddress
+  }
+  if (customer) {
+    // update existing record
+  } else {
+    // create new record
+  }
 }
 
 // Send an array of providerOrderConfirmation JSON objects which comply with

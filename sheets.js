@@ -112,21 +112,22 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
 // create the new columns
 // Note: no longer passed source sheet, does not copy over
 // any column formulas
-function createRow(sheet, data) {
+function createRow(sheet, data, createNewColumns=true) {
   let columnNames = getSheetHeaderNames(sheet)
   let numMetaCols = 6
-  Object.keys(data).forEach((key, idx) => {
+  if (createNewColumns) {
+    Object.keys(data).forEach((key, idx) => {
     if (columnNames.indexOf(key) === -1) {
       let lastCol = sheet.getLastColumn() - numMetaCols
       sheet.insertColumns(lastCol)
       let destHeaderRange = sheet.getRange(1, lastCol)
       destHeaderRange.setValue(key)
-    }
-  })
+      }
+    })
+  }
   let newColumnNames = getSheetHeaderNames(sheet, {forceRefresh: true})
   let dataArray = newColumnNames.map(colName => data[colName] ? data[colName] : "")
   sheet.appendRow(dataArray)
-  sheet.autoResizeColumns(1, sheet.getMaxColumns())
 }
 
 // Deprecated
