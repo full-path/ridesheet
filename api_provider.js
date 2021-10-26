@@ -278,28 +278,7 @@ function processClientOrderResponse(payload, source) {
         log('Warning: response type not recognized', telegram )
       }
     })
-    reformatTrips()
   }
-}
-
-function reformatTrips() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const trips = ss.getSheetByName('Trips')
-  let formatGroups = {
-    date: {
-      ranges: ["A:A"],
-      formats: function(rl) {
-        rl.setNumberFormat("mm/dd/yyyy")
-      }
-    },
-    time: {
-      ranges: ["G:G", "H:H", "I:I", "J:J", "K:K"],
-      formats: function(rl) {
-        rl.setNumberFormat("h:mm am/pm")
-      }
-    }
-  }
-  applyFormats(formatGroups, trips)
 }
 
 function processClientOrderConfirmations(confirmation, source) {
@@ -347,12 +326,9 @@ function processClientOrderConfirmations(confirmation, source) {
     'Phone Number' : customerMobilePhone,
     'Customer Name and ID' : customerNameAndID
   }
-  // Should we confirm that the customer data matches??
   if (!customer) {
     createRow(customers, customerData, false)
   } else {
-    // Update data if it is different from what we have
-    // TODO: Add better verification
     let headers = getSheetHeaderNames(customers)
     Object.keys(customerData).forEach(header => {
       let row = customer._rowPosition
@@ -362,17 +338,17 @@ function processClientOrderConfirmations(confirmation, source) {
   }
   pickupTime = negotiatedPickupTime ? negotiatedPickupTime : pickupTime
   let tripData = {
-    'Trip Date' : new Date(pickupTime['@time']),
+    'Trip Date' : formatDateFromTrip(pickupTime, 'M/d/yyyy'),
     'Source' : source,
-    'PU Time' : new Date(pickupTime['@time']),
-    'DO Time' : new Date(dropoffTime['@time']),
+    'PU Time' : formatDateFromTrip(pickupTime, 'h:mm a'),
+    'DO Time' : formatDateFromTrip(dropoffTime, 'h:mm a'),
     'PU Address' : buildAddressFromSpec(pickupAddress),
     'DO Address' : buildAddressFromSpec(dropoffAddress),
     'Trip ID' : tripTicketId,
     'Customer Name and ID' : customerNameAndID,
-    'Earliest PU Time' : pickupWindowStartTime ? new Date(pickupWindowStartTime['@time']) : '',
-    'Latest PU Time' : pickupWindowEndTime ? new Date(pickupWindowEndTime['@time']) : '',
-    'Appt Time' : appointmentTime ? new Date(appointmentTime['@time']) : '',
+    'Earliest PU Time' : pickupWindowStartTime ? formatDateFromTrip(pickupWindowStartTime, 'h:mm a') : '',
+    'Latest PU Time' : pickupWindowEndTime ? formatDateFromTrip(pickupWindowEndTime, 'h:mm a') : '',
+    'Appt Time' : appointmentTime ? formatDateFromTrip(appointmentTime, 'h:mm a') : '',
     'Est Hours' : openAttributes.estimatedTripDurationInSeconds / (60 * 60 * 24),
     'Est Miles' : openAttributes.estimatedTripDistanceInMiles,
     'Notes' : openAttributes.notes,
