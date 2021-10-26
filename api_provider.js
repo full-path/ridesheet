@@ -225,7 +225,6 @@ function sendTripRequestResponses() {
           let {results} = responseObject
           removeDeclinedTrips()
           processClientOrderResponse(results, endPoint.name)
-          // confirm the confirmations
           sendProviderOrderConfirmations(responseObject, endPoint)
         }
       }
@@ -265,9 +264,7 @@ function removeDeclinedTrips() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const outsideTrips = ss.getSheetByName('Outside Trips')
   const trips = getRangeValuesAsTable(outsideTrips.getDataRange(), {headerRowPosition: 2}).filter(tripRow => tripRow["Decline"] === true)
-  trips.forEach(trip => {
-    outsideTrips.deleteRow(trip._rowPosition)
-  })
+  safelyDeleteRows(outsideTrips, trips)
 }
 
 function processClientOrderResponse(payload, source) {
@@ -330,8 +327,7 @@ function processClientOrderConfirmations(confirmation, source) {
     pickupAddress
   } = confirmation
   if (!tripAvailable) {
-    // Remove this trip from "Outside trips"
-    outsideTrips.deleteRow(trip._rowPosition)
+    safelyDeleteRow(outsideTrips, trip)
   }
   // If customer doesn't exist, create them first
   // Create customer ID with source agency appended, to avoid ID conflicts
@@ -383,7 +379,7 @@ function processClientOrderConfirmations(confirmation, source) {
     'Mobility Factors' : openAttributes.mobilityFactors
   }
   createRow(trips, tripData, false)
-  outsideTrips.deleteRow(trip._rowPosition)
+  safelyDeleteRow(outsideTrips, trip)
 }
 
 //TODO: Make a better version of this function

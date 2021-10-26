@@ -130,6 +130,28 @@ function createRow(sheet, data, createNewColumns=true) {
   sheet.appendRow(dataArray)
 }
 
+// Data: results from getRangeValuesAsTable
+// Ensures empty rows are appended if necessary
+// and rows are deleted in reverse order to preserve indexing
+function safelyDeleteRows(sheet, data) {
+  const lastRowPosition = sheet.getLastRow()
+  if (sheet.getMaxRows() === lastRowPosition) {
+    sheet.insertRowAfter(lastRowPosition)
+  }
+  data.reverse()
+  data.forEach(row => {
+    sheet.deleteRow(row._rowPosition)
+  })
+}
+
+function safelyDeleteRow(sheet, row) {
+  const lastRowPosition = sheet.getLastRow()
+  if (sheet.getMaxRows() === lastRowPosition) {
+    sheet.insertRowAfter(lastRowPosition)
+  }
+  sheet.deleteRow(row._rowPosition)
+}
+
 // Deprecated
 // TODO: save until we determine whether we need some of this extra
 // functionality. Was buggy, and now column names are no longer in order
