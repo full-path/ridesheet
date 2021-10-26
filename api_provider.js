@@ -273,7 +273,7 @@ function processClientOrderResponse(payload, source) {
       if (telegram.clientOrderConfirmations) {
         processClientOrderConfirmations(telegram.clientOrderConfirmations, source)
       } else if (telegram.customerInfo) {
-        //processCustomerInfo(telegram.customerInfo, source)
+        processCustomerInfo(telegram.customerInfo, source)
       } else {
         log('Warning: response type not recognized', telegram )
       }
@@ -376,8 +376,7 @@ function getAgencyPrefix(name) {
   return name.toUpperCase()
 }
 
-// TODO: coordinate on additional customer info. Currently, the sheet only
-// supports the same fields that are already in the clientOrderConfirmations
+// TODO: coordinate on additional customer info. 
 function processCustomerInfo(customerInfo, source) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const customers = ss.getSheetByName('Customers')
@@ -404,13 +403,19 @@ function processCustomerInfo(customerInfo, source) {
     'Customer ID' : customerID,
     'Customer First Name' :  customerNames[1],
     'Customer Last Name' : customerNames[0],
-    'Phone Number' : customerMobilePhone,
-    'Home Address' : customerAddress
+    'Phone Number' : buildPhoneNumberFromSpec(customerPhone),
+    'Home Address' : buildAddressFromSpec(customerAddress),
+    'Customer Manifest Notes' : notesForDriver
   }
-  if (customer) {
-    // update existing record
+  if (!customer) {
+    createRow(customers, customerData, false)
   } else {
-    // create new record
+    let headers = getSheetHeaderNames(customers)
+    Object.keys(customerData).forEach(header => {
+      let row = customer._rowPosition
+      let col = headers.indexOf(header) + 1
+      customers.getRange(row, col).setValue(customerData[header])
+    });
   }
 }
 

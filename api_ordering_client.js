@@ -209,7 +209,7 @@ function processAcceptedClaims(acceptedClaims) {
     if (customer["Emergency Phone Number"]) customerInfoOut.customerEmergencyPhoneNumber = customer["Emergency Phone Number"]
     if (customer["Emergency Contact Name"]) customerInfoOut.customerEmergencyContactName = customer["Emergency Contact Name"]
     if (customer["Required Care Comments"]) customerInfoOut.requiredCareComments = customer["Required Care Comments"]
-    if (customer["Notes"]) customerInfoOut.notesForDriver = customer["Notes"]
+    if (customer["Customer Manifest Notes"]) customerInfoOut.notesForDriver = customer["Customer Manifest Notes"]
     results.push({customerInfo: customerInfoOut})
   })
   return results
