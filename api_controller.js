@@ -29,7 +29,7 @@ function doGet(e) {
           content.results = receiveRequestForRuns()
         } else if (params.resource === "tripRequests") {
           content.status = "OK"
-          content.results = receiveRequestForTripRequestsReturnTripRequests()
+          content.results = receiveRequestForTripRequestsReturnTripRequests(validatedApiAccount)
         } else {
           content.status = "INVALID_REQUEST"
         }

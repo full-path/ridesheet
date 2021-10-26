@@ -1,10 +1,16 @@
 // Ordering client (this RideSheet instance) receives request for tripRequests from provider and
 // returns an array JSON objects, each element of which complies with
 // Telegram 1A of TCRP 210 Transactional Data Spec.
-function receiveRequestForTripRequestsReturnTripRequests() {
+function receiveRequestForTripRequestsReturnTripRequests(apiAccount) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
+      if (tripRow["Declined By"]) {
+          let declinedBy = JSON.parse(tripRow["Declined By"])
+          if (declinedBy.includes(apiAccount.name)) {
+            return false
+          }
+        }
       return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true && tripRow["Source"] === ""
     })
     let result = trips.map(tripIn => {
