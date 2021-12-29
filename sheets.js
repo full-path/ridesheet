@@ -127,7 +127,16 @@ function createRow(sheet, data, createNewColumns=true) {
   }
   let newColumnNames = getSheetHeaderNames(sheet, {forceRefresh: true})
   let dataArray = newColumnNames.map(colName => data[colName] ? data[colName] : "")
+  appendRowWithFormatting(sheet, dataArray)
+}
+
+// Copy column formatting to the appended data
+function appendRowWithFormatting(sheet, dataArray) {
+  let lastRow = sheet.getLastRow()
+  let lastCol = sheet.getLastColumn()
+  let lastRowRange = sheet.getRange(lastRow + ":" + lastRow)
   sheet.appendRow(dataArray)
+  lastRowRange.copyFormatToRange(sheet, 1, lastCol, lastRow+1, lastRow+1)
 }
 
 // Data: results from getRangeValuesAsTable
@@ -198,7 +207,7 @@ function appendDataRow(sourceSheet, destSheet, dataMap) {
     })
     if (allColumnsValid) {
       const dataArray = destColumnNamesCurrentState.map(colName => dataMap[colName])
-      destSheet.appendRow(dataArray)
+      appendRowWithFormatting(destSheet, dataArray)
     }
     return allColumnsValid
   } catch(e) {
@@ -361,7 +370,7 @@ function appendValuesByHeaderNames(values, sheet) {
     const sheetHeaderColumnNames = getSheetHeaderNames(sheet)
     values.forEach(row => {
       const rowArray = sheetHeaderColumnNames.map(colName => row[colName])
-      sheet.appendRow(rowArray)
+      appendRowWithFormatting(sheet, rowArray)
     })
   } catch(e) { logError(e) }
 }
