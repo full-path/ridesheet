@@ -57,7 +57,6 @@ function receiveTripRequestResponses(payload) {
   const tripRequestResponses = formatTripRequestResponses(payload)
   const allTrips = getAllTrips()
   const filteredResponses = filterTripRequestResponses(tripRequestResponses, allTrips)
-  log('Filtered Responses', JSON.stringify(filteredResponses))
   return filteredResponses
 }
 
@@ -238,7 +237,7 @@ function moveAcceptedClaimsToSentTrips(acceptedClaims, apiAccount) {
   let tripColumnNames = getSheetHeaderNames(tripSheet)
   let ignoredFields = ["Action", "Go", "Share", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By"]
   let sentTripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
-
+  acceptedClaims.reverse()
   acceptedClaims.forEach(claim => {
     let trip = allTrips.find(row => row["Trip ID"] === claim.tripID)
     let sentTripData = {
