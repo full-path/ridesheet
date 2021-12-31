@@ -149,16 +149,16 @@ function formatAddressOnEdit(range) {
         range.setNote(msg)
         app.getActiveSpreadsheet().toast(msg)
         backgroundColor.setRgbColor(errorBackgroundColor)
+        range.setBackgroundObject(backgroundColor.build())
       } else {
         range.setValue(formattedAddress)
         range.setNote("")
-        backgroundColor.setRgbColor(defaultBackgroundColor)
+        range.setBackground(null)
       } 
     } else {
       range.setNote("")
-      backgroundColor.setRgbColor(defaultBackgroundColor)
+      range.setBackground(null)
     }
-    range.setBackgroundObject(backgroundColor.build())
   } catch(e) { logError(e) }
 }
 
