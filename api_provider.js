@@ -351,6 +351,7 @@ function processClientOrderConfirmations(confirmation, source) {
     'Appt Time' : appointmentTime ? formatDateFromTrip(appointmentTime, 'h:mm a') : '',
     'Est Hours' : openAttributes.estimatedTripDurationInSeconds / (60 * 60 * 24),
     'Est Miles' : openAttributes.estimatedTripDistanceInMiles,
+    'Guests' : openAttributes.guests,
     'Notes' : openAttributes.notes,
     'Mobility Factors' : openAttributes.mobilityFactors
   }

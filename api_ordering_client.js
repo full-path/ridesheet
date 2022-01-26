@@ -178,6 +178,7 @@ function processAcceptedClaims(acceptedClaims) {
     openAttributes.estimatedTripDistanceInMiles = trip["Est Miles"]
     if (trip["Mobility Factors"]) openAttributes.mobilityFactors = trip["Mobility Factors"]
     if (trip["Notes"]) openAttributes.notes = trip["Notes"]
+    if (trip["Guests"]) openAttributes.guests = trip["Guests"]
     openAttributes = JSON.stringify(openAttributes)
     let confirmationOut = {
       tripAvailable: true,
