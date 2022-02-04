@@ -83,13 +83,11 @@ function moveRows(sourceSheet, destSheet, filter) {
   try {
     const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
     const rowsToMove = sourceData.filter(row => filter(row))
-    const lastRowPosition = sourceSheet.getLastRow()
-    const rowsMovedSuccessfully = rowsToMove.every(row => appendDataRow(sourceSheet, destSheet, row))
+    const rowsMovedSuccessfully = rowsToMove.every(row => createRow(destSheet, row))
     if (rowsMovedSuccessfully) {
-      if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
-      const rowsToDelete = rowsToMove.map(row => row._rowPosition).sort((a,b)=>b-a)
-      rowsToDelete.forEach(rowPosition => sourceSheet.deleteRow(rowPosition))
+      safelyDeleteRows(sourceSheet, rowsToMove)
     }
+    fixColumnFormatting(destSheet)
   } catch(e) { logError(e) }
 }
 
@@ -98,58 +96,59 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
     const sourceSheet = sourceRange.getSheet()
     const sourceData = getRangeValuesAsTable(sourceRange, {includeFormulaValues: false})[0]
     Object.keys(extraFields).forEach(key => sourceData[key] = extraFields[key])
-    const lastRowPosition = sourceSheet.getLastRow()
-    if (appendDataRow(sourceSheet, destSheet, sourceData)) {
-      if (sourceSheet.getMaxRows() === lastRowPosition) { sourceSheet.insertRowAfter(lastRowPosition) }
-        sourceSheet.deleteRow(sourceData._rowPosition)
+    if (createRow(destSheet, sourceData, true)) {
+      safelyDeleteRow(sourceSheet, sourceData)  
     }
+    fixColumnFormatting(destSheet)
   } catch(e) { logError(e) }
 }
 
-// Expects an object of key/value pairs for data to be placed
-// in the destination sheet.
-// If any keys do not exist as column headers in the sheet,
-// create the new columns
-// Note: no longer passed source sheet, does not copy over
-// any column formulas
-function createRow(sheet, data, createNewColumns=true) {
-  let columnNames = getSheetHeaderNames(sheet)
-  let numMetaCols = 6
+function createRows(destSheet, data, fixColumnFormats=false, createNewColumns=true) {
   if (createNewColumns) {
-    Object.keys(data).forEach((key, idx) => {
-    if (columnNames.indexOf(key) === -1) {
-      let lastCol = sheet.getLastColumn() - numMetaCols
-      sheet.insertColumns(lastCol)
-      let destHeaderRange = sheet.getRange(1, lastCol)
-      destHeaderRange.setValue(key)
-      }
-    })
+    let firstRow = data[0]
+    createColumns(destSheet, firstRow)
   }
-  let newColumnNames = getSheetHeaderNames(sheet, {forceRefresh: true})
-  let dataArray = newColumnNames.map(colName => data[colName] ? data[colName] : "")
-  appendRowWithFormatting(sheet, dataArray)
+  let columnNames = getSheetHeaderNames(destSheet, {forceRefresh: createNewColumns})
+  let success = data.every(row => createRow(destSheet, data))
+  if (fixColumnFormats) fixColumnFormatting(destSheet)
+  return success
 }
 
-// Copy column formatting to the appended data
-function appendRowWithFormatting(sheet, dataArray) {
-  let lastRow = sheet.getLastRow()
-  let lastCol = sheet.getLastColumn()
-  let lastRowRange = sheet.getRange(lastRow + ":" + lastRow)
-  sheet.appendRow(dataArray)
-  lastRowRange.copyFormatToRange(sheet, 1, lastCol, lastRow+1, lastRow+1)
+function createColumns(sheet, dataRow, metaCols=6) {
+  let columnNames = getSheetHeaderNames(sheet)
+  Object.keys(dataRow).forEach((key, idx) => {
+    if (columnNames.indexOf(key) === -1) {
+      let lastCol = sheet.getLastColumn() - metaCols
+      sheet.insertColumns(lastCol)
+      let headerRange = sheet.getRange(1, lastCol)
+      headerRange.setValue(key)
+    }
+  })
 }
 
-// Data: results from getRangeValuesAsTable
-// Ensures empty rows are appended if necessary
-// and rows are deleted in reverse order to preserve indexing
+function createRow(destSheet, data, createNewColumns=false) {
+  try {
+    if (createNewColumns) {
+      createColumns(destSheet, data)
+    }
+    let columnNames = getSheetHeaderNames(destSheet, {forceRefresh: createNewColumns})
+    let dataArray = columnNames.map(colName => data[colName] ? data[colName] : null)
+    destSheet.appendRow(dataArray)
+    return true
+  } catch(e) {
+    logError(e)
+    return false
+  }
+}
+
 function safelyDeleteRows(sheet, data) {
   const lastRowPosition = sheet.getLastRow()
   if (sheet.getMaxRows() === lastRowPosition) {
     sheet.insertRowAfter(lastRowPosition)
   }
-  data.reverse()
-  data.forEach(row => {
-    sheet.deleteRow(row._rowPosition)
+  const rowsToDelete = data.map(row => row._rowPosition).sort((a,b)=>b-a)
+  rowsToDelete.forEach(row => {
+    sheet.deleteRow(row)
   })
 }
 
@@ -159,61 +158,6 @@ function safelyDeleteRow(sheet, row) {
     sheet.insertRowAfter(lastRowPosition)
   }
   sheet.deleteRow(row._rowPosition)
-}
-
-// Deprecated
-// TODO: save until we determine whether we need some of this extra
-// functionality. Was buggy, and now column names are no longer in order
-// in the data, so fanciness is negated.
-function appendDataRow(sourceSheet, destSheet, dataMap) {
-  try {
-    const sourceColumnNames = getSheetHeaderNames(sourceSheet)
-    const destColumnNamesOriginalState = getSheetHeaderNames(destSheet)
-    let destColumnNamesCurrentState = destColumnNamesOriginalState
-    let allColumnsValid = true
-    sourceColumnNames.every((sourceColumnName, i) => {
-      if (sourceColumnName.trim() == "") {
-        SpreadsheetApp.getActiveSpreadsheet().toast("Empty column heading encountered in source sheet. Action Cancelled.","Error")
-        allColumnsValid = false 
-      } else if (destColumnNamesOriginalState.indexOf(sourceColumnName) === -1 && sourceColumnName.slice(0,1) !== "_") {
-        let colPosition = 1
-        if (i === 0) {
-          destSheet.insertColumns(colPosition)
-        } else {
-          let positionOfColumnToInsertAfter = destColumnNamesCurrentState.indexOf(sourceColumnNames[i-1]) + 1
-          if (positionOfColumnToInsertAfter === 0) {
-            destSheet.insertColumns(colPosition)
-          } else {
-            colPosition = positionOfColumnToInsertAfter + 1
-            destSheet.insertColumnAfter(positionOfColumnToInsertAfter)
-          }
-        }
-        let rangeEnd = getSheetHeaderNames(sourceSheet).indexOf(sourceColumnName) + 1;
-        let sourceRange = sourceSheet.getRange(2, getSheetHeaderNames(sourceSheet).indexOf(sourceColumnName) + 1)
-        let destHeaderRange = destSheet.getRange(1, colPosition)
-        let destDataRange = destSheet.getRange(2, colPosition, destSheet.getMaxRows()-1)
-
-        destHeaderRange.setValue(sourceColumnName)
-        sourceRange.copyFormatToRange(destSheet, colPosition, colPosition, 2, destSheet.getMaxRows())
-        let rule = sourceRange.getDataValidation()
-        if (rule == null) {
-          destDataRange.clearDataValidations()
-        } else {
-          destDataRange.setDataValidation(rule)
-        }
-        destColumnNamesCurrentState = getSheetHeaderNames(destSheet, {forceRefresh: true})
-      }
-      return allColumnsValid
-    })
-    if (allColumnsValid) {
-      const dataArray = destColumnNamesCurrentState.map(colName => dataMap[colName])
-      appendRowWithFormatting(destSheet, dataArray)
-    }
-    return allColumnsValid
-  } catch(e) {
-    logError(e)
-    return false
-  }
 }
 
 // Takes a range and returns an array of objects, each object containing key/value pairs. 

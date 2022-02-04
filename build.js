@@ -149,6 +149,10 @@ function buildMetadata() {
           let letter = getColumnLettersFromPosition(i + 1)
           let range = sheet.getRange(`${letter}:${letter}`)
           range.addDeveloperMetadata("headerName",shn,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+          let colSettings = defaultColumns[sheetName][shn]
+          if (colSettings && colSettings["numberFormat"]) {
+            range.addDeveloperMetadata("numberFormat", colSettings["numberFormat"], SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+          }
         }
       })
     })
@@ -173,13 +177,33 @@ function fixSheetNames() {
       withKey("sheetName").find()
     mds.forEach(md => {
       const sheet = md.getLocation().getSheet()
-      //log(md.getKey(), md.getValue(), md.getLocation().getSheet().getName())
       if (sheet.getName() !== md.getValue()) {
         log(`Sheet Name '${sheet.getName()}' updated to '${md.getValue()}'`)
         sheet.setName(md.getValue())
       }
     })
   } catch(e) { logError(e) }
+}
+
+function fixColumnFormatting(sheet=null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  let scope = ss
+  if (sheet) {
+    if (typeof sheet === "object") {
+      scope = sheet
+    } else {
+      scope = ss.getSheetByName(sheet)
+    }
+  }
+  let mds = scope.createDeveloperMetadataFinder()
+    .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN)
+    .withKey("numberFormat")
+    .find()
+  mds.forEach(md => {
+    let col = md.getLocation().getColumn()
+    let format = md.getValue()
+    col.setNumberFormat(format)
+  })
 }
 
 function fixHeaderNames(range) {
