@@ -249,7 +249,7 @@ function moveAcceptedClaimsToSentTrips(acceptedClaims, apiAccount) {
     sentTripFields.forEach(key => {
       sentTripData[key] = trip[key]
     });
-    createRow(tripSheet, sentTripSheet, sentTripData)
+    createRow(sentTripSheet, sentTripData)
     tripSheet.deleteRow(trip._rowPosition)
   })
 }

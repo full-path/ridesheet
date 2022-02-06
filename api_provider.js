@@ -327,7 +327,7 @@ function processClientOrderConfirmations(confirmation, source) {
     'Customer Name and ID' : customerNameAndID
   }
   if (!customer) {
-    createRow(null, customers, customerData, false)
+    createRow(customers, customerData, false)
   } else {
     let headers = getSheetHeaderNames(customers)
     Object.keys(customerData).forEach(header => {
@@ -355,7 +355,7 @@ function processClientOrderConfirmations(confirmation, source) {
     'Notes' : openAttributes.notes,
     'Mobility Factors' : openAttributes.mobilityFactors
   }
-  createRow(null, trips, tripData, false)
+  createRow(trips, tripData, false)
   safelyDeleteRow(outsideTrips, trip)
 }
 
@@ -409,7 +409,7 @@ function processCustomerInfo(customerInfo, source) {
     'Customer Manifest Notes' : notesForDriver
   }
   if (!customer) {
-    createRow(null, customers, customerData, false)
+    createRow(customers, customerData, false)
   } else {
     let headers = getSheetHeaderNames(customers)
     Object.keys(customerData).forEach(header => {
