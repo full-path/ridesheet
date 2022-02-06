@@ -15,6 +15,8 @@ function buildMenus() {
   let settingsMenu = ui.createMenu('Settings')
   settingsMenu.addItem('Application properties', 'presentProperties')
   settingsMenu.addItem('Scheduled calendar updates', 'presentCalendarTrigger')
+  settingsMenu.addItem('Repair sheets', 'repairSheets')
+  settingsMenu.addItem('Build Metadata', 'buildMetadata')
   menu.addSubMenu(settingsMenu)
   if (getDocProp("apiShowMenuItems")) {
     const menuApi = ui.createMenu('API')
@@ -171,6 +173,12 @@ function clearMetadata() {
       md.remove()
     })
   } catch(e) { logError(e) }
+}
+
+function repairSheets() {
+  fixSheetNames()
+  fixColumnFormatting()
+  fixDataValidation()
 }
 
 function fixSheetNames() {
