@@ -153,6 +153,10 @@ function buildMetadata() {
           if (colSettings && colSettings["numberFormat"]) {
             range.addDeveloperMetadata("numberFormat", colSettings["numberFormat"], SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
           }
+          if (colSettings && colSettings["dataValidation"]) {
+            let validationRules = JSON.stringify(colSettings["dataValidation"])
+            range.addDeveloperMetadata("dataValidation", validationRules, SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+          }
         }
       })
     })
@@ -185,6 +189,41 @@ function fixSheetNames() {
   } catch(e) { logError(e) }
 }
 
+function fixDataValidation(sheet=null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  let scope = ss
+  if (sheet) {
+    if (typeof sheet === "object") {
+      scope = sheet
+    } else {
+      scope = ss.getSheetByName(sheet)
+    }
+  }
+  let mds = scope.createDeveloperMetadataFinder()
+    .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN)
+    .withKey("dataValidation")
+    .find()
+  mds.forEach(md => {
+    let col = md.getLocation().getColumn().offset(1, 0)
+    let rules = JSON.parse(md.getValue())
+    let criteriaName = rules.criteriaType
+    let criteria = SpreadsheetApp.DataValidationCriteria[criteriaName]
+    let allowInvalid = !!rules.allowInvalid
+    let args = []
+    if (criteriaName === "VALUE_IN_RANGE") {
+      let rng = ss.getRangeByName(rules.namedRange)
+      let dropdown = rules.showDropdown
+      args = [rng, dropdown]
+    }
+    let builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
+    if (rules.helpText) {
+      builder = builder.setHelpText(rules.helpText)
+    }
+    let rule = builder.build()
+    col.setDataValidation(rule) 
+  })
+}
+
 function fixColumnFormatting(sheet=null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   let scope = ss
@@ -200,7 +239,7 @@ function fixColumnFormatting(sheet=null) {
     .withKey("numberFormat")
     .find()
   mds.forEach(md => {
-    let col = md.getLocation().getColumn()
+    let col = md.getLocation().getColumn().offset(1,0)
     let format = md.getValue()
     col.setNumberFormat(format)
   })

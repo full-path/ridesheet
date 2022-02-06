@@ -83,7 +83,7 @@ function moveRows(sourceSheet, destSheet, filter) {
   try {
     const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
     const rowsToMove = sourceData.filter(row => filter(row))
-    const rowsMovedSuccessfully = rowsToMove.every(row => createRow(destSheet, row))
+    const rowsMovedSuccessfully = createRows(destSheet, rowsToMove)
     if (rowsMovedSuccessfully) {
       safelyDeleteRows(sourceSheet, rowsToMove)
     }
@@ -114,14 +114,26 @@ function createRows(destSheet, data, fixColumnFormats=false, createNewColumns=tr
   return success
 }
 
-function createColumns(sheet, dataRow, metaCols=6) {
+const defaultColumnFilter = colHeader => {
+  if (colHeader.trim() == '') {
+    return false
+  }
+  if (colHeader.startsWith('_')) {
+    return false
+  }
+  return true
+}
+
+function createColumns(sheet, dataRow, columnFilter=defaultColumnFilter, colOffset=0) {
   let columnNames = getSheetHeaderNames(sheet)
-  Object.keys(dataRow).forEach((key, idx) => {
-    if (columnNames.indexOf(key) === -1) {
-      let lastCol = sheet.getLastColumn() - metaCols
+  let dataCols = Object.keys(dataRow).filter(colHeader => defaultColumnFilter(colHeader))
+  dataCols.forEach((col) => {
+    if (columnNames.indexOf(col) === -1) {
+      let lastCol = sheet.getLastColumn() - colOffset
+      if (lastCol < 1) lastCol = sheet.getLastColumn()
       sheet.insertColumns(lastCol)
       let headerRange = sheet.getRange(1, lastCol)
-      headerRange.setValue(key)
+      headerRange.setValue(col)
     }
   })
 }
