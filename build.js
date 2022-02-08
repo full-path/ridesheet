@@ -212,7 +212,9 @@ function fixDataValidation(sheet=null) {
     .withKey("dataValidation")
     .find()
   mds.forEach(md => {
-    let col = md.getLocation().getColumn().offset(1, 0)
+    let fullCol = md.getLocation().getColumn()
+    let numRows = fullCol.getHeight()
+    let col = fullCol.offset(1, 0, numRows - 1)
     let rules = JSON.parse(md.getValue())
     let criteriaName = rules.criteriaType
     let criteria = SpreadsheetApp.DataValidationCriteria[criteriaName]
@@ -251,7 +253,9 @@ function fixColumnFormatting(sheet=null) {
     .withKey("numberFormat")
     .find()
   mds.forEach(md => {
-    let col = md.getLocation().getColumn().offset(1,0)
+    let fullCol = md.getLocation().getColumn()
+    let numRows = fullCol.getHeight()
+    let col = fullCol.offset(1, 0, numRows - 1)
     let format = md.getValue()
     col.setNumberFormat(format)
   })
