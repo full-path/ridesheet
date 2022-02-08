@@ -220,8 +220,12 @@ function fixDataValidation(sheet=null) {
     let args = []
     if (criteriaName === "VALUE_IN_RANGE") {
       let rng = ss.getRangeByName(rules.namedRange)
+      let a1 = rng.getA1Notation()
+      let lookupsheet = rng.getSheet()
+      let colLetter = a1.substring(0,1)
+      let simplifiedRange = lookupsheet.getRange(colLetter + ':' + colLetter)
       let dropdown = rules.showDropdown
-      args = [rng, dropdown]
+      args = [simplifiedRange, dropdown]
     }
     let builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     if (rules.helpText) {
