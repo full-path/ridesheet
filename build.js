@@ -197,26 +197,31 @@ function fixSheetNames() {
   } catch(e) { logError(e) }
 }
 
-function fixDataValidation(sheet=null) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  let scope = ss
-  if (sheet) {
-    if (typeof sheet === "object") {
-      scope = sheet
-    } else {
-      scope = ss.getSheetByName(sheet)
-    }
-  }
+function getColumnMetadata(scope, key) {
   let mds = scope.createDeveloperMetadataFinder()
     .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN)
-    .withKey("dataValidation")
+    .withKey(key)
+    .onIntersectingLocations()
     .find()
+  return mds
+}
+
+function fixRowDataValidation(range) {
+  let mds = getColumnMetadata(range, 'dataValidation')
+  let sheet = range.getSheet()
   mds.forEach(md => {
-    let fullCol = md.getLocation().getColumn()
-    let numRows = fullCol.getHeight()
-    let col = fullCol.offset(1, 0, numRows - 1)
-    let rules = JSON.parse(md.getValue())
-    let criteriaName = rules.criteriaType
+    let col = md.getLocation().getColumn().getColumn()
+    let row = range.getRow()
+    let cell = sheet.getRange(row, col, 1, 1)
+    let rule = getValidationRuleFromMetadata(md)
+    cell.setDataValidation(rule)
+  })
+}
+
+function getValidationRuleFromMetadata(md) {
+  let ss = SpreadsheetApp.getActiveSpreadsheet()
+  let rules = JSON.parse(md.getValue())
+  let criteriaName = rules.criteriaType
     let criteria = SpreadsheetApp.DataValidationCriteria[criteriaName]
     let allowInvalid = !!rules.allowInvalid
     let args = []
@@ -234,11 +239,10 @@ function fixDataValidation(sheet=null) {
       builder = builder.setHelpText(rules.helpText)
     }
     let rule = builder.build()
-    col.setDataValidation(rule) 
-  })
+    return rule
 }
 
-function fixColumnFormatting(sheet=null) {
+function fixDataValidation(sheet=null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   let scope = ss
   if (sheet) {
@@ -248,10 +252,27 @@ function fixColumnFormatting(sheet=null) {
       scope = ss.getSheetByName(sheet)
     }
   }
-  let mds = scope.createDeveloperMetadataFinder()
-    .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN)
-    .withKey("numberFormat")
-    .find()
+  let mds = getColumnMetadata(scope, 'dataValidation')
+  mds.forEach(md => {
+    let fullCol = md.getLocation().getColumn()
+    let numRows = fullCol.getHeight()
+    let col = fullCol.offset(1, 0, numRows - 1)
+    let rule = getValidationRuleFromMetadata(md)
+    col.setDataValidation(rule) 
+  })
+}
+
+function fixNumberFormatting(sheet=null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  let scope = ss
+  if (sheet) {
+    if (typeof sheet === "object") {
+      scope = sheet
+    } else {
+      scope = ss.getSheetByName(sheet)
+    }
+  }
+  let mds = getColumnMetadata(scope, 'numberFormat')
   mds.forEach(md => {
     let fullCol = md.getLocation().getColumn()
     let numRows = fullCol.getHeight()
@@ -259,6 +280,18 @@ function fixColumnFormatting(sheet=null) {
     let format = md.getValue()
     col.setNumberFormat(format)
   })
+}
+
+function fixRowNumberFormatting(range) {
+    let mds = getColumnMetadata(range, 'numberFormatting')
+    let sheet = range.getSheet()
+    mds.forEach(md => {
+      let col = md.getLocation().getColumn().getColumn()
+      let row = range.getRow()
+      let cell = sheet.getRange(row, col, 1, 1)
+      let format = md.getValue()
+      cell.setNumberFormat(format)
+    })
 }
 
 function fixHeaderNames(range) {
@@ -288,7 +321,7 @@ function fixHeaderNames(range) {
   } catch(e) { logError(e) }
 }
 
-function findMetadata() {
+function logMetadata() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     let mds = ss.createDeveloperMetadataFinder().
