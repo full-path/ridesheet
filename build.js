@@ -177,7 +177,7 @@ function clearMetadata() {
 
 function repairSheets() {
   fixSheetNames()
-  fixColumnFormatting()
+  fixNumberFormatting()
   fixDataValidation()
 }
 
@@ -201,14 +201,13 @@ function getColumnMetadata(scope, key) {
   let mds = scope.createDeveloperMetadataFinder()
     .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN)
     .withKey(key)
-    .onIntersectingLocations()
     .find()
   return mds
 }
 
 function fixRowDataValidation(range) {
-  let mds = getColumnMetadata(range, 'dataValidation')
   let sheet = range.getSheet()
+  let mds = getColumnMetadata(sheet, 'dataValidation')
   mds.forEach(md => {
     let col = md.getLocation().getColumn().getColumn()
     let row = range.getRow()
@@ -283,8 +282,8 @@ function fixNumberFormatting(sheet=null) {
 }
 
 function fixRowNumberFormatting(range) {
-    let mds = getColumnMetadata(range, 'numberFormatting')
     let sheet = range.getSheet()
+    let mds = getColumnMetadata(sheet, 'numberFormat')
     mds.forEach(md => {
       let col = md.getLocation().getColumn().getColumn()
       let row = range.getRow()

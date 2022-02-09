@@ -87,7 +87,6 @@ function moveRows(sourceSheet, destSheet, filter) {
     if (rowsMovedSuccessfully) {
       safelyDeleteRows(sourceSheet, rowsToMove)
     }
-    fixColumnFormatting(destSheet)
   } catch(e) { logError(e) }
 }
 
@@ -99,18 +98,16 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
     if (createRow(destSheet, sourceData, true)) {
       safelyDeleteRow(sourceSheet, sourceData)  
     }
-    fixColumnFormatting(destSheet)
   } catch(e) { logError(e) }
 }
 
-function createRows(destSheet, data, fixColumnFormats=false, createNewColumns=true) {
+function createRows(destSheet, data, createNewColumns=true) {
   if (createNewColumns) {
     let firstRow = data[0]
     createColumns(destSheet, firstRow)
   }
   let columnNames = getSheetHeaderNames(destSheet, {forceRefresh: createNewColumns})
-  let success = data.every(row => createRow(destSheet, data))
-  if (fixColumnFormats) fixColumnFormatting(destSheet)
+  let success = data.every(row => createRow(destSheet, row))
   return success
 }
 
@@ -126,7 +123,7 @@ const defaultColumnFilter = colHeader => {
 
 function createColumns(sheet, dataRow, columnFilter=defaultColumnFilter, colOffset=0) {
   let columnNames = getSheetHeaderNames(sheet)
-  let dataCols = Object.keys(dataRow).filter(colHeader => defaultColumnFilter(colHeader))
+  let dataCols = Object.keys(dataRow).filter(colHeader => columnFilter(colHeader))
   dataCols.forEach((col) => {
     if (columnNames.indexOf(col) === -1) {
       let lastCol = sheet.getLastColumn() - colOffset
@@ -146,11 +143,25 @@ function createRow(destSheet, data, createNewColumns=false) {
     let columnNames = getSheetHeaderNames(destSheet, {forceRefresh: createNewColumns})
     let dataArray = columnNames.map(colName => data[colName] ? data[colName] : null)
     destSheet.appendRow(dataArray)
+    let newRowIndex = destSheet.getLastRow()
+    let newRow = destSheet.getRange(newRowIndex + ':' + newRowIndex)
+    fixRowNumberFormatting(newRow)
+    fixRowDataValidation(newRow)
     return true
   } catch(e) {
     logError(e)
     return false
   }
+}
+
+function testRowFormat() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet()
+  let sheet = ss.getSheetByName('Trip Review')
+  let newRowIndex = sheet.getLastRow()
+  let newRow = sheet.getRange(newRowIndex + ':' + newRowIndex)
+  let a = newRow.getA1Notation()
+  fixRowNumberFormatting(newRow)
+  fixRowDataValidation(newRow)
 }
 
 function safelyDeleteRows(sheet, data) {
