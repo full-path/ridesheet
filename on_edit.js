@@ -38,7 +38,11 @@ const rangeTriggers = {
   codeUpdateTripVehicle: {
     functionCall: updateTripVehicleOnEdit,
     callOncePerRow: true
-  }
+  },
+  codeNotifySharedTrip: {
+    functionCall: notifySharedTripOnEdit,
+    callOncePerRow: true
+  },
 }
 
 /**
@@ -336,6 +340,16 @@ function tripActionButton(goCheckBoxRange) {
       actionCell.setValue(null)
     }
   } catch(e) { logError(e) }
+}
+
+function notifySharedTripOnEdit(range) {
+  let shareTrip = range.getValue()
+  if (shareTrip) {
+    let agencyName = getDocProp("providerName")
+    let subject = agencyName + " has shared a trip with you"
+    let body = "See your shared trips in <strong>Outside Trips</strong> by opening the API menu and clicking <strong>Get Trip Requests</strong>"
+    sendNotification(subject, body)                        
+  }
 }
 
 function updatePropertiesOnEdit(e) {
