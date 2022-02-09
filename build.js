@@ -135,6 +135,50 @@ function assessMetadata() {
 
 function buildMetadata() {
   try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    let sheetMetadata = ss.createDeveloperMetadataFinder().
+      withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.SHEET).
+      withKey("sheetName").find()
+    let labeledSheets = sheetMetadata.map(md => md.getValue())
+    defaultSheets.forEach(sheetName => {
+     if (!labeledSheets.includes(sheetName)) {
+       let sheet = ss.getSheetByName(sheetName)
+       sheet.addDeveloperMetadata("sheetName",sheetName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+     }
+    })
+    sheetsWithHeaders.forEach(sheetName => {
+      let sheet = ss.getSheetByName(sheetName)
+      let extraHeaderNames = getDocProp("extraHeaderNames")
+      let sheetHeaderNames = getSheetHeaderNames(sheet)
+      let registeredColumns = [...Object.keys(defaultColumns[sheetName] || {}),...extraHeaderNames[sheetName]]
+      sheetHeaderNames.forEach((columnName, i) => {
+        if (registeredColumns.includes(columnName)) {
+          let letter = getColumnLettersFromPosition(i + 1)
+          let range = sheet.getRange(`${letter}:${letter}`)
+          let colMetadata = range.createDeveloperMetadataFinder()
+            .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN)
+            .find()
+          if (colMetadata.length < 1) {
+            let colSettings = defaultColumns[sheetName][columnName]
+            range.addDeveloperMetadata("headerName",columnName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+            if (colSettings && colSettings["numberFormat"]) {
+              range.addDeveloperMetadata("numberFormat", colSettings["numberFormat"], SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+            }
+            if (colSettings && colSettings["dataValidation"]) {
+              let validationRules = JSON.stringify(colSettings["dataValidation"])
+              range.addDeveloperMetadata("dataValidation", validationRules, SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+            }
+          }
+        }
+      })
+    })
+  } catch(e) {
+    logError(e)
+  }
+}
+
+function rebuildAllMetadata() {
+  try {
     clearMetadata()
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const extraHeaderNames = getDocProp("extraHeaderNames")

@@ -9,6 +9,7 @@ function onOpen(e) {
   } catch(e) { logError(e) }
   try {
     buildNamedRanges()
+    buildMetadata()
   } catch(e) { logError(e) }
   log("onOpen duration:",(new Date()) - startTime)
 }
