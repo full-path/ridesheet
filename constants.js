@@ -878,10 +878,6 @@ const defaultNamedRanges = {
     "sheetName":"Trips",
     "headerName":"Appt Time"
   },
-  "codeNotifySharedTrip": {
-    "sheetName": "Trips",
-    "headerName": "Share"
-  },
   "lookupCustomerNames": {
     "sheetName":"Lookups",
     "column":"A"
