@@ -165,6 +165,11 @@ const defaultDocumentProperties = {
     value: "Enter provider name here",
     description: "Name of the agency using this RideSheet document"
   },
+  notificationEmail: {
+    type: "string",
+    value: "",
+    description: "Email address to use for notifications"
+  },
   apiGetAccess: {
     type: "array",
     value: [

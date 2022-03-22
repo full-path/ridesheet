@@ -15,6 +15,8 @@ function buildMenus() {
   let settingsMenu = ui.createMenu('Settings')
   settingsMenu.addItem('Application properties', 'presentProperties')
   settingsMenu.addItem('Scheduled calendar updates', 'presentCalendarTrigger')
+  settingsMenu.addItem('Repair sheets', 'repairSheets')
+  settingsMenu.addItem('Build Metadata', 'buildMetadata')
   menu.addSubMenu(settingsMenu)
   if (getDocProp("apiShowMenuItems")) {
     const menuApi = ui.createMenu('API')
@@ -133,6 +135,50 @@ function assessMetadata() {
 
 function buildMetadata() {
   try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    let sheetMetadata = ss.createDeveloperMetadataFinder().
+      withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.SHEET).
+      withKey("sheetName").find()
+    let labeledSheets = sheetMetadata.map(md => md.getValue())
+    defaultSheets.forEach(sheetName => {
+     if (!labeledSheets.includes(sheetName)) {
+       let sheet = ss.getSheetByName(sheetName)
+       sheet.addDeveloperMetadata("sheetName",sheetName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+     }
+    })
+    sheetsWithHeaders.forEach(sheetName => {
+      let sheet = ss.getSheetByName(sheetName)
+      let extraHeaderNames = getDocProp("extraHeaderNames")
+      let sheetHeaderNames = getSheetHeaderNames(sheet)
+      let registeredColumns = [...Object.keys(defaultColumns[sheetName] || {}),...extraHeaderNames[sheetName]]
+      sheetHeaderNames.forEach((columnName, i) => {
+        if (registeredColumns.includes(columnName)) {
+          let letter = getColumnLettersFromPosition(i + 1)
+          let range = sheet.getRange(`${letter}:${letter}`)
+          let colMetadata = range.createDeveloperMetadataFinder()
+            .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN)
+            .find()
+          if (colMetadata.length < 1) {
+            let colSettings = defaultColumns[sheetName][columnName]
+            range.addDeveloperMetadata("headerName",columnName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+            if (colSettings && colSettings["numberFormat"]) {
+              range.addDeveloperMetadata("numberFormat", colSettings["numberFormat"], SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+            }
+            if (colSettings && colSettings["dataValidation"]) {
+              let validationRules = JSON.stringify(colSettings["dataValidation"])
+              range.addDeveloperMetadata("dataValidation", validationRules, SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+            }
+          }
+        }
+      })
+    })
+  } catch(e) {
+    logError(e)
+  }
+}
+
+function rebuildAllMetadata() {
+  try {
     clearMetadata()
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const extraHeaderNames = getDocProp("extraHeaderNames")
@@ -149,6 +195,14 @@ function buildMetadata() {
           let letter = getColumnLettersFromPosition(i + 1)
           let range = sheet.getRange(`${letter}:${letter}`)
           range.addDeveloperMetadata("headerName",shn,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+          let colSettings = defaultColumns[sheetName][shn]
+          if (colSettings && colSettings["numberFormat"]) {
+            range.addDeveloperMetadata("numberFormat", colSettings["numberFormat"], SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+          }
+          if (colSettings && colSettings["dataValidation"]) {
+            let validationRules = JSON.stringify(colSettings["dataValidation"])
+            range.addDeveloperMetadata("dataValidation", validationRules, SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+          }
         }
       })
     })
@@ -165,6 +219,12 @@ function clearMetadata() {
   } catch(e) { logError(e) }
 }
 
+function repairSheets() {
+  fixSheetNames()
+  fixNumberFormatting()
+  fixDataValidation()
+}
+
 function fixSheetNames() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -173,13 +233,108 @@ function fixSheetNames() {
       withKey("sheetName").find()
     mds.forEach(md => {
       const sheet = md.getLocation().getSheet()
-      //log(md.getKey(), md.getValue(), md.getLocation().getSheet().getName())
       if (sheet.getName() !== md.getValue()) {
         log(`Sheet Name '${sheet.getName()}' updated to '${md.getValue()}'`)
         sheet.setName(md.getValue())
       }
     })
   } catch(e) { logError(e) }
+}
+
+function getColumnMetadata(scope, key) {
+  let mds = scope.createDeveloperMetadataFinder()
+    .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN)
+    .withKey(key)
+    .find()
+  return mds
+}
+
+function fixRowDataValidation(range) {
+  let sheet = range.getSheet()
+  let mds = getColumnMetadata(sheet, 'dataValidation')
+  mds.forEach(md => {
+    let col = md.getLocation().getColumn().getColumn()
+    let row = range.getRow()
+    let cell = sheet.getRange(row, col, 1, 1)
+    let rule = getValidationRuleFromMetadata(md)
+    cell.setDataValidation(rule)
+  })
+}
+
+function getValidationRuleFromMetadata(md) {
+  let ss = SpreadsheetApp.getActiveSpreadsheet()
+  let rules = JSON.parse(md.getValue())
+  let criteriaName = rules.criteriaType
+    let criteria = SpreadsheetApp.DataValidationCriteria[criteriaName]
+    let allowInvalid = !!rules.allowInvalid
+    let args = []
+    if (criteriaName === "VALUE_IN_RANGE") {
+      let rng = ss.getRangeByName(rules.namedRange)
+      let a1 = rng.getA1Notation()
+      let lookupsheet = rng.getSheet()
+      let colLetter = a1.substring(0,1)
+      let simplifiedRange = lookupsheet.getRange(colLetter + ':' + colLetter)
+      let dropdown = rules.showDropdown
+      args = [simplifiedRange, dropdown]
+    }
+    let builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
+    if (rules.helpText) {
+      builder = builder.setHelpText(rules.helpText)
+    }
+    let rule = builder.build()
+    return rule
+}
+
+function fixDataValidation(sheet=null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  let scope = ss
+  if (sheet) {
+    if (typeof sheet === "object") {
+      scope = sheet
+    } else {
+      scope = ss.getSheetByName(sheet)
+    }
+  }
+  let mds = getColumnMetadata(scope, 'dataValidation')
+  mds.forEach(md => {
+    let fullCol = md.getLocation().getColumn()
+    let numRows = fullCol.getHeight()
+    let col = fullCol.offset(1, 0, numRows - 1)
+    let rule = getValidationRuleFromMetadata(md)
+    col.setDataValidation(rule) 
+  })
+}
+
+function fixNumberFormatting(sheet=null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  let scope = ss
+  if (sheet) {
+    if (typeof sheet === "object") {
+      scope = sheet
+    } else {
+      scope = ss.getSheetByName(sheet)
+    }
+  }
+  let mds = getColumnMetadata(scope, 'numberFormat')
+  mds.forEach(md => {
+    let fullCol = md.getLocation().getColumn()
+    let numRows = fullCol.getHeight()
+    let col = fullCol.offset(1, 0, numRows - 1)
+    let format = md.getValue()
+    col.setNumberFormat(format)
+  })
+}
+
+function fixRowNumberFormatting(range) {
+    let sheet = range.getSheet()
+    let mds = getColumnMetadata(sheet, 'numberFormat')
+    mds.forEach(md => {
+      let col = md.getLocation().getColumn().getColumn()
+      let row = range.getRow()
+      let cell = sheet.getRange(row, col, 1, 1)
+      let format = md.getValue()
+      cell.setNumberFormat(format)
+    })
 }
 
 function fixHeaderNames(range) {
@@ -209,7 +364,7 @@ function fixHeaderNames(range) {
   } catch(e) { logError(e) }
 }
 
-function findMetadata() {
+function logMetadata() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     let mds = ss.createDeveloperMetadataFinder().

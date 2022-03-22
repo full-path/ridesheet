@@ -38,7 +38,7 @@ const rangeTriggers = {
   codeUpdateTripVehicle: {
     functionCall: updateTripVehicleOnEdit,
     callOncePerRow: true
-  }
+  },
 }
 
 /**
