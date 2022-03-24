@@ -17,13 +17,12 @@ function getGeocode(address,returnType) {
     bounds["geocoderBoundNeLatitude"], 
     bounds["geocoderBoundNeLongitude"]
   )
-
   let result = mapGeo.geocode(address)
   if (returnType === "raw") {
     return JSON.stringify(result).slice(0,50000)
   } else if (result["status"] != "OK") {
     return "Error: " + result["status"]
-  } else if (result["results"][0]["partial_match"]) {
+  } else if (isPartialMatch(result)) {
     return "Error: partial match: " + result["results"][0]["formatted_address"]
   }
   switch(returnType){
@@ -32,6 +31,17 @@ function getGeocode(address,returnType) {
     case "formatted_address": return result["results"][0]["formatted_address"]
     default:                  return "Error: Invalid Return Type"
   }
+}
+
+function isPartialMatch(geocodeResults) {
+  if (geocodeResults["results"][0]["partial_match"]) {
+    let locationType = geocodeResults["results"][0]["geometry"]["location_type"]
+    let types = geocodeResults["results"][0]["types"]
+    if (locationType === 'APPROXIMATE') {
+      return true
+    }
+  }
+  return false
 }
 
 function getTripEstimate(origin, destination, returnType) {
