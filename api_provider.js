@@ -404,8 +404,8 @@ function processCustomerInfo(customerInfo, source) {
     'Customer ID' : customerID,
     'Customer First Name' :  customerNames[1],
     'Customer Last Name' : customerNames[0],
-    'Phone Number' : buildPhoneNumberFromSpec(customerPhone),
-    'Home Address' : buildAddressFromSpec(customerAddress),
+    'Phone Number' : customerPhone ? buildPhoneNumberFromSpec(customerPhone) : "",
+    'Home Address' : customerAddress? buildAddressFromSpec(customerAddress) : "",
     'Customer Manifest Notes' : notesForDriver
   }
   if (!customer) {
