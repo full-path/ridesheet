@@ -196,14 +196,15 @@ function checkSourceOnShare(range) {
   }
 }
 
+// Named range: "Source" column
 function verifySourceOnEdit(range) {
   try {
     let tripRow = getFullRow(range)
-    let rowIndex = tripRow.getRow()
     let columnIndex = getRangeHeaderNames(tripRow).indexOf("Share")
-    let shareCell = tripRow.getCell(rowIndex, columnIndex)
+    let shareCell = tripRow.getCell(1, columnIndex + 1)
     if (shareCell.getValue()) {
       if (range.getValue()) {
+        const app = SpreadsheetApp
         let backgroundColor = app.newColor()
         let msg = "Warning: Cannot share a trip with a set Source."
         shareCell.setNote(msg)
