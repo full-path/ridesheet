@@ -339,7 +339,8 @@ const defaultColumns = {
     "Driver Calendar ID": {},
     "Trip Event ID": {},
     "Trip ID": {},
-    "Customer ID": {}
+    "Customer ID": {},
+    "Shared": {}
   },
   "Runs": {
     "Run Date": {
@@ -651,6 +652,12 @@ const defaultColumns = {
         allowInvalid: false,
         helpText: "Value must be a valid vehicle ID.",
       },
+    },
+    "First PU Time": {
+      numberFormat: 'h":"mm am/pm'    
+    },
+    "Last DO Time": {
+      numberFormat: 'h":"mm am/pm'    
     },
     "Scheduled Start Time": {
       numberFormat: 'h":"mm am/pm'
