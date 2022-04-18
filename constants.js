@@ -878,6 +878,14 @@ const defaultNamedRanges = {
     "sheetName":"Trips",
     "headerName":"Appt Time"
   },
+  "codeCheckSourceOnShare": {
+    "sheetName":"Trips",
+    "headerName": "Share"
+  },
+  "codeVerifySourceOnEdit": {
+    "sheetName":"Trips",
+    "headerName":"Source"
+  },
   "lookupCustomerNames": {
     "sheetName":"Lookups",
     "column":"A"

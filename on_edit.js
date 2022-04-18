@@ -39,6 +39,14 @@ const rangeTriggers = {
     functionCall: updateTripVehicleOnEdit,
     callOncePerRow: true
   },
+  codeCheckSourceOnShare: {
+    functionCall: checkSourceOnShare,
+    callOncePerRow: true
+  },
+  codeVerifySourceOnEdit: {
+    functionCall: verifySourceOnEdit,
+    callOncePerRow: true
+  }
 }
 
 /**
@@ -118,6 +126,8 @@ function callCellTriggers(e) {
             triggeredRows[triggerName].push(range.getRow())
           }
         } else {
+          log('Trigger Name:', triggerName)
+          log('Cllas to Make', JSON.stringify(callsToMake))
           callsToMake[triggerName].push(range)
         }
       })
@@ -160,6 +170,53 @@ function formatAddressOnEdit(range) {
       range.setBackground(null)
     }
   } catch(e) { logError(e) }
+}
+
+// Named range = "Share" column
+function checkSourceOnShare(range) {
+  try {
+    if (range.getValue()) {
+      const app = SpreadsheetApp
+      const tripRow = getFullRow(range)
+      const tripValues = getRangeValuesAsTable(tripRow)[0]
+      if (tripValues["Source"]) {
+        let backgroundColor = app.newColor()
+        let msg = "Warning: Cannot share a trip with a set Source."
+        range.setNote(msg)
+        backgroundColor.setRgbColor(errorBackgroundColor)
+        range.setBackgroundObject(backgroundColor.build())
+      }
+    } else {
+      range.setNote("")
+      range.setBackground(null)
+    }
+  } 
+  catch(e) {
+    logError(e)
+  }
+}
+
+function verifySourceOnEdit(range) {
+  try {
+    let tripRow = getFullRow(range)
+    let rowIndex = tripRow.getRow()
+    let columnIndex = getRangeHeaderNames(tripRow).indexOf("Share")
+    let shareCell = tripRow.getCell(rowIndex, columnIndex)
+    if (shareCell.getValue()) {
+      if (range.getValue()) {
+        let backgroundColor = app.newColor()
+        let msg = "Warning: Cannot share a trip with a set Source."
+        shareCell.setNote(msg)
+        backgroundColor.setRgbColor(errorBackgroundColor)
+        shareCell.setBackgroundObject(backgroundColor.build())
+      } else {
+        shareCell.setNote("")
+        shareCell.setBackground(null)
+      }
+    }
+  } catch(e) {
+    logError(e)
+  }
 }
 
 function fillTripCellsOnEdit(range) {
