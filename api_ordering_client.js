@@ -236,7 +236,7 @@ function moveAcceptedClaimsToSentTrips(acceptedClaims, apiAccount) {
   // Remove certain fields from the trip, while leaving in any custom
   // columns that may have been created
   let tripColumnNames = getSheetHeaderNames(tripSheet)
-  let ignoredFields = ["Action", "Go", "Share", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By"]
+  let ignoredFields = ["Action", "Go", "Share", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By", "Shared"]
   let sentTripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
   acceptedClaims.reverse()
   acceptedClaims.forEach(claim => {

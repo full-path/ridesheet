@@ -28,28 +28,33 @@ function buildMenus() {
 }
 
 function buildNamedRanges() {
-  try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const namedRanges = ss.getNamedRanges()
     const currentRangeNames = namedRanges.map(nr => nr.getName())
     const buildRangeNames = Object.keys(defaultNamedRanges)
     namedRanges.forEach(namedRange => {
-      if (buildRangeNames.indexOf(namedRange.getName()) !== -1 && 
+      try {
+        if (buildRangeNames.indexOf(namedRange.getName()) !== -1 && 
           (namedRange.getRange().getRow() !== 1 || 
           namedRange.getRange().getLastRow() !== namedRange.getRange().getSheet().getMaxRows() + 1000)) {
         const name = namedRange.getName()
         let newRange = defaultNamedRanges[name]
-        //namedRange.remove()
         buildNamedRange(ss, name, newRange.sheetName, newRange.column, newRange.headerName)
+      }
+      } catch(e) {
+        logError(e)
       }
     })
     buildRangeNames.forEach(rangeName => {
-      if (currentRangeNames.indexOf(rangeName) === -1) {
+      try {
+        if (currentRangeNames.indexOf(rangeName) === -1) {
         let newRange = defaultNamedRanges[rangeName]
         buildNamedRange(ss, rangeName,newRange.sheetName, newRange.column, newRange.headerName)
       }
+      } catch(e) {
+        logError(e)
+      }
     })
-  } catch(e) { logError(e) }
 }
 
 function buildNamedRange(ss, name, sheetName, column, headerName) {
