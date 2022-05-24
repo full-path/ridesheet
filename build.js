@@ -19,7 +19,7 @@ function buildMenus() {
   settingsMenu.addItem('Build Metadata', 'buildMetadata')
   menu.addSubMenu(settingsMenu)
   if (getDocProp("apiShowMenuItems")) {
-    const menuApi = ui.createMenu('API')
+    const menuApi = ui.createMenu('Ride Sharing')
     menuApi.addItem('Get trip requests', 'sendRequestForTripRequests')
     menuApi.addItem('Send responses to trip requests', 'sendTripRequestResponses')
     menuApi.addToUi()
