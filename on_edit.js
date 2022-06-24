@@ -126,8 +126,6 @@ function callCellTriggers(e) {
             triggeredRows[triggerName].push(range.getRow())
           }
         } else {
-          log('Trigger Name:', triggerName)
-          log('Cllas to Make', JSON.stringify(callsToMake))
           callsToMake[triggerName].push(range)
         }
       })
