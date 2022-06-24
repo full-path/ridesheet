@@ -4,7 +4,6 @@ function buildMenus() {
   const ui = SpreadsheetApp.getUi()
   const menu = ui.createMenu('RideSheet')
   menu.addItem('Refresh driver calendars', 'updateDriverCalendars')
-  menu.addItem('Refresh outside runs', 'sendRequestForRuns')
   menu.addItem('Add return trip', 'createReturnTrip')
   menu.addItem('Add stop', 'addStop')
   menu.addItem('Create manifests for day', 'createManifests')
@@ -22,6 +21,7 @@ function buildMenus() {
     const menuApi = ui.createMenu('Ride Sharing')
     menuApi.addItem('Get trip requests', 'sendRequestForTripRequests')
     menuApi.addItem('Send responses to trip requests', 'sendTripRequestResponses')
+    menuApi.addItem('Refresh outside runs', 'sendRequestForRuns')
     menuApi.addToUi()
   }
   menu.addToUi()
