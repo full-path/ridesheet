@@ -112,10 +112,14 @@ function createRows(destSheet, data, createNewColumns=true) {
 }
 
 const defaultColumnFilter = colHeader => {
+  const colsToSkip = ["Action", "Go", "Share", "Shared", "Earliest PU Time", "Latest PU Time"]
   if (colHeader.trim() == '') {
     return false
   }
   if (colHeader.startsWith('_')) {
+    return false
+  }
+  if (colsToSkip.includes(colHeader)) {
     return false
   }
   return true
