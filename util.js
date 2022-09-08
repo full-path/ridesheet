@@ -1,4 +1,5 @@
 function log(d, ...args) {
+  if (getDocProp("logLevel") === "normal") return
   let ss = SpreadsheetApp.getActiveSpreadsheet()
   let logSheet = ss.getSheetByName("Debug Log") || ss.insertSheet("Debug Log")
   logSheet.appendRow([new Date(), d].concat(args))
@@ -11,7 +12,7 @@ function logError(e) {
 function clearLog() {
   let ss = SpreadsheetApp.getActiveSpreadsheet()
   let logSheet = ss.getSheetByName("Debug Log")
-  logSheet.deleteRows(1,logSheet.getLastRow())
+  logSheet.deleteRows(2,logSheet.getLastRow())
 }
 
 function logProperties() {
