@@ -201,7 +201,7 @@ function sendRequestForRuns() {
               [null, null, null, null],
               ["Source", endPoint.name, "Run Date", new Date(row.runDate)],
               ["Seats", row.ambulatorySpacePoints, "Wheelchair spaces", row.standardWheelchairSpacePoints],
-              ["Lift", row.hasLift ? "Yes" : "No", "Ramp", row.hasLift ? "Yes" : "No"],
+              ["Lift", row.hasLift ? "Yes" : "No", "Ramp", row.hasRamp ? "Yes" : "No"],
               ["Start location", row.startLocation, "End location", row.endLocation],
               [null, "Stop Time", "Stop City", "Rider Change"]
             )
@@ -263,8 +263,7 @@ function receiveRequestForRuns() {
       })
 
       runOut.runDate = runIn["Run Date"]    
-      runOut.ambulatorySpacePoints = vehicle["Seating Capacity"]
-      runOut.standardWheelchairSpacePoints = vehicle["Seating Capacity"]
+      runOut.standardWheelchairSpacePoints = vehicle["Wheelchair Capacity"]
       runOut.ambulatorySpacePoints = vehicle["Seating Capacity"]
       runOut.hasLift = !!vehicle["Has Lift"]
       runOut.hasRamp = !!vehicle["Has Ramp"]
