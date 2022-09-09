@@ -200,6 +200,11 @@ const defaultDocumentProperties = {
     value: false,
     description: "Show menu items for manually triggering API calls?"
   },
+  logLevel: {
+    type: "string",
+    value: "normal",
+    description: "Set logging level to normal or verbose"
+  },
   extraHeaderNames: {
     type: "object",
     value: {
