@@ -83,7 +83,7 @@ function moveRows(sourceSheet, destSheet, filter) {
   try {
     const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
     const rowsToMove = sourceData.filter(row => filter(row))
-    const rowsMovedSuccessfully = createRows(destSheet, rowsToMove)
+    const rowsMovedSuccessfully = createRows(destSheet, rowsToMove, false)
     if (rowsMovedSuccessfully) {
       safelyDeleteRows(sourceSheet, rowsToMove)
     }
@@ -169,14 +169,18 @@ function testRowFormat() {
 }
 
 function safelyDeleteRows(sheet, data) {
-  const lastRowPosition = sheet.getLastRow()
+  if (data.length < 1) { return }
+  let ss = SpreadsheetApp.getActive()
+  let sheetId = sheet.getSheetId()
+  let lastRowPosition = sheet.getLastRow()
   if (sheet.getMaxRows() === lastRowPosition) {
     sheet.insertRowAfter(lastRowPosition)
   }
-  const rowsToDelete = data.map(row => row._rowPosition).sort((a,b)=>b-a)
-  rowsToDelete.forEach(row => {
-    sheet.deleteRow(row)
-  })
+  let rowsToDelete = data.map(row => {
+    let offset = row._rowIndex + 1
+    return { deleteDimension: { range: { sheetId, startIndex: offset, endIndex: offset + 1, dimension: "ROWS"}}}
+    }).reverse()
+  Sheets.Spreadsheets.batchUpdate({requests: rowsToDelete}, ss.getId());
 }
 
 function safelyDeleteRow(sheet, row) {
