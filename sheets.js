@@ -83,9 +83,15 @@ function moveRows(sourceSheet, destSheet, filter) {
   try {
     const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
     const rowsToMove = sourceData.filter(row => filter(row))
-    const rowsMovedSuccessfully = createRows(destSheet, rowsToMove, false)
+    if (rowsToMove.length < 1) {
+      log('moveRows', 'No data returned by filter. No rows moved.')
+      return
+    }
+    const rowsMovedSuccessfully = createRows(destSheet, rowsToMove)
     if (rowsMovedSuccessfully) {
       safelyDeleteRows(sourceSheet, rowsToMove)
+    } else {
+      SpreadsheetApp.getActiveSpreadsheet().toast('Error moving data. Please check for duplicate entries.')
     }
   } catch(e) { logError(e) }
 }
@@ -95,20 +101,60 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
     const sourceSheet = sourceRange.getSheet()
     const sourceData = getRangeValuesAsTable(sourceRange, {includeFormulaValues: false})[0]
     Object.keys(extraFields).forEach(key => sourceData[key] = extraFields[key])
-    if (createRow(destSheet, sourceData, true)) {
+    if (createRow(destSheet, sourceData)) {
       safelyDeleteRow(sourceSheet, sourceData)  
     }
   } catch(e) { logError(e) }
 }
 
-function createRows(destSheet, data, createNewColumns=true) {
-  if (createNewColumns) {
-    let firstRow = data[0]
-    createColumns(destSheet, firstRow)
+function createRows(destSheet, data) {
+  try{
+    let columnNames = getSheetHeaderNames(destSheet)
+    let values = data.map(row => {
+    return columnNames.map(colName => row[colName] ? row[colName] : null)
+    })
+    destSheet.getRange(destSheet.getLastRow()+1, 1, values.length, values[0].length).setValues(values)
+    return true
+  } catch(e) { return false }
+}
+
+function createRow(destSheet, data) {
+  try {
+    let columnNames = getSheetHeaderNames(destSheet)
+    let dataArray = columnNames.map(colName => data[colName] ? data[colName] : null)
+    destSheet.appendRow(dataArray)
+    let newRowIndex = destSheet.getLastRow()
+    let newRow = destSheet.getRange(newRowIndex + ':' + newRowIndex)
+    fixRowNumberFormatting(newRow)
+    fixRowDataValidation(newRow)
+    return true
+  } catch(e) {
+    logError(e)
+    return false
   }
-  let columnNames = getSheetHeaderNames(destSheet, {forceRefresh: createNewColumns})
-  let success = data.every(row => createRow(destSheet, row))
-  return success
+}
+
+function safelyDeleteRows(sheet, data) {
+  if (data.length < 1) { return }
+  let ss = SpreadsheetApp.getActive()
+  let sheetId = sheet.getSheetId()
+  let lastRowPosition = sheet.getLastRow()
+  if (sheet.getMaxRows() === lastRowPosition) {
+    sheet.insertRowAfter(lastRowPosition)
+  }
+  let rowsToDelete = data.map(row => {
+    let offset = row._rowIndex + 1
+    return { deleteDimension: { range: { sheetId, startIndex: offset, endIndex: offset + 1, dimension: "ROWS"}}}
+    }).reverse()
+  Sheets.Spreadsheets.batchUpdate({requests: rowsToDelete}, ss.getId())
+}
+
+function safelyDeleteRow(sheet, row) {
+  const lastRowPosition = sheet.getLastRow()
+  if (sheet.getMaxRows() === lastRowPosition) {
+    sheet.insertRowAfter(lastRowPosition)
+  }
+  sheet.deleteRow(row._rowPosition)
 }
 
 const defaultColumnFilter = colHeader => {
@@ -139,25 +185,6 @@ function createColumns(sheet, dataRow, columnFilter=defaultColumnFilter, colOffs
   })
 }
 
-function createRow(destSheet, data, createNewColumns=false) {
-  try {
-    if (createNewColumns) {
-      createColumns(destSheet, data)
-    }
-    let columnNames = getSheetHeaderNames(destSheet, {forceRefresh: createNewColumns})
-    let dataArray = columnNames.map(colName => data[colName] ? data[colName] : null)
-    destSheet.appendRow(dataArray)
-    let newRowIndex = destSheet.getLastRow()
-    let newRow = destSheet.getRange(newRowIndex + ':' + newRowIndex)
-    fixRowNumberFormatting(newRow)
-    fixRowDataValidation(newRow)
-    return true
-  } catch(e) {
-    logError(e)
-    return false
-  }
-}
-
 function testRowFormat() {
   let ss = SpreadsheetApp.getActiveSpreadsheet()
   let sheet = ss.getSheetByName('Trip Review')
@@ -166,29 +193,6 @@ function testRowFormat() {
   let a = newRow.getA1Notation()
   fixRowNumberFormatting(newRow)
   fixRowDataValidation(newRow)
-}
-
-function safelyDeleteRows(sheet, data) {
-  if (data.length < 1) { return }
-  let ss = SpreadsheetApp.getActive()
-  let sheetId = sheet.getSheetId()
-  let lastRowPosition = sheet.getLastRow()
-  if (sheet.getMaxRows() === lastRowPosition) {
-    sheet.insertRowAfter(lastRowPosition)
-  }
-  let rowsToDelete = data.map(row => {
-    let offset = row._rowIndex + 1
-    return { deleteDimension: { range: { sheetId, startIndex: offset, endIndex: offset + 1, dimension: "ROWS"}}}
-    }).reverse()
-  Sheets.Spreadsheets.batchUpdate({requests: rowsToDelete}, ss.getId());
-}
-
-function safelyDeleteRow(sheet, row) {
-  const lastRowPosition = sheet.getLastRow()
-  if (sheet.getMaxRows() === lastRowPosition) {
-    sheet.insertRowAfter(lastRowPosition)
-  }
-  sheet.deleteRow(row._rowPosition)
 }
 
 // Takes a range and returns an array of objects, each object containing key/value pairs. 
