@@ -111,9 +111,12 @@ function createRows(destSheet, data) {
   try{
     let columnNames = getSheetHeaderNames(destSheet)
     let values = data.map(row => {
-    return columnNames.map(colName => row[colName] ? row[colName] : null)
+      return columnNames.map(colName => row[colName] ? row[colName] : null)
     })
-    destSheet.getRange(destSheet.getLastRow()+1, 1, values.length, values[0].length).setValues(values)
+    let newRows = destSheet.getRange(destSheet.getLastRow()+1, 1, values.length, values[0].length)
+    newRows.setValues(values)
+    //fixRowDataValidation(newRows)
+    //fixRowNumberFormatting(newRows)
     return true
   } catch(e) { return false }
 }
