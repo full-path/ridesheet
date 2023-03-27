@@ -172,7 +172,7 @@ function sendRequestForRuns() {
               rl.setHorizontalAlignment("left")
             }
           },
-          riderChange: {
+          availableSeats: {
             ranges: [],
             formats: function(rl) {
               rl.setNumberFormat("0")
@@ -200,10 +200,10 @@ function sendRequestForRuns() {
             grid.push(
               [null, null, null, null],
               ["Source", endPoint.name, "Run Date", new Date(row.runDate)],
-              ["Seats", row.ambulatorySpacePoints, "Wheelchair spaces", row.standardWheelchairSpacePoints],
+              ["Seats", row.ambulatorySpacePoints ? row.ambulatorySpacePoints : "Unknown", "Wheelchair spaces", row.standardWheelchairSpacePoints ? row.standardWheelchairSpacePoints : "Unknown"],
               ["Lift", row.hasLift ? "Yes" : "No", "Ramp", row.hasRamp ? "Yes" : "No"],
               ["Start location", row.startLocation, "End location", row.endLocation],
-              [null, "Stop Time", "Stop City", "Rider Change"]
+              [null, "Stop Time", "Stop City", "Available Seats"]
             )
             formatGroups.label.ranges.push("A" + (currentRow + 1) + ":A" + (currentRow + 4), "C" + (currentRow + 1) + ":C" + (currentRow + 4))
             formatGroups.date.ranges.push("D" + (currentRow + 1))
@@ -211,11 +211,15 @@ function sendRequestForRuns() {
             formatGroups.runAttributes.ranges.push("A" + (currentRow + 1) + ":D" + (currentRow + 5))
             formatGroups.header.ranges.push("A" + (currentRow + 5) + ":D" + (currentRow + 5))
             currentRow += 6
+            let currentSeats = row.ambulatorySpacePoints ? parseInt(row.ambulatorySpacePoints) : 0
             row.stops.forEach(stop => {
-              grid.push([null, new Date(stop.time), stop.city, stop.riderChange])
+              let riderChange = parseInt(stop.riderChange)
+              currentSeats = row.ambulatorySpacePoints ? (currentSeats - riderChange) : ''
+              let text = getStopText(riderChange)
+              grid.push([text, new Date(stop.time), stop.city, currentSeats])
             })
             formatGroups.time.ranges.push("B" + currentRow + ":B" + (currentRow + row.stops.length -1))
-            formatGroups.riderChange.ranges.push("D" + currentRow + ":D" + (currentRow + row.stops.length -1))
+            formatGroups.availableSeats.ranges.push("D" + currentRow + ":D" + (currentRow + row.stops.length -1))
             currentRow += row.stops.length
           })
         } else {
@@ -240,6 +244,16 @@ function sendRequestForRuns() {
       }
     })
   } catch(e) { logError(e) }
+}
+
+function getStopText(riderChange) {
+  if (riderChange > 0) {
+    if (riderChange > 1) return riderChange + ' riders board'
+    return '1 rider boards'
+  } else {
+    if (riderChange < -1) return Math.abs(riderChange) + ' riders alight'
+    return '1 rider alights'
+  }
 }
 
 function receiveRequestForRuns() {
