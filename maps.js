@@ -108,14 +108,21 @@ function extractCity(address) {
   if (parsed) return parsed[1]
   let isPlusCode = noParens.match(/.*\+.*/)
   if (isPlusCode) {
-    let geocodeResult = Maps.newGeocoder().geocode(noParens)
-    if (geocodeResult.status === 'OK') {
-      let location = geocodeResult.results[0].geometry.location
-      let locationInformation = Maps.newGeocoder().reverseGeocode(location.lat, location.lng)
-      if (locationInformation.status === 'OK') {
-        let approxAddress = locationInformation.results[0].formatted_address
-        let city = extractCity(approxAddress)
-        return city
+    let cache = CacheService.getScriptCache()
+    let cachedCity = cache.get(noParens)
+    if (cachedCity) {
+      return cachedCity
+    } else {
+      let geocodeResult = Maps.newGeocoder().geocode(noParens)
+      if (geocodeResult.status === 'OK') {
+        let location = geocodeResult.results[0].geometry.location
+        let locationInformation = Maps.newGeocoder().reverseGeocode(location.lat, location.lng)
+        if (locationInformation.status === 'OK') {
+          let approxAddress = locationInformation.results[0].formatted_address
+          let city = extractCity(approxAddress)
+          cache.put(noParens, city, 259200) // cache for 72 hours
+          return city
+        }
       }
     }
   }
