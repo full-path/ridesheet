@@ -104,7 +104,7 @@ function extractCity(address) {
   let noParens = parseAddress(address).geocodeAddress
   let parsed = noParens.match(/.*, (.*, .*) \d{5}, USA/)
   if (parsed) return parsed[1]
-  parsed = noParens.match(/[A-Z0-9]{4}\+[A-Z0-9]{2,3} (.*, .*), USA/)
+  parsed = noParens.match(/[A-Z0-9]{4}\+[A-Z0-9]{2,3},? (.*, .*), USA/)
   if (parsed) return parsed[1]
   let isPlusCode = noParens.match(/.*\+.*/)
   if (isPlusCode) {
