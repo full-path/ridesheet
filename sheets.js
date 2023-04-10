@@ -108,17 +108,98 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
 }
 
 function createRows(destSheet, data) {
-  try{
+  try {
     let columnNames = getSheetHeaderNames(destSheet)
     let values = data.map(row => {
       return columnNames.map(colName => row[colName] ? row[colName] : null)
     })
-    let newRows = destSheet.getRange(destSheet.getLastRow()+1, 1, values.length, values[0].length)
+    let firstRow = destSheet.getLastRow() + 1
+    let newRows = destSheet.getRange(firstRow, 1, values.length, values[0].length)
     newRows.setValues(values)
-    //fixRowDataValidation(newRows)
-    //fixRowNumberFormatting(newRows)
+    applySheetFormatsAndValidation(destSheet, firstRow)
     return true
-  } catch(e) { return false }
+  } catch(e) { 
+      logError(e)
+      return false 
+  }
+}
+
+// ex. of format for defaultColumns
+// {"Trips": {
+//     "Trip Date": {
+//       numberFormat: "M/d/yyyy",
+//       dataValidation: {
+//         criteriaType: "DATE_IS_VALID_DATE",
+//         helpText: "Value must be a valid date.",
+//       },
+//     },
+//     "Customer Name and ID": {
+//       dataValidation: {
+//         criteriaType: "VALUE_IN_RANGE",
+//         namedRange: "lookupCustomerNames",
+//         showDropdown: true,
+//         allowInvalid: false,
+//         helpText: "Value must be a valid customer name and ID.",
+//       },
+//     },
+// }}
+
+/**
+ * Applies formatting and validation rules to a sheet based on a set of default column rules.
+ * @param {Sheet} sheet - The sheet to apply the rules to.
+ * @param {number} [startRow=2] - The starting row of the range to apply the rules to.
+ */
+function applySheetFormatsAndValidation(sheet, startRow=2) {
+  let sheetName = sheet.getName()
+  let rules = defaultColumns[sheetName]
+  let defaultHeaderNames = Object.keys(rules) // defaultColumns is a global variable
+
+  // Get the headers of the sheet
+  let headerRange = sheet.getRange(1, 1, 1, sheet.getLastColumn())
+  let sheetHeaders = headerRange.getValues()[0]
+
+  // Get the range of rows beginning with startRow and ending at the last row in the sheet
+  // Set formatting on that range to ensure text is normal weight (not bold) and clear any background color on cells 
+  let dataRange = sheet.getRange(startRow, 1, sheet.getLastRow() - startRow + 1, sheet.getLastColumn())
+  dataRange.setFontWeight('normal').setBackground(null)
+
+  // Loop through defaultHeaderNames and apply formatting and validation rules as appropriate
+  for (let i = 0; i < defaultHeaderNames.length; i++) {
+    let headerName = defaultHeaderNames[i]
+    let rule = rules[headerName]
+    if (rule.numberFormat || rule.dataValidation) {
+      let index = sheetHeaders.indexOf(headerName)
+      if (index >= 0) {
+        let columnRange = sheet.getRange(startRow, index + 1, sheet.getLastRow() - startRow + 1)
+        if (rule.numberFormat) {
+          columnRange.setNumberFormat(rule.numberFormat)
+        }
+        if (rule.dataValidation) {
+          let validationRules = rule.dataValidation
+          let criteriaName = validationRules.criteriaType
+          let criteria = SpreadsheetApp.DataValidationCriteria[criteriaName]
+          let allowInvalid = !!validationRules.allowInvalid
+          let args = []
+          if (criteriaName === "VALUE_IN_RANGE") {
+            let ss = SpreadsheetApp.getActiveSpreadsheet()
+            let rng = ss.getRangeByName(validationRules.namedRange)
+            let a1 = rng.getA1Notation()
+            let lookupsheet = rng.getSheet()
+            let colLetter = a1.substring(0,1)
+            let simplifiedRange = lookupsheet.getRange(colLetter + ':' + colLetter)
+            let dropdown = validationRules.showDropdown
+            args = [simplifiedRange, dropdown]
+          }
+          let builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
+          if (validationRules.helpText) {
+            builder = builder.setHelpText(validationRules.helpText)
+          }
+          let validation = builder.build()
+          columnRange.setDataValidation(validation)
+        }
+      }
+    }
+  }
 }
 
 function createRow(destSheet, data) {
