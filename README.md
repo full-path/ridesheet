@@ -40,3 +40,13 @@ To ensure sheets are cleaned up and incorporate the latest changes, select RideS
 - Create a test trip and run through review and archive to make sure everything is working
 - Set up reporting (*TO-DO: Create Documentation*)
 
+## Common Issues & Debugging
+
+- In the `Document Properties` sheet, set `logLevel` to `verbose`  
+  *This ensures that the most detailed possible errors show up in the `Debug Log` sheet*
+  
+- Ensure all checkbox columns are set so that an empty checkbox is null, rather than `False`
+  *Under Data > Data Validation in the main menu, you can see all rules for the current sheet. For any checkbox ranges, the option `use custom cell values` should be selected, and unchecked should be empty*
+
+  - Look for any red error markers on cells; these may indicate a missing or incorrect validation rule 
+
