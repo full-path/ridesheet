@@ -301,6 +301,8 @@ function getValidationRuleFromMetadata(md) {
       }
       log(criteria, JSON.stringify(args))
       //builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
+    } else if (criteriaName === "TEXT_IS_VALID_EMAIL") {
+      builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     } else if (criteriaName === "DATE_IS_VALID_DATE") {
       builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     }
