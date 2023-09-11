@@ -267,11 +267,13 @@ function fixRowDataValidation(range) {
 }
 
 function getValidationRuleFromMetadata(md) {
-  let ss = SpreadsheetApp.getActiveSpreadsheet()
-  let rules = JSON.parse(md.getValue())
-  let criteriaName = rules.criteriaType
+  try {
+    let ss = SpreadsheetApp.getActiveSpreadsheet()
+    let rules = JSON.parse(md.getValue())
+    let criteriaName = rules.criteriaType
     let criteria = SpreadsheetApp.DataValidationCriteria[criteriaName]
     let allowInvalid = !!rules.allowInvalid
+    let builder
     let args = []
     if (criteriaName === "VALUE_IN_RANGE") {
       let rng = ss.getRangeByName(rules.namedRange)
@@ -281,13 +283,35 @@ function getValidationRuleFromMetadata(md) {
       let simplifiedRange = lookupsheet.getRange(colLetter + ':' + colLetter)
       let dropdown = rules.showDropdown
       args = [simplifiedRange, dropdown]
+      builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
+    } else if (criteriaName === "VALUE_IN_LIST") {
+      let dropdown = rules.showDropdown
+      let values = rules.values
+      args = [values, dropdown]
+      builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
+    } else if (criteriaName === "CHECKBOX") {
+      if (rules.hasOwnProperty("checkedValue")) {
+        if (rules.hasOwnProperty("uncheckedValue")) {
+          builder = SpreadsheetApp.newDataValidation().requireCheckbox(rules.checkedValue, rules.uncheckedValue).setAllowInvalid(allowInvalid)
+        } else {
+          builder = SpreadsheetApp.newDataValidation().requireCheckbox(rules.checkedValue).setAllowInvalid(allowInvalid)
+        }
+      } else {
+        builder = SpreadsheetApp.newDataValidation().requireCheckbox().setAllowInvalid(allowInvalid)
+      }
+      log(criteria, JSON.stringify(args))
+      //builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
+    } else if (criteriaName === "DATE_IS_VALID_DATE") {
+      builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     }
-    let builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
-    if (rules.helpText) {
-      builder = builder.setHelpText(rules.helpText)
+    if (builder !== undefined) {
+      if (rules.hasOwnProperty("helpText")) {
+        builder = builder.setHelpText(rules.helpText)
+      }
+      let rule = builder.build()
+      return rule
     }
-    let rule = builder.build()
-    return rule
+  } catch(e) { logError(e) }
 }
 
 function fixDataValidation(sheet=null) {
