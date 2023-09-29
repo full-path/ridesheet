@@ -146,23 +146,11 @@ function callCellTriggers(e) {
 
 function formatAddressOnEdit(range) {
   try {
-    const app = SpreadsheetApp
-    let backgroundColor = app.newColor()
     if (range.getValue() && range.getValue().trim()) {
-      addressParts = parseAddress(range.getValue())
-      let formattedAddress = getGeocode(addressParts.geocodeAddress, "formatted_address")
-      if (addressParts.parenText) formattedAddress = formattedAddress + " (" + addressParts.parenText + ")"
-      if (formattedAddress.startsWith("Error")) {
-        const msg = "Address " + formattedAddress
-        range.setNote(msg)
-        app.getActiveSpreadsheet().toast(msg)
-        backgroundColor.setRgbColor(errorBackgroundColor)
-        range.setBackgroundObject(backgroundColor.build())
-      } else {
-        range.setValue(formattedAddress)
-        range.setNote("")
-        range.setBackground(null)
-      } 
+      const app = SpreadsheetApp
+      if (!setAddressByShortName(app, range)) {
+        setAddressByApi(app, range)
+      }
     } else {
       range.setNote("")
       range.setBackground(null)

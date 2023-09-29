@@ -44,6 +44,48 @@ function isPartialMatch(geocodeResults) {
   return false
 }
 
+function setAddressByShortName(app, range) {
+  try {
+    const ss = app.getActiveSpreadsheet()
+    const sheet = ss.getSheetByName('Addresses')
+    const dataRange = sheet.getDataRange()
+    const data = getRangeValuesAsTable(dataRange)
+    const result = data.find((row) => row["Short Name"].toLowerCase() === range.getValue().trim().toLowerCase())["Address"]
+    if (!result.trim()) { throw new Error('No true address found') }
+    range.setValue(result)
+    range.setNote("")
+    range.setBackground(null)
+    return true
+  } catch(e) {
+    return false
+  }
+}
+
+function setAddressByApi(app, range) {
+  try {
+    let backgroundColor = app.newColor()
+    addressParts = parseAddress(range.getValue())
+    let formattedAddress = getGeocode(addressParts.geocodeAddress, "formatted_address")
+    if (addressParts.parenText) formattedAddress = formattedAddress + " (" + addressParts.parenText + ")"
+    if (formattedAddress.startsWith("Error")) {
+      const msg = "Address " + formattedAddress
+      range.setNote(msg)
+      app.getActiveSpreadsheet().toast(msg)
+      backgroundColor.setRgbColor(errorBackgroundColor)
+      range.setBackgroundObject(backgroundColor.build())
+      return false
+    } else {
+      range.setValue(formattedAddress)
+      range.setNote("")
+      range.setBackground(null)
+      return true
+    }
+  } catch(e) {
+    logError(e)
+    return false
+  }
+}
+
 function getTripEstimate(origin, destination, returnType) {
   const mapObj = Maps.newDirectionFinder()
   mapObj.setOrigin(origin)
