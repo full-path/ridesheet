@@ -69,7 +69,7 @@ const defaultDocumentProperties = {
     type: "number",
     value: 46.299097,
     description: "The north latitude of the box where Google Maps gives extra preference when geocoding addresses."
-  }, 
+  },
   geocoderBoundNeLongitude: {
     type: "number",
     value: -116.463363,
@@ -183,7 +183,7 @@ const defaultDocumentProperties = {
         hasTrips: true
       }
     ],
-    description: "API information needed to connect to other agencies"    
+    description: "API information needed to connect to other agencies"
   },
   apiGiveAccess: {
     type: "object",
@@ -191,9 +191,9 @@ const defaultDocumentProperties = {
       Enter_agency_key_here: {
         name: "Example agency name with API access to data in this sheet",
           secret: "Enter secret here"
-      }  
+      }
     },
-    description: "API information needed to allow agencies to connect to this sheet. We recommend using https://www.uuidgenerator.net/ to generate API keys."    
+    description: "API information needed to allow agencies to connect to this sheet. We recommend using https://www.uuidgenerator.net/ to generate API keys."
   },
   apiShowMenuItems: {
     type: "boolean",
@@ -370,7 +370,7 @@ const defaultColumns = {
         helpText: "Value must be a valid vehicle ID.",
       },
     },
-    "Service ID": {      
+    "Service ID": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupServiceIds",
@@ -383,7 +383,7 @@ const defaultColumns = {
     "Mobility Factors": {},
     "Notes": {},
     "Est Hours": {
-      numberFormat: "[h]:mm:ss"      
+      numberFormat: "0.00"
     },
     "Est Miles": {},
     "Driver Calendar ID": {},
@@ -507,7 +507,7 @@ const defaultColumns = {
     "Mobility Factors": {},
     "Notes": {},
     "Est Hours": {
-      numberFormat: "[h]:mm:ss"
+      numberFormat: "0.00"
     },
     "Est Miles": {},
     "Trip ID": {},
@@ -618,7 +618,7 @@ const defaultColumns = {
     },
     "PU Address": {},
     "DO Address": {},
-    "Service ID": {      
+    "Service ID": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupServiceIds",
@@ -631,7 +631,7 @@ const defaultColumns = {
     "Mobility Factors": {},
     "Notes": {},
     "Est Hours": {
-      numberFormat: "[h]:mm:ss"
+      numberFormat: "0.00"
     },
     "Est Miles": {},
     "Manifest ID": {},
@@ -791,7 +791,7 @@ const defaultColumns = {
     },
     "PU Address": {},
     "DO Address": {},
-    "Service ID": {      
+    "Service ID": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupServiceIds",
@@ -804,7 +804,7 @@ const defaultColumns = {
     "Mobility Factors": {},
     "Notes": {},
     "Est Hours": {
-      numberFormat: "[h]:mm:ss"
+      numberFormat: "0.00"
     },
     "Est Miles": {},
     "Manifest ID": {},
