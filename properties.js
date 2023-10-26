@@ -1,4 +1,3 @@
-
 const propDescSuffix = "__description__"
 var cachedDocProps = {}
 var allDocPropsCached = false
@@ -184,7 +183,10 @@ function coerceValue(value, type) {
   if      (!type || type === getType(value)) { return value }
   else if (type === "array")     { return JSON.parse(value) }
   else if (type === "bigint")    { return BigInt(value) }
-  else if (type === "boolean")   { return new Boolean(JSON.parse(value)) }
+  else if (type === "boolean")   {
+    if (value.toLowerCase() === "false" || value.toLowerCase() === "no" || value === "0" || !value) { return false }
+    else { return true }
+  }
   else if (type === "date")      { return new Date(JSON.parse(value)) } 
   else if (type === "map")       { return new Map(JSON.parse(value)) }
   else if (type === "null")      { return null }

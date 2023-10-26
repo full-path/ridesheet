@@ -1,5 +1,5 @@
 /**
-* Get latitude, longitude, or a formatted street address for a given 
+* Get latitude, longitude, or a formatted street address for a given
 * @param address Address as string Ex. "300 N LaSalles St, Chicago, IL"
 * @param return_type Return type as string "lat", "long", or "formatted_address"
 * @customfunction
@@ -12,9 +12,9 @@ function getGeocode(address,returnType) {
     {name: "geocoderBoundNeLongitude"}
     ])
   let mapGeo = Maps.newGeocoder().setBounds(
-    bounds["geocoderBoundSwLatitude"], 
-    bounds["geocoderBoundSwLongitude"], 
-    bounds["geocoderBoundNeLatitude"], 
+    bounds["geocoderBoundSwLatitude"],
+    bounds["geocoderBoundSwLongitude"],
+    bounds["geocoderBoundNeLatitude"],
     bounds["geocoderBoundNeLongitude"]
   )
   let result = mapGeo.geocode(address)
@@ -44,12 +44,54 @@ function isPartialMatch(geocodeResults) {
   return false
 }
 
+function setAddressByShortName(app, range) {
+  try {
+    const ss = app.getActiveSpreadsheet()
+    const sheet = ss.getSheetByName('Addresses')
+    const dataRange = sheet.getDataRange()
+    const data = getRangeValuesAsTable(dataRange)
+    const result = data.find((row) => row["Short Name"].toLowerCase() === range.getValue().trim().toLowerCase())["Address"]
+    if (!result.trim()) { throw new Error('No true address found') }
+    range.setValue(result)
+    range.setNote("")
+    range.setBackground(null)
+    return true
+  } catch(e) {
+    return false
+  }
+}
+
+function setAddressByApi(app, range) {
+  try {
+    let backgroundColor = app.newColor()
+    addressParts = parseAddress(range.getValue())
+    let formattedAddress = getGeocode(addressParts.geocodeAddress, "formatted_address")
+    if (addressParts.parenText) formattedAddress = formattedAddress + " (" + addressParts.parenText + ")"
+    if (formattedAddress.startsWith("Error")) {
+      const msg = "Address " + formattedAddress
+      range.setNote(msg)
+      app.getActiveSpreadsheet().toast(msg)
+      backgroundColor.setRgbColor(errorBackgroundColor)
+      range.setBackgroundObject(backgroundColor.build())
+      return false
+    } else {
+      range.setValue(formattedAddress)
+      range.setNote("")
+      range.setBackground(null)
+      return true
+    }
+  } catch(e) {
+    logError(e)
+    return false
+  }
+}
+
 function getTripEstimate(origin, destination, returnType) {
   const mapObj = Maps.newDirectionFinder()
   mapObj.setOrigin(origin)
   mapObj.setDestination(destination)
   const result = mapObj.getDirections()
-  
+
   if (returnType === "raw") {
     return JSON.stringify(result).slice(0,50000)
   } else if (result["status"] != "OK") {
@@ -74,6 +116,8 @@ function getTripEstimate(origin, destination, returnType) {
         return (durationInSeconds / 86400)
       case "milesAndDays":
         return {miles: (distanceInMeters * 0.000621371), days: (durationInSeconds / 86400)}
+      case "milesAndHours":
+        return {miles: (distanceInMeters * 0.000621371), hours: (durationInSeconds / 3600)}
       default:
         return "Error: Invalid Unit Type"
     }

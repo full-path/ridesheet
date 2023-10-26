@@ -69,7 +69,7 @@ const defaultDocumentProperties = {
     type: "number",
     value: 46.299097,
     description: "The north latitude of the box where Google Maps gives extra preference when geocoding addresses."
-  }, 
+  },
   geocoderBoundNeLongitude: {
     type: "number",
     value: -116.463363,
@@ -183,7 +183,7 @@ const defaultDocumentProperties = {
         hasTrips: true
       }
     ],
-    description: "API information needed to connect to other agencies"    
+    description: "API information needed to connect to other agencies"
   },
   apiGiveAccess: {
     type: "object",
@@ -191,9 +191,9 @@ const defaultDocumentProperties = {
       Enter_agency_key_here: {
         name: "Example agency name with API access to data in this sheet",
           secret: "Enter secret here"
-      }  
+      }
     },
-    description: "API information needed to allow agencies to connect to this sheet. We recommend using https://www.uuidgenerator.net/ to generate API keys."    
+    description: "API information needed to allow agencies to connect to this sheet. We recommend using https://www.uuidgenerator.net/ to generate API keys."
   },
   apiShowMenuItems: {
     type: "boolean",
@@ -223,7 +223,12 @@ const defaultDocumentProperties = {
       Services: []
     },
     description: "Show menu items for manually triggering API calls?"
-  }
+  },
+  configFolderId: {
+    type: "string",
+    value: "Enter ID here",
+    description: "The ID of the folder where configuration files will be located."
+  },
 }
 
 const defaultColumns = {
@@ -264,8 +269,20 @@ const defaultColumns = {
     "Default Mobility Factors": {},
     "Customer Manifest Notes": {},
     "Customer Private Notes": {},
-    "Customer Start Date": {},
-    "Customer End Date": {}
+    "Customer Start Date": {
+      numberFormat: "M/d/yyyy",
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid date.",
+      },
+    },
+    "Customer End Date": {
+      numberFormat: "M/d/yyyy",
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid date.",
+      },
+    }
   },
   "Trips": {
     "Trip Date": {
@@ -288,22 +305,50 @@ const defaultColumns = {
     "Go": {},
     "Share": {},
     "Declined By": {},
-    "Trip Result": {},
+    "Trip Result": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupTripResults",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid trip result.",
+      },
+    },
     "Source": {},
     "Earliest PU Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "PU Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "Latest PU Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "DO Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "Appt Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "PU Address": {},
     "DO Address": {},
@@ -325,7 +370,7 @@ const defaultColumns = {
         helpText: "Value must be a valid vehicle ID.",
       },
     },
-    "Service ID": {      
+    "Service ID": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupServiceIds",
@@ -338,7 +383,7 @@ const defaultColumns = {
     "Mobility Factors": {},
     "Notes": {},
     "Est Hours": {
-      numberFormat: "[h]:mm:ss"      
+      numberFormat: "0.00"
     },
     "Est Miles": {},
     "Driver Calendar ID": {},
@@ -349,7 +394,7 @@ const defaultColumns = {
   },
   "Runs": {
     "Run Date": {
-      numberFormat: "M/d/yyyy",
+      numberFormat: "MM/dd/yyyy",
       dataValidation: {
         criteriaType: "DATE_IS_VALID_DATE",
         helpText: "Value must be a valid date.",
@@ -373,14 +418,34 @@ const defaultColumns = {
         helpText: "Value must be a valid vehicle ID.",
       },
     },
-    "Scheduled Start Time": {},
+    "Scheduled Start Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
     "First PU Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "Last DO Time": {
-      numberFormat: 'h":"mm am/pm'    
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
-    "Scheduled End Time": {}
+    "Scheduled End Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    }
   },
   "Sent Trips": {
     "Claimed By": {},
@@ -402,19 +467,39 @@ const defaultColumns = {
     },
     "Declined By": {},
     "Earliest PU Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "PU Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "Latest PU Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "DO Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "Appt Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "PU Address": {},
     "DO Address": {},
@@ -422,7 +507,7 @@ const defaultColumns = {
     "Mobility Factors": {},
     "Notes": {},
     "Est Hours": {
-      numberFormat: "[h]:mm:ss"
+      numberFormat: "0.00"
     },
     "Est Miles": {},
     "Trip ID": {},
@@ -445,251 +530,73 @@ const defaultColumns = {
         helpText: "Value must be a valid customer name and ID.",
       },
     },
-    "Action": {},
-    "Go": {},
-    "Trip Result": {},
-    "Share": {},
+    "Action": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_LIST",
+        values: ["Add return trip","Add stop"],
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid action.",
+      },
+    },
+    "Go": {
+        dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "TRUE",
+        allowInvalid: false,
+      },
+    },
+    "Trip Result": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupTripResults",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid trip result.",
+      },
+    },
+    "Share": {
+        criteriaType: "CHECKBOX",
+        checkedValue: "TRUE",
+        allowInvalid: false,
+    },
     "Actual PU Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "Actual DO Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "Start Odo": {},
     "End Odo": {},
     "Source": {},
     "PU Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "DO Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Appt Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Driver ID": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupDriverIds",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid driver ID.",
-      },
-    },
-    "Vehicle ID": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupVehicleIds",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid vehicle ID.",
-      },
-    },
-    "PU Address": {},
-    "DO Address": {},
-    "Service ID": {      
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupServiceIds",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid service ID.",
-      },
-    },
-    "Guests": {},
-    "Mobility Factors": {},
-    "Notes": {},
-    "Est Hours": {
-      numberFormat: "[h]:mm:ss"
-    },
-    "Est Miles": {},
-    "Manifest ID": {},
-    "Calendar ID": {},
-    "Customer ID": {}
-  },
-  "Run Review": {
-    "Run Date": {
-      numberFormat: "M/d/yyyy",
+      numberFormat: 'h":"mm am/pm',
       dataValidation: {
         criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid date.",
+        helpText: "Value must be a valid time.",
       },
-    },
-    "Driver ID": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupDriverIds",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid driver ID.",
-      },
-    },
-    "Vehicle ID": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupVehicleIds",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid vehicle ID.",
-      },
-    },
-    "Scheduled Start Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "First PU Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Last DO Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Scheduled End Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Actual Start Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Actual End Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Odometer Start": {},
-    "Odometer End": {}
-  },
-  "Trip Archive": {
-    "Trip Date": {
-      numberFormat: "M/d/yyyy",
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid date.",
-      }
-    },
-    "Customer Name and ID": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupCustomerNames",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid customer name and ID.",
-      },
-    },
-    "Trip Result": {},
-    "Actual PU Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Actual DO Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Start Odo": {},
-    "End Odo": {},
-    "Odo Start": {},
-    "Odo End": {},
-    "Source": {},
-    "PU Time": {
-      numberFormat: 'h":"mm am/pm'
     },
     "DO Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Appt Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Driver ID": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupDriverIds",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid driver ID.",
-      },
-    },
-    "Vehicle ID": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupVehicleIds",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid vehicle ID.",
-      },
-    },
-    "PU Address": {},
-    "DO Address": {},
-    "Service ID": {      
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupServiceIds",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid service ID.",
-      },
-    },
-    "Guests": {},
-    "Mobility Factors": {},
-    "Notes": {},
-    "Est Hours": {
-      numberFormat: "[h]:mm:ss"
-    },
-    "Est Miles": {},
-    "Manifest ID": {},
-    "Calendar ID": {},
-    "Customer ID": {}
-  },
-  "Run Archive": {
-    "Run Date": {
-      numberFormat: "M/d/yyyy",
+      numberFormat: 'h":"mm am/pm',
       dataValidation: {
         criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid date.",
-      }
-    },
-    "Driver ID": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupDriverIds",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid driver ID.",
+        helpText: "Value must be a valid time.",
       },
-    },
-    "Vehicle ID": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupVehicleIds",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid vehicle ID.",
-      },
-    },
-    "First PU Time": {
-      numberFormat: 'h":"mm am/pm'    
-    },
-    "Last DO Time": {
-      numberFormat: 'h":"mm am/pm'    
-    },
-    "Scheduled Start Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Scheduled End Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Actual Start Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Actual End Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "Odometer Start": {},
-    "Odometer End": {}
-  },
-  "Recurring Trips": {
-    "Customer Name and ID": {},
-    "Source": {},
-    "PU Time": {
-      numberFormat: 'h":"mm am/pm'
-    },
-    "DO Time": {
-      numberFormat: 'h":"mm am/pm'
     },
     "Appt Time": {
-      numberFormat: 'h":"mm am/pm'
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
     },
     "Driver ID": {
       dataValidation: {
@@ -723,7 +630,257 @@ const defaultColumns = {
     "Guests": {},
     "Mobility Factors": {},
     "Notes": {},
+    "Est Hours": {
+      numberFormat: "0.00"
+    },
+    "Est Miles": {},
+    "Manifest ID": {},
+    "Calendar ID": {},
     "Customer ID": {}
+  },
+  "Run Review": {
+    "Run Date": {
+      numberFormat: "M/d/yyyy",
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid date.",
+      },
+    },
+    "Driver ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupDriverIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid driver ID.",
+      },
+    },
+    "Vehicle ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupVehicleIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid vehicle ID.",
+      },
+    },
+    "Scheduled Start Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "First PU Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Last DO Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Scheduled End Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Actual Start Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Actual End Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Odometer Start": {},
+    "Odometer End": {}
+  },
+  "Trip Archive": {
+    "Trip Date": {
+      numberFormat: "M/d/yyyy",
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid date.",
+      }
+    },
+    "Customer Name and ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupCustomerNames",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid customer name and ID.",
+      },
+    },
+    "Trip Result": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupTripResults",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid trip result.",
+      },
+    },
+    "Actual PU Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Actual DO Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Source": {},
+    "PU Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "DO Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Appt Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Driver ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupDriverIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid driver ID.",
+      },
+    },
+    "Vehicle ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupVehicleIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid vehicle ID.",
+      },
+    },
+    "PU Address": {},
+    "DO Address": {},
+    "Service ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupServiceIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid service ID.",
+      },
+    },
+    "Guests": {},
+    "Mobility Factors": {},
+    "Notes": {},
+    "Est Hours": {
+      numberFormat: "0.00"
+    },
+    "Est Miles": {},
+    "Manifest ID": {},
+    "Calendar ID": {},
+    "Customer ID": {}
+  },
+  "Run Archive": {
+    "Run Date": {
+      numberFormat: "M/d/yyyy",
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid date.",
+      }
+    },
+    "Driver ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupDriverIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid driver ID.",
+      },
+    },
+    "Vehicle ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupVehicleIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid vehicle ID.",
+      },
+    },
+    "First PU Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Last DO Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Scheduled Start Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Scheduled End Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Actual Start Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Actual End Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Odometer Start": {},
+    "Odometer End": {}
   },
   "Vehicles": {
     "Vehicle ID": {},
@@ -732,8 +889,20 @@ const defaultColumns = {
     "Seating Capacity": {},
     "Wheelchair Capacity": {},
     "Scooter Capacity": {},
-    "Has Ramp": {},
-    "Has Lift": {},
+    "Has Ramp": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "TRUE",
+        allowInvalid: false,
+      },
+    },
+    "Has Lift": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "TRUE",
+        allowInvalid: false,
+      },
+    },
     "Vehicle Start Date": {
       numberFormat: "M/d/yyyy",
       dataValidation: {

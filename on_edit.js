@@ -78,7 +78,7 @@ function callCellTriggers(e) {
   try {
     const spreadsheet = e.source
     const sheet = e.range.getSheet()
-    const allNamedRanges = sheet.getNamedRanges().filter(namedRange => 
+    const allNamedRanges = sheet.getNamedRanges().filter(namedRange =>
       namedRange.getName().indexOf("code") === 0 && rangesOverlap(e.range, namedRange.getRange())
     )
     if (allNamedRanges.length === 0) return
@@ -130,7 +130,7 @@ function callCellTriggers(e) {
         }
       })
     })
-  
+
     //  const serializableCallsToMake = {}
     //  Object.keys(callsToMake).forEach(rangeTrigger => {
     //    serializableCallsToMake[rangeTrigger] = callsToMake[rangeTrigger].map(range => range.getA1Notation())
@@ -146,23 +146,11 @@ function callCellTriggers(e) {
 
 function formatAddressOnEdit(range) {
   try {
-    const app = SpreadsheetApp
-    let backgroundColor = app.newColor()
     if (range.getValue() && range.getValue().trim()) {
-      addressParts = parseAddress(range.getValue())
-      let formattedAddress = getGeocode(addressParts.geocodeAddress, "formatted_address")
-      if (addressParts.parenText) formattedAddress = formattedAddress + " (" + addressParts.parenText + ")"
-      if (formattedAddress.startsWith("Error")) {
-        const msg = "Address " + formattedAddress
-        range.setNote(msg)
-        app.getActiveSpreadsheet().toast(msg)
-        backgroundColor.setRgbColor(errorBackgroundColor)
-        range.setBackgroundObject(backgroundColor.build())
-      } else {
-        range.setValue(formattedAddress)
-        range.setNote("")
-        range.setBackground(null)
-      } 
+      const app = SpreadsheetApp
+      if (!setAddressByShortName(app, range)) {
+        setAddressByApi(app, range)
+      }
     } else {
       range.setNote("")
       range.setBackground(null)
@@ -188,7 +176,7 @@ function checkSourceOnShare(range) {
       range.setNote("")
       range.setBackground(null)
     }
-  } 
+  }
   catch(e) {
     logError(e)
   }
@@ -231,9 +219,9 @@ function fillHoursAndMilesOnEdit(range) {
     if (tripValues["PU Address"] && tripValues["DO Address"]) {
       const PUAddress = parseAddress(tripValues["PU Address"]).geocodeAddress
       const DOAddress = parseAddress(tripValues["DO Address"]).geocodeAddress
-      const tripEstimate = getTripEstimate(PUAddress, DOAddress, "milesAndDays")
-      setValuesByHeaderNames([{"Est Hours": tripEstimate.days, "Est Miles": tripEstimate.miles}], tripRow)
-      if (tripEstimate["days"]) {
+      const tripEstimate = getTripEstimate(PUAddress, DOAddress, "milesAndHours")
+      setValuesByHeaderNames([{"Est Hours": tripEstimate.hours, "Est Miles": tripEstimate.miles}], tripRow)
+      if (tripEstimate.hours) {
         SpreadsheetApp.getActiveSpreadsheet().toast("Travel estimate saved")
       }
       updateTripTimesOnEdit(range)
@@ -245,9 +233,9 @@ function fillHoursAndMilesOnEdit(range) {
 
 /**
  * Manage setup of a new customer record. The goals here are to:
- * - Trim the customer name as needed 
+ * - Trim the customer name as needed
  * _ Generate a customer ID when it's missing and there's a first and last name present
- * - Autofill the "Customer Name and ID" field when the first name, last name, and ID are present. 
+ * - Autofill the "Customer Name and ID" field when the first name, last name, and ID are present.
  *   This will be the field used to identify the customer in trip records
  * - Keep track of the current highest customer ID in document properties, seeding data when needed
  */
@@ -273,16 +261,16 @@ function setCustomerKeyOnEdit(range) {
         newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
         newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
         setDocProp("lastCustomerID_", nextCustomerID)
-        // There is an ID value present, and it's numeric. 
+        // There is an ID value present, and it's numeric.
         // Update the lastCustomerID property if the new ID is greater than the current lastCustomerID property
-      } else if (Number.isFinite(customerValues["Customer ID"])) { 
+      } else if (Number.isFinite(customerValues["Customer ID"])) {
         newValues["Customer ID"] = (customerValues["Customer ID"])
         newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
         newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
         newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
         if (customerValues["Customer ID"] >= nextCustomerID) { setDocProp("lastCustomerID_", customerValues["Customer ID"]) }
         // There is an ID value, and it's not numeric. Allow this, but don't track it as the lastCustomerID
-      } else { 
+      } else {
         newValues["Customer First Name"] = customerValues["Customer First Name"].trim()
         newValues["Customer Last Name"] = customerValues["Customer Last Name"].trim()
         newValues["Customer Name and ID"] = getCustomerNameAndId(newValues["Customer First Name"], newValues["Customer Last Name"], newValues["Customer ID"])
@@ -300,7 +288,7 @@ function updateTripTimesOnEdit(range) {
     tripValues.forEach(row => {
       let newRowValues = {}
       if (row["Est Hours"] && isFinite(row["Est Hours"])) {
-        const estMilliseconds = timeOnlyAsMilliseconds(row["Est Hours"])
+        const estMilliseconds = (row["Est Hours"] * 60 * 60 * 1000)
         const estHours = estMilliseconds / 3600000
         const padding = getDocProp("tripPaddingPerHourInMinutes") * estHours * 60000
         const apptPadding = getDocProp("dropOffToAppointmentTimeInMinutes") * 60000
@@ -334,7 +322,7 @@ function updateTripVehicleOnEdit(range) {
         valuesToChange["Vehicle ID"] = driverRow["Default Vehicle ID"]
         setValuesByHeaderNames([valuesToChange], tripRow)
       }
-    }  
+    }
   } catch(e) { logError(e) }
 }
 
@@ -344,13 +332,13 @@ function scanForDuplicatesOnEdit(range) {
     const thisRowNumber = range.getRow()
     const fullRange = range.getSheet().getRange(1, range.getColumn(), range.getSheet().getLastRow())
     const values = fullRange.getValues().flat()
-    
+
     let duplicateRows = []
     values.forEach((value, i) => {
       if (value == thisValue && (i + 1) != thisRowNumber) duplicateRows.push(i + 1)
     })
-    if (duplicateRows.length == 1) range.setNote("This value is already used in row "  + duplicateRows[0]) 
-    if (duplicateRows.length > 1)  range.setNote("This value is already used in rows " + duplicateRows.join(", ")) 
+    if (duplicateRows.length == 1) range.setNote("This value is already used in row "  + duplicateRows[0])
+    if (duplicateRows.length > 1)  range.setNote("This value is already used in rows " + duplicateRows.join(", "))
     if (duplicateRows.length == 0) range.clearNote()
   } catch(e) { logError(e) }
 }
@@ -358,7 +346,7 @@ function scanForDuplicatesOnEdit(range) {
 // When a trip is pasted in, change the Trip ID to avoid duplicate IDs
 function updateTripID(e) {
   try {
-    if (e.range.getColumn() === 1 && 
+    if (e.range.getColumn() === 1 &&
         e.range.getLastColumn() === e.range.getSheet().getMaxColumns()) {
       let tripValues = getRangeValuesAsTable(e.range)
       tripValues.forEach(row => {

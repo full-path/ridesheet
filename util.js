@@ -188,3 +188,21 @@ function convertNamedRangeToTriggerName(namedRange) {
   // remove numeric suffix
   return namedRange.getName().replace(/\d+$/g,'')
 }
+
+function loadConfigFile(fileName) {
+  try {
+    const configFolderId = getDocProp("configFolderId")
+    const configFolder = DriveApp.getFolderById(configFolderId)
+    const files = configFolder.getFilesByName(fileName)
+    if (files.hasNext()) {
+      const file = files.next()
+      const content = file.getBlob().getDataAsString()
+      const json = JSON.parse(content)
+      return json
+    }
+  } catch(e) { logError(e) }
+}
+
+function testLoadConfigFile() {
+  log(JSON.stringify(loadConfigFile("columns.json.txt")))
+}
