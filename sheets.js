@@ -1,7 +1,8 @@
 var cachedHeaderNames = {}
+var cachedHeaderFormulas = {}
 
 /**
- * Test whether a range is fully inside or matches another range. 
+ * Test whether a range is fully inside or matches another range.
  * If the inner range is not fully inside the outer range, returns false.
  * @param {range} innerRange The inner range
  * @param {range} outerRange The range that the inner must be inside of or match exactly
@@ -41,7 +42,7 @@ function rangesOverlap(firstRange, secondRange) {
 /**
  * Given a range, return the entire row that corresponds with the row
  * of the upper left corner of the passed in range. Useful with managing events.
- * @param {range} range The source range 
+ * @param {range} range The source range
  * @return {range}
  */
 function getFullRow(range) {
@@ -53,7 +54,7 @@ function getFullRow(range) {
 
 /**
  * Given a range, return the full width of all the rows that correspond with the passed in range.
- * @param {range} range The source range 
+ * @param {range} range The source range
  * @return {range}
  */
 function getFullRows(range) {
@@ -102,7 +103,7 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
     const sourceData = getRangeValuesAsTable(sourceRange, {includeFormulaValues: false})[0]
     Object.keys(extraFields).forEach(key => sourceData[key] = extraFields[key])
     if (createRow(destSheet, sourceData)) {
-      safelyDeleteRow(sourceSheet, sourceData)  
+      safelyDeleteRow(sourceSheet, sourceData)
     }
   } catch(e) { logError(e) }
 }
@@ -118,9 +119,9 @@ function createRows(destSheet, data) {
     newRows.setValues(values)
     applySheetFormatsAndValidation(destSheet, firstRow)
     return true
-  } catch(e) { 
+  } catch(e) {
       logError(e)
-      return false 
+      return false
   }
 }
 
@@ -159,7 +160,7 @@ function applySheetFormatsAndValidation(sheet, startRow=2) {
   let sheetHeaders = headerRange.getValues()[0]
 
   // Get the range of rows beginning with startRow and ending at the last row in the sheet
-  // Set formatting on that range to ensure text is normal weight (not bold) and clear any background color on cells 
+  // Set formatting on that range to ensure text is normal weight (not bold) and clear any background color on cells
   let dataRange = sheet.getRange(startRow, 1, sheet.getLastRow() - startRow + 1, sheet.getLastColumn())
   dataRange.setFontWeight('normal').setBackground(null)
 
@@ -279,34 +280,44 @@ function testRowFormat() {
   fixRowDataValidation(newRow)
 }
 
-// Takes a range and returns an array of objects, each object containing key/value pairs. 
-// If the range includes row 1 of the spreadsheet, that top row will be used as the keys. 
+// Takes a range and returns an array of objects, each object containing key/value pairs.
+// If the range includes row 1 of the spreadsheet, that top row will be used as the keys.
 // Otherwise row 1 will be collected separately and used as the source for keys.
+// If includeFormulaValues = false, then formulas are searched for in the actual source cell
+// and in the corresponding header cell. The latter check is premised on the idea that any
+// array formulas will be embedded in the header cell
 function getRangeValuesAsTable(range, {headerRowPosition = 1, includeFormulaValues = true} = {}) {
   try {
     let topDataRowPosition = range.getRow()
     let values = range.getValues()
     let formulas
-    if (!includeFormulaValues) formulas = range.getFormulas()
     let rangeHeaderNames
+    let rangeHeaderFormulas
+    if (!includeFormulaValues) formulas = range.getFormulas()
     if (topDataRowPosition <= headerRowPosition) {
       if (values.length > (headerRowPosition + 1 - topDataRowPosition)) {
+        // If the header row is already in the selected range, then collect the header names
+        // and remove them from the values and formulas arrays
         rangeHeaderNames = values[headerRowPosition - topDataRowPosition]
         values.splice(0, headerRowPosition + 1 - topDataRowPosition)
-        if (!includeFormulaValues) formulas.splice(0, headerRowPosition + 1 - topDataRowPosition)
+        if (!includeFormulaValues) {
+          rangeHeaderFormulas = formulas[headerRowPosition - topDataRowPosition]
+          formulas.splice(0, headerRowPosition + 1 - topDataRowPosition)
+        }
         topDataRowPosition = headerRowPosition + 1
       } else {
         return []
       }
     } else if (topDataRowPosition > headerRowPosition) {
       rangeHeaderNames = getRangeHeaderNames(range, {headerRowPosition: headerRowPosition})
+      rangeHeaderFormulas = getRangeHeaderFormulas(range, {headerRowPosition: headerRowPosition})
     }
     let result = values.map((row, rowIndex) => {
       let rowObject = {}
       rowObject._rowPosition = rowIndex + topDataRowPosition
       rowObject._rowIndex = rowIndex
       rangeHeaderNames.forEach((headerName, columnIndex) => {
-        if (includeFormulaValues || (!includeFormulaValues && !formulas[rowIndex][columnIndex])) {
+        if (includeFormulaValues || (!includeFormulaValues && !formulas[rowIndex][columnIndex] && !rangeHeaderFormulas[columnIndex])) {
           rowObject[headerName] = row[columnIndex]
         }
       })
@@ -317,11 +328,11 @@ function getRangeValuesAsTable(range, {headerRowPosition = 1, includeFormulaValu
 }
 
 /**
- * Given a desired column name and a range, 
+ * Given a desired column name and a range,
  * return the display value of the first row of the column whose header row value
  * matches the headerName. Returns null if column cannot be found.
  * @param {string} headerName The name of the header
- * @param {range} range The range 
+ * @param {range} range The range
  * @return {object}
  */
 function getDisplayValueByHeaderName(headerName, range) {
@@ -336,11 +347,11 @@ function getDisplayValueByHeaderName(headerName, range) {
 }
 
 /**
- * Given a desired column name and a range, 
+ * Given a desired column name and a range,
  * return the value of the first row of the column whose header row value
  * matches the headerName. Returns null if column cannot be found.
  * @param {string} headerName The name of the header
- * @param {range} range The range 
+ * @param {range} range The range
  * @return {object}
  */
 function getValueByHeaderName(headerName, range) {
@@ -449,7 +460,7 @@ function getSheetHeaderNames(sheet, {forceRefresh = false, headerRowPosition = 1
     return cachedHeaderNames[sheetName]
   } catch(e) { logError(e) }
 }
-    
+
 // Get header information for column range only, rather than the entire sheet
 // Uses getSheetHeaderNames for caching purposes.
 function getRangeHeaderNames(range, {forceRefresh = false, headerRowPosition = 1} = {}) {
@@ -457,6 +468,28 @@ function getRangeHeaderNames(range, {forceRefresh = false, headerRowPosition = 1
     const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {forceRefresh: forceRefresh, headerRowPosition: headerRowPosition})
     const rangeStartColumnIndex = range.getColumn() - 1
     return sheetHeaderNames.slice(rangeStartColumnIndex, rangeStartColumnIndex + range.getWidth())
+  } catch(e) { logError(e) }
+}
+
+// Cache header formula info in a global variable so it only needs to be collected once per sheet per onEdit call.
+function getSheetHeaderFormulas(sheet, {forceRefresh = false, headerRowPosition = 1} = {}) {
+  try {
+    const sheetName = sheet.getName()
+    if (!cachedHeaderFormulas[sheetName] || forceRefresh) {
+      const headerFormulas = sheet.getRange("A" + headerRowPosition + ":" + headerRowPosition).getFormulas()[0]
+      cachedHeaderFormulas[sheetName] = headerFormulas
+    }
+    return cachedHeaderFormulas[sheetName]
+  } catch(e) { logError(e) }
+}
+
+// Get header formula information for column range only, rather than the entire sheet
+// Uses getSheetHeaderFormulas for caching purposes.
+function getRangeHeaderFormulas(range, {forceRefresh = false, headerRowPosition = 1} = {}) {
+  try {
+    const sheetHeaderFormulas = getSheetHeaderFormulas(range.getSheet(), {forceRefresh: forceRefresh, headerRowPosition: headerRowPosition})
+    const rangeStartColumnIndex = range.getColumn() - 1
+    return sheetHeaderFormulas.slice(rangeStartColumnIndex, rangeStartColumnIndex + range.getWidth())
   } catch(e) { logError(e) }
 }
 

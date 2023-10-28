@@ -36,7 +36,7 @@ function copyTrip(sourceTripRange, isReturnTrip) {
     const tripSheet       = ss.getActiveSheet()
     if (!sourceTripRange) sourceTripRange = getFullRow(tripSheet.getActiveCell())
     const sourceTripRow   = sourceTripRange.getRow()
-    const sourceTripData  = getRangeValuesAsTable(sourceTripRange)[0]
+    const sourceTripData  = getRangeValuesAsTable(sourceTripRange,{includeFormulaValues: false})[0]
     let   newTripData     = {...sourceTripData}
     if (tripSheet.getName() === "Trips" && isCompleteTrip(sourceTripData)) {
       newTripData["PU Address"] = sourceTripData["DO Address"]
