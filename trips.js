@@ -30,6 +30,11 @@ function fillTripCells(range) {
   } catch(e) { logError(e) }
 }
 
+// Takes an existing trip and makes a copy of it, using the DO address of the existing trip as the
+// PU address of the new one. If this isReturnTrip is true, the DO address of the new trip is the
+// PU address of the earliest trip for the customer and day
+// Function can be called from the Action/Go trigger or from the menu bar. If called from the
+// menu bar, the source row is taken from taken from whatever row the active cell is in
 function copyTrip(sourceTripRange, isReturnTrip) {
   try {
     const ss              = SpreadsheetApp.getActiveSpreadsheet()
@@ -37,34 +42,46 @@ function copyTrip(sourceTripRange, isReturnTrip) {
     if (!sourceTripRange) sourceTripRange = getFullRow(tripSheet.getActiveCell())
     const sourceTripRow   = sourceTripRange.getRow()
     const sourceTripData  = getRangeValuesAsTable(sourceTripRange,{includeFormulaValues: false})[0]
-    let   newTripData     = {...sourceTripData}
-    if (tripSheet.getName() === "Trips" && isCompleteTrip(sourceTripData)) {
-      newTripData["PU Address"] = sourceTripData["DO Address"]
-      newTripData["DO Address"] = (isReturnTrip ? sourceTripData["PU Address"] : null)
-      if (sourceTripData["Appt Time"]) {
-        newTripData["PU Time"] = timeAdd(sourceTripData["Appt Time"], 60*60*1000)
-      } else if (sourceTripData["DO Time"]) {
-        newTripData["PU Time"] = timeAdd(sourceTripData["DO Time"], 60*60*1000)
-      } else {
-        newTripData["PU Time"] = null
-      }
-      newTripData["Earliest PU Time"] = null
-      newTripData["Latest PU Time"]   = null
-      newTripData["DO Time"]          = null
-      newTripData["Appt Time"]        = null
-      newTripData["Est Hours"]        = null
-      newTripData["Est Miles"]        = null
-      newTripData["Trip ID"]          = Utilities.getUuid()
-      newTripData["Calendar ID"]      = null
-      tripSheet.insertRowAfter(sourceTripRow)
-      let newTripRange = getFullRow(tripSheet.getRange(sourceTripRow + 1, 1))
-      setValuesByHeaderNames([newTripData],newTripRange)
-      if (isReturnTrip) {
-        fillHoursAndMilesOnEdit(newTripRange)
-        updateTripTimesOnEdit(newTripRange)
-      }
+    if (tripSheet.getName() !== "Trips" || !isCompleteTrip(sourceTripData)) {
+      ss.toast("Select a cell in a trip to create a subsequent trip.","Trip Creation Failed")
+      return
+    }
+    let DoAddress
+    if (isReturnTrip) {
+      const allTrips = getRangeValuesAsTable(tripSheet.getDataRange())
+      const customerTripsThisDay = allTrips.
+        filter((row) => row["Customer ID"] === sourceTripData["Customer ID"] &&
+        row["Trip Date"].getTime() === sourceTripData["Trip Date"].getTime())
+      const firstCustomerTripThisDay = customerTripsThisDay.
+        reduce((earliestRow, row) => row["PU Time"] < earliestRow["PU Time"] ? row : earliestRow)
+        DoAddress = firstCustomerTripThisDay["PU Address"]
     } else {
-      ss.toast("Select a cell in a trip to create its return trip.","Trip Creation Failed")
+      DoAddress = null
+    }
+    let   newTripData     = {...sourceTripData}
+    newTripData["PU Address"] = sourceTripData["DO Address"]
+    newTripData["DO Address"] = DoAddress
+    if (sourceTripData["Appt Time"]) {
+      newTripData["PU Time"] = timeAdd(sourceTripData["Appt Time"], 60*60*1000)
+    } else if (sourceTripData["DO Time"]) {
+      newTripData["PU Time"] = timeAdd(sourceTripData["DO Time"], 60*60*1000)
+    } else {
+      newTripData["PU Time"] = null
+    }
+    newTripData["Earliest PU Time"] = null
+    newTripData["Latest PU Time"]   = null
+    newTripData["DO Time"]          = null
+    newTripData["Appt Time"]        = null
+    newTripData["Est Hours"]        = null
+    newTripData["Est Miles"]        = null
+    newTripData["Trip ID"]          = Utilities.getUuid()
+    newTripData["Calendar ID"]      = null
+    tripSheet.insertRowAfter(sourceTripRow)
+    let newTripRange = getFullRow(tripSheet.getRange(sourceTripRow + 1, 1))
+    setValuesByHeaderNames([newTripData],newTripRange)
+    if (isReturnTrip) {
+      fillHoursAndMilesOnEdit(newTripRange)
+      updateTripTimesOnEdit(newTripRange)
     }
   } catch(e) { logError(e) }
 }
