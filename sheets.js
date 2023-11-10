@@ -110,9 +110,20 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
 
 function createRows(destSheet, data) {
   try {
-    let columnNames = getSheetHeaderNames(destSheet)
+    let destColumnNames = getSheetHeaderNames(destSheet)
+    let sourceColumnNames = Object.keys(data[0])
+    let missingDestColumns = sourceColumnNames.reduce((a, c) => {
+      if (!destColumnNames.includes(c) && c.slice(0,1) !== "_") a.push(c)
+      return a
+    }, [])
+    if (missingDestColumns.length) {
+      SpreadsheetApp.getUi().alert(
+        `Sheet "${destSheet.getSheetName()}" is missing the column${missingDestColumns.length === 1 ? "" : "s"} ${missingDestColumns.map((e) => '"' + e + '"').join(", ")}.
+        Rows will not be moved to the "${destSheet.getSheetName()}" sheet.`)
+      return false
+    }
     let values = data.map(row => {
-      return columnNames.map(colName => row[colName] ? row[colName] : null)
+      return destColumnNames.map(colName => row[colName] ? row[colName] : null)
     })
     let firstRow = destSheet.getLastRow() + 1
     let newRows = destSheet.getRange(firstRow, 1, values.length, values[0].length)
