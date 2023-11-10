@@ -37,11 +37,12 @@ function fillTripCells(range) {
 // menu bar, the source row is taken from taken from whatever row the active cell is in
 function copyTrip(sourceTripRange, isReturnTrip) {
   try {
-    const ss              = SpreadsheetApp.getActiveSpreadsheet()
-    const tripSheet       = ss.getActiveSheet()
+    const ss                  = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet           = ss.getActiveSheet()
     if (!sourceTripRange) sourceTripRange = getFullRow(tripSheet.getActiveCell())
-    const sourceTripRow   = sourceTripRange.getRow()
-    const sourceTripData  = getRangeValuesAsTable(sourceTripRange,{includeFormulaValues: false})[0]
+    const sourceTripRow       = sourceTripRange.getRow()
+    const sourceTripData      = getRangeValuesAsTable(sourceTripRange,{includeFormulaValues: false})[0]
+    const defaultStayDuration = getDocProp("defaultStayDuration")
     if (tripSheet.getName() !== "Trips" || !isCompleteTrip(sourceTripData)) {
       ss.toast("Select a cell in a trip to create a subsequent trip.","Trip Creation Failed")
       return
@@ -53,7 +54,7 @@ function copyTrip(sourceTripRange, isReturnTrip) {
         filter((row) => row["Customer ID"] === sourceTripData["Customer ID"] &&
         row["Trip Date"].getTime() === sourceTripData["Trip Date"].getTime())
       const firstCustomerTripThisDay = customerTripsThisDay.
-        reduce((earliestRow, row) => row["PU Time"] < earliestRow["PU Time"] ? row : earliestRow)
+        reduce((earliestRow, row) => timeOnlyAsMilliseconds(row["PU Time"]) < timeOnlyAsMilliseconds(earliestRow["PU Time"]) ? row : earliestRow)
         DoAddress = firstCustomerTripThisDay["PU Address"]
     } else {
       DoAddress = null
@@ -61,10 +62,12 @@ function copyTrip(sourceTripRange, isReturnTrip) {
     let   newTripData     = {...sourceTripData}
     newTripData["PU Address"] = sourceTripData["DO Address"]
     newTripData["DO Address"] = DoAddress
-    if (sourceTripData["Appt Time"]) {
-      newTripData["PU Time"] = timeAdd(sourceTripData["Appt Time"], 60*60*1000)
+    if (defaultStayDuration === -1) {
+      newTripData["PU Time"] = null
+    } else if (sourceTripData["Appt Time"]) {
+      newTripData["PU Time"] = timeAdd(sourceTripData["Appt Time"], defaultStayDuration*60*1000)
     } else if (sourceTripData["DO Time"]) {
-      newTripData["PU Time"] = timeAdd(sourceTripData["DO Time"], 60*60*1000)
+      newTripData["PU Time"] = timeAdd(sourceTripData["DO Time"], defaultStayDuration*60*1000)
     } else {
       newTripData["PU Time"] = null
     }
