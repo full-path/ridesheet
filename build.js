@@ -48,9 +48,9 @@ function buildNamedRanges() {
     buildRangeNames.forEach(rangeName => {
       try {
         if (currentRangeNames.indexOf(rangeName) === -1) {
-        let newRange = defaultNamedRanges[rangeName]
-        buildNamedRange(ss, rangeName,newRange.sheetName, newRange.column, newRange.headerName)
-      }
+          let newRange = defaultNamedRanges[rangeName]
+          buildNamedRange(ss, rangeName, newRange.sheetName, newRange.column, newRange.headerName)
+        }
       } catch(e) {
         logError(e)
       }
@@ -261,40 +261,40 @@ function fixRowDataValidation(range) {
     let col = md.getLocation().getColumn().getColumn()
     let row = range.getRow()
     let cell = sheet.getRange(row, col, 1, 1)
-    let rule = getValidationRuleFromMetadata(md)
+    const ruleAttributes = JSON.parse(md.getValue())
+    let rule = getValidationRule(ruleAttributes)
     cell.setDataValidation(rule)
   })
 }
 
-function getValidationRuleFromMetadata(md) {
+function getValidationRule(ruleAttributes) {
   try {
     let ss = SpreadsheetApp.getActiveSpreadsheet()
-    let rules = JSON.parse(md.getValue())
-    let criteriaName = rules.criteriaType
+    let criteriaName = ruleAttributes.criteriaType
     let criteria = SpreadsheetApp.DataValidationCriteria[criteriaName]
-    let allowInvalid = !!rules.allowInvalid
+    let allowInvalid = !!ruleAttributes.allowInvalid
     let builder
     let args = []
     if (criteriaName === "VALUE_IN_RANGE") {
-      let rng = ss.getRangeByName(rules.namedRange)
+      let rng = ss.getRangeByName(ruleAttributes.namedRange)
       let a1 = rng.getA1Notation()
       let lookupsheet = rng.getSheet()
       let colLetter = a1.substring(0,1)
       let simplifiedRange = lookupsheet.getRange(colLetter + ':' + colLetter)
-      let dropdown = rules.showDropdown
+      let dropdown = ruleAttributes.showDropdown
       args = [simplifiedRange, dropdown]
       builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     } else if (criteriaName === "VALUE_IN_LIST") {
-      let dropdown = rules.showDropdown
-      let values = rules.values
+      let dropdown = ruleAttributes.showDropdown
+      let values = ruleAttributes.values
       args = [values, dropdown]
       builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     } else if (criteriaName === "CHECKBOX") {
-      if (rules.hasOwnProperty("checkedValue")) {
-        if (rules.hasOwnProperty("uncheckedValue")) {
-          builder = SpreadsheetApp.newDataValidation().requireCheckbox(rules.checkedValue, rules.uncheckedValue).setAllowInvalid(allowInvalid)
+      if (ruleAttributes.hasOwnProperty("checkedValue")) {
+        if (ruleAttributes.hasOwnProperty("uncheckedValue")) {
+          builder = SpreadsheetApp.newDataValidation().requireCheckbox(ruleAttributes.checkedValue, ruleAttributes.uncheckedValue).setAllowInvalid(allowInvalid)
         } else {
-          builder = SpreadsheetApp.newDataValidation().requireCheckbox(rules.checkedValue).setAllowInvalid(allowInvalid)
+          builder = SpreadsheetApp.newDataValidation().requireCheckbox(ruleAttributes.checkedValue).setAllowInvalid(allowInvalid)
         }
       } else {
         builder = SpreadsheetApp.newDataValidation().requireCheckbox().setAllowInvalid(allowInvalid)
@@ -307,8 +307,8 @@ function getValidationRuleFromMetadata(md) {
       builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     }
     if (builder !== undefined) {
-      if (rules.hasOwnProperty("helpText")) {
-        builder = builder.setHelpText(rules.helpText)
+      if (ruleAttributes.hasOwnProperty("helpText")) {
+        builder = builder.setHelpText(ruleAttributes.helpText)
       }
       let rule = builder.build()
       return rule
@@ -331,8 +331,9 @@ function fixDataValidation(sheet=null) {
     let fullCol = md.getLocation().getColumn()
     let numRows = fullCol.getHeight()
     let col = fullCol.offset(1, 0, numRows - 1)
-    let rule = getValidationRuleFromMetadata(md)
-    col.setDataValidation(rule) 
+    const ruleAttributes = JSON.parse(md.getValue())
+    let rule = getValidationRule(ruleAttributes)
+    col.setDataValidation(rule)
   })
 }
 
