@@ -176,27 +176,9 @@ function applySheetFormatsAndValidation(sheet, startRow=2) {
           columnRange.setNumberFormat(rule.numberFormat)
         }
         if (rule.dataValidation) {
-          let validationRules = rule.dataValidation
-          let criteriaName = validationRules.criteriaType
-          let criteria = SpreadsheetApp.DataValidationCriteria[criteriaName]
-          let allowInvalid = !!validationRules.allowInvalid
-          let args = []
-          if (criteriaName === "VALUE_IN_RANGE") {
-            let ss = SpreadsheetApp.getActiveSpreadsheet()
-            let rng = ss.getRangeByName(validationRules.namedRange)
-            let a1 = rng.getA1Notation()
-            let lookupsheet = rng.getSheet()
-            let colLetter = a1.substring(0,1)
-            let simplifiedRange = lookupsheet.getRange(colLetter + ':' + colLetter)
-            let dropdown = validationRules.showDropdown
-            args = [simplifiedRange, dropdown]
-          }
-          let builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
-          if (validationRules.helpText) {
-            builder = builder.setHelpText(validationRules.helpText)
-          }
-          let validation = builder.build()
-          columnRange.setDataValidation(validation)
+          let ruleAttributes = rule.dataValidation
+          let validationRule = getValidationRule(ruleAttributes)
+          columnRange.setDataValidation(validationRule)
         }
       }
     }
