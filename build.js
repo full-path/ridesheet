@@ -12,7 +12,7 @@ function buildMenus() {
   menu.addItem('Move reviewed data to archive', 'moveTripsToArchive')
   menu.addSeparator()
   let settingsMenu = ui.createMenu('Settings')
-  settingsMenu.addItem('Application properties', 'presentProperties')
+  settingsMenu.addItem('Refresh document properties sheet', 'presentProperties')
   settingsMenu.addItem('Scheduled calendar updates', 'presentCalendarTrigger')
   settingsMenu.addItem('Repair sheets', 'repairSheets')
   settingsMenu.addItem('Build Metadata', 'buildMetadata')
@@ -71,7 +71,8 @@ function buildNamedRange(ss, name, sheetName, column, headerName) {
   }
 }
 
-// Document properties don't pass on to copied sheets. This recreates the ones put into the properties sheet.
+// Document properties don't pass on to copied sheets.
+// This recreates the ones put into the properties sheet.
 function buildDocumentPropertiesFromSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const propSheet = ss.getSheetByName("Document Properties")
@@ -91,9 +92,13 @@ function buildDocumentPropertiesFromSheet() {
       }
     })
     setDocProps(newProps)
+    updatePropertiesSheet()
   }
 }
 
+// If there are any default document properties that are missing from the actual
+// document properties for this sheet, this adds them.
+// This is useful for code updates that involve creating new document properties.
 function buildDocumentPropertiesFromDefaults() {
   let docProps = PropertiesService.getDocumentProperties().getProperties()
   let newProps = []
@@ -111,7 +116,10 @@ function buildDocumentPropertiesFromDefaults() {
       newProps.push(prop)
     }
   })
-  setDocProps(newProps)
+  if (newProps.length) {
+    setDocProps(newProps)
+    updatePropertiesSheet()
+  }
 }
 
 function assessMetadata() {

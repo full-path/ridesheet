@@ -90,36 +90,6 @@ const defaultDocumentProperties = {
     value: "America/Los_Angeles",
     description: "The local time zone. Use one of the TZ database names found here: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones"
   },
-  monthlyBackupFolderId: {
-    type: "string",
-    value: "Enter ID here",
-    description: "The ID of the folder where monthly backups will be saved"
-  },
-  monthlyFileRetentionInDays: {
-    type: "number",
-    value: 365,
-    description: "How many days monthly backups should be held onto before they're automatically deleted"
-  },
-  nightlyBackupFolderId: {
-    type: "string",
-    value: "Enter ID here",
-    description: "The ID of the folder where nightly backups will be saved"
-  },
-  nightlyFileRetentionInDays: {
-    type: "number",
-    value: 90,
-    description: "How many days weekly backups should be held onto before they're automatically deleted"
-  },
-  weeklyBackupFolderId: {
-    type: "string",
-    value: "Enter ID here",
-    description: "The ID of the folder where nightly backups will be saved"
-  },
-  weeklyFileRetentionInDays: {
-    type: "number",
-    value: 180,
-    description: "How many days weekly backups should be held onto before they're automatically deleted"
-  },
   dwellTimeInMinutes: {
     type: "number",
     value: 10,
@@ -222,7 +192,7 @@ const defaultDocumentProperties = {
       Drivers: [],
       Services: []
     },
-    description: "Show menu items for manually triggering API calls?"
+    description: "Extra header names that should be preserved when doing sheet repairs"
   },
   configFolderId: {
     type: "string",

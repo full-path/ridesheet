@@ -27,7 +27,7 @@ function loadPropertiesFromJSON() {
   setDocProps(props)
 }
 
-function presentProperties() {
+function updatePropertiesSheet() {
   let ss = SpreadsheetApp.getActiveSpreadsheet()
   let propSheet = ss.getSheetByName("Document Properties") || ss.insertSheet("Document Properties")
   propSheet.getDataRange().clear()
@@ -44,7 +44,11 @@ function presentProperties() {
     propRange.setValues(props)
     propSheet.autoResizeColumns(1,3)
   }
-  ss.setActiveSheet(propSheet)
+}
+
+function presentProperties() {
+  updatePropertiesSheet()
+  SpreadsheetApp.getActiveSpreadsheet().setActiveSheet("Document Properties")
 }
 
 function updateProperties(e) {
@@ -110,10 +114,13 @@ function getDocProp(propName) {
         let result = deserializeProp(prop)
         cachedDocProps[propName] = result
         return result
-      } else {
-        let result = addDocProp(propName)
+      } else if (defaultDocumentProperties.hasOwnProperty(propName) &&
+          defaultDocumentProperties[propName].hasOwnProperty("value")) {
+        let result = defaultDocumentProperties[propName].value
         cachedDocProps[propName] = result
         return result
+      } else {
+        return null
       }
     }
   } catch(e) { logError(e) }
@@ -132,14 +139,17 @@ function getDocProps(props) {
       }
       if (cachedDocProps[propName]) {
         result[propName] = cachedDocProps[propName]
-      } else if (propName in docProps) {
+      } else if (docProps.hasOwnProperty(propName)) {
         let thisResult = deserializeProp(docProps[propName])
         cachedDocProps[propName] = thisResult
         result[propName] = thisResult
+      } else if (defaultDocumentProperties.hasOwnProperty(propName) &&
+          defaultDocumentProperties[propName].hasOwnProperty("value")) {
+        let result = defaultDocumentProperties[propName].value
+        cachedDocProps[propName] = result
+        return result
       } else {
-        let thisResult = addDocProp(propName)
-        cachedDocProps[propName] = thisResult
-        result[propName] = thisResult
+        return null
       }
     })
     return result
@@ -184,8 +194,11 @@ function coerceValue(value, type) {
   else if (type === "array")     { return JSON.parse(value) }
   else if (type === "bigint")    { return BigInt(value) }
   else if (type === "boolean")   {
-    if (value.toLowerCase() === "false" || value.toLowerCase() === "no" || value === "0" || !value) { return false }
-    else { return true }
+    if (value.toLowerCase() === "false" || value.toLowerCase() === "no" || value === "0" || !value) {
+      return false
+    } else {
+      return true
+    }
   }
   else if (type === "date")      { return new Date(JSON.parse(value)) } 
   else if (type === "map")       { return new Map(JSON.parse(value)) }
