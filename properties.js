@@ -44,11 +44,11 @@ function updatePropertiesSheet() {
     propRange.setValues(props)
     propSheet.autoResizeColumns(1,3)
   }
+  return propSheet
 }
 
 function presentProperties() {
-  updatePropertiesSheet()
-  SpreadsheetApp.getActiveSpreadsheet().setActiveSheet("Document Properties")
+  SpreadsheetApp.getActiveSpreadsheet().setActiveSheet(updatePropertiesSheet())
 }
 
 function updateProperties(e) {
