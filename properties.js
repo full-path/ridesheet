@@ -76,6 +76,23 @@ function updateProperties(e) {
   }
 }
 
+function purgeOldDocumentProperties() {
+  const docProps = PropertiesService.getDocumentProperties()
+  const docPropKeys = Object.keys(docProps.getProperties())
+  const defaultDocPropKeys = Object.keys(defaultDocumentProperties)
+  const oldDocPropKeys = docPropKeys.filter(docPropKey => {
+    if (docPropKey.indexOf(propDescSuffix) === -1) {
+      return !defaultDocPropKeys.includes(docPropKey)
+    } else {
+      return !defaultDocPropKeys.includes(docPropKey.slice(0,-propDescSuffix.length))
+    }
+  })
+  if (oldDocPropKeys.length) {
+    oldDocPropKeys.forEach(oldDocPropKey => docProps.deleteProperty(oldDocPropKey))
+    updatePropertiesSheet()
+  }
+}
+
 function addDocProp(propName) {
   if (defaultDocumentProperties[propName] && defaultDocumentProperties[propName].value) {
     setDocProp(propName, defaultDocumentProperties[propName].value, defaultDocumentProperties[propName].description)

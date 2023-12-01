@@ -6,6 +6,7 @@ function onOpen(e) {
   try {
     buildDocumentPropertiesFromSheet()
     buildDocumentPropertiesFromDefaults()
+    purgeOldDocumentProperties()
   } catch(e) { logError(e) }
   try {
     buildNamedRanges()
