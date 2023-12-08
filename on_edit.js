@@ -58,9 +58,12 @@ function onEdit(e) {
     const startTime = new Date()
     const sheetName = e.range.getSheet().getName()
     if (sheetsWithHeaders.includes(sheetName) && e.range.getRow() === 1) fixHeaderNames(e.range)
+    callLocalSheetTriggers(e, sheetName, initialLocalSheetTriggers)
     callSheetTriggers(e, sheetName, initialSheetTriggers)
+    callLocalCellTriggers(e)
     callCellTriggers(e)
     callSheetTriggers(e, sheetName, finalSheetTriggers)
+    callLocalSheetTriggers(e, sheetName, finalLocalSheetTriggers)
   } catch(e) {
     logError(e)
   } finally {

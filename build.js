@@ -416,3 +416,39 @@ function logMetadata() {
     })
   } catch(e) { logError(e) }
 }
+
+// Sets up a new instance of RideSheet
+function buildRideSheetInstall(destFolderId, sourceRideSheetFileId, namePrefix) {
+  const manifestTemplateName = "Manifest Template"
+  const reportFileName = "Monthly Reporting"
+
+  const sourceRideSheetFile = DriveApp.getFileById(sourceRideSheetFileId)
+  const sourceFolder = sourceRideSheetFile.getParents().next()
+  const sourceTemplateFile = sourceFolder.getFoldersByName("Settings").next().
+    getFilesByName(manifestTemplateName).next()
+  const sourceReportFile = sourceFolder.getFoldersByName("Reports").next().
+    getFilesByName(reportFileName).next()
+
+  const destFolder = DriveApp.getFolderById(destFolderId)
+  const newManifestFolder = destFolder.createFolder("Manifests")
+  const newReportsFolder = destFolder.createFolder("Reports")
+  const newSettingsFolder = destFolder.createFolder("Settings")
+  const newRideSheetFile = sourceRideSheetFile.makeCopy(destFolder).setName(namePrefix + " RideSheet")
+  const newTemplateFile = sourceTemplateFile.makeCopy(newSettingsFolder).setName(manifestTemplateName)
+  const newReportFile = sourceReportFile.makeCopy(newReportsFolder).setName(reportFileName)
+
+  const newRideSheet = SpreadsheetApp.open(newRideSheetFile)
+  const propSheet = newRideSheet.getSheetByName("Document Properties")
+  const propSheetDataRange = propSheet.getDataRange()
+  const propSheetData = propSheetDataRange.getValues()
+  updatePropertyRange(propSheetData,"driverManifestFolderId",newManifestFolder.getId())
+  updatePropertyRange(propSheetData,"driverManifestTemplateDocId",newTemplateFile.getId())
+  updatePropertyRange(propSheetData,"configFolderId",newSettingsFolder.getId())
+  propSheetDataRange.setValues(propSheetData)
+}
+
+function updatePropertyRange(dataRange, propName, newPropValue) {
+  dataRange.forEach(row => {
+    if (row[0] === propName) { row[1] = newPropValue }
+  })
+}
