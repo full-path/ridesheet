@@ -6,7 +6,43 @@ const initialLocalSheetTriggers = {}
 
 const finalLocalSheetTriggers  = {}
 
-const rangeTriggersLocal = {}
+const rangeTriggersLocal = {
+  localCodeReferralActionButton: {
+    functionCall: referralActionButton,
+    callOncePerRow: true
+  },
+  localCodeFillReferralCells: {
+    functionCall: fillReferralCells,
+    callOncePerRow: true
+  }
+}
+
+function referralActionButton(goCheckBoxRange) {
+  try {
+    const goCheckboxValue = goCheckBoxRange.getValue()
+    const actionCell = goCheckBoxRange.getSheet().getRange(goCheckBoxRange.getRow(), goCheckBoxRange.getColumn()-1)
+    const actionText = actionCell.getValue()
+    if (goCheckboxValue && actionText) {
+      const sourceRow = getFullRow(goCheckBoxRange)
+      createReferral(sourceRow)
+    }
+    goCheckBoxRange.setValue(null)
+    actionCell.setValue(null)
+  } catch(e) { logError(e) }
+}
+
+function fillReferralCells(callDateRange) {
+  try {
+    const sourceRow = getFullRow(callDateRange)
+    const rowValues = getRangeValuesAsTable(sourceRow)[0]
+    log(JSON.stringify(rowValues))
+    if (rowValues['Call Date'] !== '' && rowValues['Call ID'] === '') {
+      let valuesToChange = {}
+      valuesToChange["Call ID"] = Utilities.getUuid()
+      setValuesByHeaderNames([valuesToChange], sourceRow)
+    }
+  } catch(e) { logError(e) }
+}
 
 function callLocalSheetTriggers(e, sheetName, triggers) {
   if (Object.keys(triggers).indexOf(sheetName) !== -1) {
