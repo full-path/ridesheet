@@ -31,14 +31,15 @@ function buildNamedRanges() {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const namedRanges = ss.getNamedRanges()
     const currentRangeNames = namedRanges.map(nr => nr.getName())
-    const buildRangeNames = Object.keys(defaultNamedRanges)
+    const configuredNamedRanges = {...defaultNamedRanges, ...localNamedRanges}
+    const buildRangeNames = Object.keys(configuredNamedRanges)
     namedRanges.forEach(namedRange => {
       try {
         if (buildRangeNames.indexOf(namedRange.getName()) !== -1 && 
           (namedRange.getRange().getRow() !== 1 || 
           namedRange.getRange().getLastRow() !== namedRange.getRange().getSheet().getMaxRows() + 1000)) {
         const name = namedRange.getName()
-        let newRange = defaultNamedRanges[name]
+        let newRange = configuredNamedRanges[name]
         buildNamedRange(ss, name, newRange.sheetName, newRange.column, newRange.headerName)
       }
       } catch(e) {
@@ -48,7 +49,7 @@ function buildNamedRanges() {
     buildRangeNames.forEach(rangeName => {
       try {
         if (currentRangeNames.indexOf(rangeName) === -1) {
-          let newRange = defaultNamedRanges[rangeName]
+          let newRange = configuredNamedRanges[rangeName]
           buildNamedRange(ss, rangeName, newRange.sheetName, newRange.column, newRange.headerName)
         }
       } catch(e) {
