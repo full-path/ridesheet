@@ -12,13 +12,16 @@ function createReferral(sourceRow) {
       'Call ID'
     ]
 
-    log(JSON.stringify(sourceData))
-    let newReferral = {}
-    matchingColumns.map((col) => newReferral[col] = sourceData[col])
-    newReferral['Referral Date'] = dateToday()
-    newReferral['Agency'] = sourceData['Make TDS Referral To']
-    if (createRow(destSheet,newReferral)) {
-      ss.toast("Referral created")
+    if (sourceData["Call ID"]) {
+      let newReferral = {}
+      matchingColumns.map((col) => newReferral[col] = sourceData[col])
+      newReferral['Referral Date'] = dateToday()
+      newReferral['Agency'] = sourceData['Make TDS Referral To']
+      if (createRow(destSheet,newReferral)) {
+        ss.toast("Referral created")
+      }
+    } else {
+      ss.toast("Call ID is missing.","Referral not created" )
     }
   } catch(e) { logError(e) }
 }
