@@ -115,7 +115,12 @@ const defaultDocumentProperties = {
     value: ["Trip Result", "Actual PU Time", "Actual DO Time"],
     description: "The names of trip columns that must have data in them in order to be archived."
   },
-  runReviewRequiredFields: {
+  runUserReviewRequiredFields: {
+    type: "array",
+    value: [],
+    description: "The names of run columns that must have data in them in order to for RideSheet to calculate deadhead or other run information."
+  },
+  runFullReviewRequiredFields: {
     type: "array",
     value: [],
     description: "The names of run columns that must have data in them in order to be archived."

@@ -124,6 +124,14 @@ function combineDateAndTime(date, time) {
   } catch(e) { logError(e) }
 }
 
+function isInDay(value, date) {
+  if (!value || !date) {
+    return false
+  } else {
+    return (value.getTime() >= date.getTime() && value.getTime < (date.getTime() + 1))
+  }
+}
+
 function escapeRegex(string) {
   return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
