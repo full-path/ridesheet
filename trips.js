@@ -118,31 +118,19 @@ function moveTripsToReview() {
 
 function moveTripsToArchive() {
   try {
-    const ss                             = SpreadsheetApp.getActiveSpreadsheet()
-    const tripReviewSheet                = ss.getSheetByName("Trip Review")
-    const tripArchiveSheet               = ss.getSheetByName("Trip Archive")
-    const tripReviewRequiredFields       = getDocProp("tripReviewRequiredFields")
-    const tripReviewCompletedTripResults = getDocProp("tripReviewCompletedTripResults")
-    const tripFilter       = function(row) {
-      if (!row["Trip Result"]) {
-        return false
-      } else if (tripReviewCompletedTripResults.includes(row["Trip Result"])) {
-        blankColumns = tripReviewRequiredFields.filter(column => !row[column])
-        return blankColumns.length === 0
-      } else {
-        return true
-      }
-    }
-    moveRows(tripReviewSheet, tripArchiveSheet, tripFilter)
-
+    const ss                      = SpreadsheetApp.getActiveSpreadsheet()
+    const tripReviewSheet         = ss.getSheetByName("Trip Review")
     const runReviewSheet          = ss.getSheetByName("Run Review")
+    const tripArchiveSheet        = ss.getSheetByName("Trip Archive")
     const runArchiveSheet         = ss.getSheetByName("Run Archive")
-    const runReviewRequiredFields = getDocProp("runReviewRequiredFields")
-    const runFilter       = function(row) {
-      blankColumns = runReviewRequiredFields.filter(column => !row[column])
-      return blankColumns.length === 0
-    }
-    moveRows(runReviewSheet, runArchiveSheet, runFilter)
+
+    let trips = getRangeValuesAsTable(tripArchiveSheet.getDataRange())
+    let runs  = getRangeValuesAsTable(runReviewSheet.getDataRange())
+    let dates = new Set([...trips.map((row) => row["Trip Date"]), ...runs.map((row) => row["Run Date"])])
+
+    dates.forEach((date) => {})
+    moveRows(tripReviewSheet, tripArchiveSheet, isReviewedTrip(date))
+    moveRows(runReviewSheet, runArchiveSheet, date, isFullyReviewedRun)
   } catch(e) { logError(e) }
 }
 
@@ -150,6 +138,37 @@ function isCompleteTrip(trip) {
   try {
     return (trip["Trip Date"] && trip["Customer Name and ID"])
   } catch(e) { logError(e) }
+}
+
+function isReviewedTrip(date) {
+  return function(trip) {
+    const tripReviewRequiredFields       = getDocProp("tripReviewRequiredFields")
+    const tripReviewCompletedTripResults = getDocProp("tripReviewCompletedTripResults")
+    if (trip["Trip Date"].getTime() === date.getTime()) {
+      if (!trip["Trip Result"]) {
+        return false
+      } else if (tripReviewCompletedTripResults.includes(trip["Trip Result"])) {
+        blankColumns = tripReviewRequiredFields.filter(column => !trip[column])
+        return blankColumns.length === 0
+      } else {
+        return true
+      }
+    } else {
+      return false
+    }
+  }
+}
+
+function isUserReviewedRun(run) {
+  const runReviewRequiredFields = getDocProp("runUserReviewRequiredFields")
+  blankColumns = runReviewRequiredFields.filter(column => !run[column])
+  return blankColumns.length === 0
+}
+
+function isFullyReviewedRun(run) {
+  const runReviewRequiredFields = getDocProp("runFullReviewRequiredFields")
+  blankColumns = runReviewRequiredFields.filter(column => !run[column])
+  return blankColumns.length === 0
 }
 
 function isTripWithValidTimes(trip) {
