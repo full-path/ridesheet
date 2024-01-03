@@ -75,7 +75,7 @@ function byteArrayToHexString(bytes) {
   } catch(e) { logError(e) }
 }
 
-function generateHmacHexString(secret, nonce, timestamp, params) {
+function generateHmacHexStringOld(secret, nonce, timestamp, params) {
   try {
     let orderedParams = {}
     Object.keys(params).sort().forEach(key => {
@@ -87,7 +87,17 @@ function generateHmacHexString(secret, nonce, timestamp, params) {
   } catch(e) { logError(e) }
 }
 
-function getResource(endPoint, params) {
+function generateHmacHexString(secret, senderId, receiverId, timestamp, nonce, method, body, url) {
+  try {
+    const value = senderId + receiverId + timestamp + nonce + method + body + url;
+    const sigAsByteArray = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_SHA_256, value, secret)
+    return byteArrayToHexString(sigAsByteArray);
+  } catch (e) {
+    logError(e);
+  }
+}
+
+function getResourceOld(endPoint, params) {
   try {
     params.version = endPoint.version
     params.apiKey = endPoint.apiKey
@@ -104,7 +114,48 @@ function getResource(endPoint, params) {
   } catch(e) { logError(e) }
 }
 
-function postResource(endPoint, params, payload) {
+// Need to have a senderId -- right now the apiKey is both the sender/receiver ID
+// TODO: format URL as just the /path not the full URL
+function getResource(endPoint, params) {
+  try {
+    const version = endPoint.version
+    const receiverId = endPoint.apiKey
+    const senderId = endPoint.apiKey
+    const nonce = Utilities.getUuid()
+    const timestamp = new Date().getTime().toString()
+    const endpointPath = extractPathFromUrl(endPoint.url)
+
+    const signature = generateHmacHexString(
+      endPoint.secret,
+      senderId,
+      receiverId,
+      timestamp,
+      nonce,
+      'GET',
+      '', // For GET requests, the body will be empty
+      endpointPath
+    );
+
+    const options = {
+      method: 'GET',
+      contentType: 'application/json',
+      headers: {
+        Authorization: `${signature}:${senderId}:${receiverId}:${timestamp}:${nonce}`,
+        'X-TDS-Path': endpointPath
+      }
+    }
+
+    const fetchUrl = endPoint.url + "?" + urlQueryString(params)
+    log(fetchUrl)
+
+    const response = UrlFetchApp.fetch(fetchUrl, options)
+    return response
+  } catch (e) {
+    logError(e)
+  }
+}
+
+function postResourceOld(endPoint, payload) {
   try {
     params.version = endPoint.version
     params.apiKey = endPoint.apiKey
@@ -119,4 +170,58 @@ function postResource(endPoint, params, payload) {
     const response = UrlFetchApp.fetch(fetchUrl, options)
     return response
   } catch(e) { logError(e) }
+}
+
+// Need to have a senderId -- right now the apiKey is both the sender/receiver ID
+// TODO: format URL as just the /path not the full URL
+function postResource(endPoint, payload) {
+  try {
+    const version = endPoint.version
+    const receiverId = endPoint.apiKey
+    const senderId = endPoint.apiKey
+    const nonce = Utilities.getUuid()
+    const timestamp = new Date().getTime().toString()
+    const endpointPath = extractPathFromUrl(endPoint.url)
+
+    const signature = generateHmacHexString(
+      endPoint.secret,
+      senderId,
+      receiverId,
+      timestamp,
+      nonce,
+      'POST',
+      JSON.stringify(payload),
+      endpointPath
+    );
+
+    const options = {
+      method: 'POST',
+      contentType: 'application/json',
+      payload: payload,
+      headers: {
+        Authorization: `${signature}:${senderId}:${receiverId}:${timestamp}:${nonce}`,
+        'X-TDS-Path': endpointPath
+      }
+    };
+
+    const fetchUrl = endPoint.url;
+    log(fetchUrl);
+
+    const response = UrlFetchApp.fetch(fetchUrl, options);
+    return response;
+  } catch (e) {
+    logError(e);
+  }
+}
+
+// Return empty string when working with other ridesheet instances
+function extractPathFromUrl(url) {
+  const regex = /\/v1\/?(.*)/; // Regex to match "/v1" followed by anything
+  const match = url.match(regex);
+
+  if (match && match.length > 1) {
+    return "/v1" + match[1]; 
+  } else {
+    return '';
+  }
 }
