@@ -2,10 +2,10 @@ function doGet(e) {
   try {
     const params = e.parameter
     const hmacHeader = params.authorization
-    const pathHeader = params.endpointPath
+    const pathHeader = params.endpointPath || ''
 
     // TODO: match error response with actual TDS spec
-    if (!(hmacHeader && pathHeader)) {
+    if (!hmacHeader) {
       return createErrorResponse("MISSING_AUTHORIZATION_HEADER")
     }
 
@@ -53,10 +53,10 @@ function doPost(e) {
   try {
     const params = e.parameter
     const hmacHeader = params.authorization
-    const pathHeader = params.endpointPath
+    const pathHeader = params.endpointPath || ''
 
     // TODO: match error response with actual TDS spec
-    if (!(hmacHeader && pathHeader)) {
+    if (!hmacHeader) {
       return createErrorResponse("MISSING_AUTHORIZATION_HEADER")
     }
 
