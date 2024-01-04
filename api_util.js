@@ -132,7 +132,7 @@ function getResource(endPoint, params) {
 
 // Need to have a senderId -- right now the apiKey is both the sender/receiver ID
 // TODO: format URL as just the /path not the full URL
-function postResource(endPoint, payload) {
+function postResource(endPoint, params, payload) {
   try {
     const version = endPoint.version
     const receiverId = endPoint.apiKey
@@ -163,10 +163,8 @@ function postResource(endPoint, payload) {
       }
     };
 
-    const params = {
-      authorization: authHeader,
-      endpointPath: endpointPath
-    }
+    params.authorization = authHeader
+    params.endpointPath = endpointPath
 
     const fetchUrl = endPoint.url + "?" + urlQueryString(params);
     log(fetchUrl);
