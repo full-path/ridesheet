@@ -75,18 +75,6 @@ function byteArrayToHexString(bytes) {
   } catch(e) { logError(e) }
 }
 
-function generateHmacHexStringOld(secret, nonce, timestamp, params) {
-  try {
-    let orderedParams = {}
-    Object.keys(params).sort().forEach(key => {
-      orderedParams[key] = params[key]
-    })
-    const value = [nonce, timestamp, JSON.stringify(orderedParams)].join(':')
-    const sigAsByteArray = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_SHA_256, value, secret)
-    return byteArrayToHexString(sigAsByteArray)
-  } catch(e) { logError(e) }
-}
-
 function generateHmacHexString(secret, senderId, receiverId, timestamp, nonce, method, body, url) {
   try {
     const value = senderId + receiverId + timestamp + nonce + method + body + url;
@@ -95,23 +83,6 @@ function generateHmacHexString(secret, senderId, receiverId, timestamp, nonce, m
   } catch (e) {
     logError(e);
   }
-}
-
-function getResourceOld(endPoint, params) {
-  try {
-    params.version = endPoint.version
-    params.apiKey = endPoint.apiKey
-    let hmac = {}
-    hmac.nonce = Utilities.getUuid()
-    hmac.timestamp = JSON.parse(JSON.stringify(new Date()))
-    hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
-
-    const options = {method: 'GET', contentType: 'application/json'}
-    const fetchUrl = endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac)
-    log(fetchUrl)
-    const response = UrlFetchApp.fetch(fetchUrl, options)
-    return response
-  } catch(e) { logError(e) }
 }
 
 // Need to have a senderId -- right now the apiKey is both the sender/receiver ID
@@ -157,23 +128,6 @@ function getResource(endPoint, params) {
   } catch (e) {
     logError(e)
   }
-}
-
-function postResourceOld(endPoint, payload) {
-  try {
-    params.version = endPoint.version
-    params.apiKey = endPoint.apiKey
-    let hmac = {}
-    hmac.nonce = Utilities.getUuid()
-    hmac.timestamp = JSON.parse(JSON.stringify(new Date()))
-    hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
-
-    const options = {method: 'POST', contentType: 'application/json', payload: payload}
-    const fetchUrl = endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac)
-    log(fetchUrl, JSON.stringify(payload))
-    const response = UrlFetchApp.fetch(fetchUrl, options)
-    return response
-  } catch(e) { logError(e) }
 }
 
 // Need to have a senderId -- right now the apiKey is both the sender/receiver ID
@@ -234,4 +188,45 @@ function extractPathFromUrl(url) {
   } else {
     return '';
   }
+}
+
+// Function to validate HMAC signature
+function validateHmacSignature(signature, senderId, receiverId, timestamp, nonce, method, body, urlEndpoint) {
+  try {
+    // Fetch the secret associated with the receiverId (apiKey)
+    const apiAccounts = getDocProp("apiGiveAccess")
+    const statedApiAccount = apiAccounts[receiverId]
+
+    let receivedTimestamp = new Date(timestamp)
+    let timeNow = new Date()
+    let timePassed = timeNow.getTime() - receivedTimestamp.getTime()
+
+    if (timePassed > 300000) return false
+
+    // Generate the expected HMAC signature based on the retrieved secret and other parameters
+    const expectedSignature = generateHmacHexString(
+      statedApiAccount.secret,
+      senderId,
+      receiverId,
+      timestamp,
+      nonce,
+      method,
+      body,
+      urlEndpoint
+    )
+
+    // Compare the expected signature with the received signature
+    return signature === expectedSignature
+  } catch (e) {
+    logError(e)
+    return false
+  }
+}
+
+function createErrorResponse(status) {
+  const response = ContentService.createTextOutput()
+  response.setMimeType(ContentService.MimeType.JSON)
+  const errorContent = { status: status }
+  response.setContent(JSON.stringify(errorContent))
+  return response
 }

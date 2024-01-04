@@ -98,43 +98,4 @@ function doPost(e) {
   } catch(e) { logError(e) }
 }
 
-// Function to validate HMAC signature
-function validateHmacSignature(signature, senderId, receiverId, timestamp, nonce, method, body, urlEndpoint) {
-  try {
-    // Fetch the secret associated with the receiverId (apiKey)
-    const apiAccounts = getDocProp("apiGiveAccess")
-    const statedApiAccount = apiAccounts[receiverId]
 
-    let receivedTimestamp = new Date(timestamp)
-    let timeNow = new Date()
-    let timePassed = timeNow.getTime() - receivedTimestamp.getTime()
-
-    if (timePassed > 300000) return false
-
-    // Generate the expected HMAC signature based on the retrieved secret and other parameters
-    const expectedSignature = generateHmacHexString(
-      statedApiAccount.secret,
-      senderId,
-      receiverId,
-      timestamp,
-      nonce,
-      method,
-      body,
-      urlEndpoint
-    )
-
-    // Compare the expected signature with the received signature
-    return signature === expectedSignature
-  } catch (e) {
-    logError(e)
-    return false
-  }
-}
-
-function createErrorResponse(status) {
-  const response = ContentService.createTextOutput()
-  response.setMimeType(ContentService.MimeType.JSON)
-  const errorContent = { status: status }
-  response.setContent(JSON.stringify(errorContent))
-  return response
-}
