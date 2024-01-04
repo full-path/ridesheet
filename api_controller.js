@@ -1,8 +1,8 @@
 function doGet(e) {
   try {
-    const { parameter: params, headers } = e
-    const hmacHeader = headers['Authorization']
-    const pathHeader = headers['X-TDS-Path']
+    const params = e.parameter
+    const hmacHeader = params.authorization
+    const pathHeader = params.endpointPath
 
     // TODO: match error response with actual TDS spec
     if (!(hmacHeader && pathHeader)) {
@@ -51,9 +51,9 @@ function doGet(e) {
   
 function doPost(e) {
   try {
-    const { parameter: params, headers } = e
-    const hmacHeader = headers['Authorization']
-    const pathHeader = headers['X-TDS-Path']
+    const params = e.parameter
+    const hmacHeader = params.authorization
+    const pathHeader = params.endpointPath
 
     // TODO: match error response with actual TDS spec
     if (!(hmacHeader && pathHeader)) {

@@ -136,14 +136,18 @@ function getResource(endPoint, params) {
       endpointPath
     );
 
+    const authHeader = `${signature}:${senderId}:${receiverId}:${timestamp}:${nonce}`
+
     const options = {
       method: 'GET',
       contentType: 'application/json',
       headers: {
-        Authorization: `${signature}:${senderId}:${receiverId}:${timestamp}:${nonce}`,
-        'X-TDS-Path': endpointPath
+        Authorization: authHeader,
       }
     }
+
+    params.authorization = authHeader
+    params.endpointPath = endpointPath
 
     const fetchUrl = endPoint.url + "?" + urlQueryString(params)
     log(fetchUrl)
@@ -194,17 +198,23 @@ function postResource(endPoint, payload) {
       endpointPath
     );
 
+    const authHeader = `${signature}:${senderId}:${receiverId}:${timestamp}:${nonce}`
+
     const options = {
       method: 'POST',
       contentType: 'application/json',
       payload: payload,
       headers: {
-        Authorization: `${signature}:${senderId}:${receiverId}:${timestamp}:${nonce}`,
-        'X-TDS-Path': endpointPath
+        Authorization: authHeader
       }
     };
 
-    const fetchUrl = endPoint.url;
+    const params = {
+      authorization: authHeader,
+      endpointPath: endpointPath
+    }
+
+    const fetchUrl = endPoint.url + "?" + urlQueryString(params);
     log(fetchUrl);
 
     const response = UrlFetchApp.fetch(fetchUrl, options);
