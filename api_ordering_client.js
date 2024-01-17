@@ -1,6 +1,85 @@
 // Ordering client (this RideSheet instance) receives request for tripRequests from provider and
 // returns an array JSON objects, each element of which complies with
 // Telegram 1A of TCRP 210 Transactional Data Spec.
+
+
+// Notes: must send each trip request individually - is there a way to do this more efficiently in 
+// sheets, rather than waiting synchronously on each one? 
+// Also - could be updated to *only* send new shared trips
+function sendTripRequests() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  endPoints = getDocProp("apiGetAccess")
+  endPoints.forEach(endPoint => {
+    if (endPoint.hasTrips) {
+      const params = {}
+      const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
+        if (tripRow["Declined By"]) {
+            let declinedBy = JSON.parse(tripRow["Declined By"])
+            if (declinedBy.includes(apiAccount.name)) {
+              return false
+            }
+          }
+        return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true && tripRow["Source"] === ""
+      })
+      trips.forEach(trip => {
+        let payload = { TripRequest: formatTripRequest(trip)}
+        let response = postResource(endpoint, params, JSON.stringify(payload))
+        try {
+          let responseObject = JSON.parse(response.getContentText())
+          // TODO: Check for TDS status codes
+        } catch(e) {
+          logError(e)
+        }
+      })
+    }
+  })
+}
+
+// Following telegram #1A https://app.swaggerhub.com/apis/full-path/RideNoCo-TDS/0.5.a3#/Multiple%20Endpoints/post_v1_TripRequest
+// Currently Unsupported fields:
+// *NOTE* should pretty print in notes field
+// - detailedPickupLocationDescription
+// - detailedDropoffLocationDescription
+// - tripPurpose
+// - specialAttributes
+// - detoursPermissible
+// - negotiatedPickupTime
+// - hardConstraintOnPickupTime
+// - hardConstraintOnDropoff Time
+// - transportServices
+// - tripTransfer (Must support!)
+function formatTripRequest(trip) {
+  const formattedTrip = {
+    tripTicketId: trip["Trip ID"],
+    pickupAddress: buildAddressToSpec(trip["PU Address"]),
+    dropoffAddress: buildAddressToSpec(trip["DO Address"]),
+    pickupTime: combineDateAndTime(trip["Trip Date"], trip["PU Time"]),
+    dropoffTime:  combineDateAndTime(trip["Trip Date"], trip["DO Time"]),
+    customerInfo: getCustomerInfo(trip),
+    openAttributes: {
+      estimatedTripDurationInSeconds: timeOnlyAsMilliseconds(trip["Est Hours"] || 0)/1000,
+      estimatedTripDistanceInMiles: trip["Est Miles"]
+    }
+  }
+  // To add conditionally: pickupWindowStartTime, pickupWindowEndTime,
+  // appointmentTime, numOtherReservedPassengers, notesForDriver
+  return formattedTrip
+}
+
+function getCustomerInfo(trip) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const allCustomers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
+  const customer = allCustomers.find(row => row["Customer ID"] === trip["Customer ID"])
+  const formattedCustomer = {
+    firstLegalName: customer["Customer First Name"],
+    lastName: customer["Customer Last Name"],
+    address: buildAddressToSpec(customer["Home Address"]),
+    phone: buildPhoneNumberToSpec(customer["Phone Number"]),
+    customerId: customer["Customer ID"]
+  }
+  return formattedCustomer
+}
+
 function receiveRequestForTripRequestsReturnTripRequests(apiAccount) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()

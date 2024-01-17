@@ -1,6 +1,10 @@
 // Provider (this RideSheet instance) sends request for tripRequests to ordering client.
 // Received format is an array JSON objects, each element of which complies with
 // Telegram 1A of TCRP 210 Transactional Data Spec.
+function receiveTripRequest(tripRequest) {
+
+}
+
 function sendRequestForTripRequests() {
   try {
     const lastColumnLetter = "R"

@@ -87,9 +87,11 @@ function doPost(e) {
 
     if (params.resource === "tripRequestResponses") {
       const processedResponses = receiveTripRequestResponses(JSON.parse(payload))
-      content = returnClientOrderConfirmations(processedResponses, validatedApiAccount)
+      content = returnClientOrderConfirmations(processedResponses, apiAccount)
     } else if (params.resource === "providerOrderConfirmations") {
-      content = receiveProviderOrderConfirmationsReturnCustomerInformation(payload, validatedApiAccount)
+      content = receiveProviderOrderConfirmationsReturnCustomerInformation(payload, apiAccount)
+    } else if (payload.TripRequest) {
+      content = receiveTripRequest(payload.TripRequest)
     } else {
       return createErrorResponse("INVALID_REQUEST")
     }
