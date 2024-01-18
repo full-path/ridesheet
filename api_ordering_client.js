@@ -11,22 +11,26 @@ function sendTripRequests() {
   endPoints = getDocProp("apiGetAccess")
   endPoints.forEach(endPoint => {
     if (endPoint.hasTrips) {
-      const params = {}
+      const params = {endpointPath: "/v1/TripRequest"}
       const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
         if (tripRow["Declined By"]) {
-            let declinedBy = JSON.parse(tripRow["Declined By"])
+            const declinedBy = JSON.parse(tripRow["Declined By"])
             if (declinedBy.includes(apiAccount.name)) {
               return false
             }
           }
         return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true && tripRow["Source"] === ""
       })
+      // set necessary params: HMAC headers, resource (endpoint), ??
       trips.forEach(trip => {
         let payload = { TripRequest: formatTripRequest(trip)}
         let response = postResource(endpoint, params, JSON.stringify(payload))
         try {
           let responseObject = JSON.parse(response.getContentText())
+          log('#1A response', responseObject)
           // TODO: Check for TDS status codes
+          // if share is successful, mark 'Shared' as true
+          // What to do if we don't receive a 200?
         } catch(e) {
           logError(e)
         }

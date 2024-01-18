@@ -86,7 +86,8 @@ function generateHmacHexString(secret, senderId, receiverId, timestamp, nonce, m
 }
 
 // Need to have a senderId -- right now the apiKey is both the sender/receiver ID
-// TODO: format URL as just the /path not the full URL
+// GET requests will not be used at all with the standard TDS any longer; this is Ridesheet only 
+// and likely soon to be deprecated
 function getResource(endPoint, params) {
   try {
     const version = endPoint.version
@@ -94,7 +95,7 @@ function getResource(endPoint, params) {
     const senderId = endPoint.apiKey
     const nonce = Utilities.getUuid()
     const timestamp = new Date().getTime().toString()
-    const endpointPath = extractPathFromUrl(endPoint.url)
+    const endpointPath = params.endpointPath || ''
 
     const signature = generateHmacHexString(
       endPoint.secret,
@@ -139,7 +140,14 @@ function postResource(endPoint, params, payload) {
     const senderId = endPoint.apiKey
     const nonce = Utilities.getUuid()
     const timestamp = new Date().getTime().toString()
-    const endpointPath = extractPathFromUrl(endPoint.url)
+    const endpointPath = params.endpointPath || ''
+    // Path should always be sent in params... that is easy with how it is set up
+    // If the endPoint URL is ridesheet (google)
+    // - Do not include path in fetchUrl
+    // - Do include path as a param & in the signature
+    // If the URL is not ridesheet:
+    // - do append the path to the fetchUrl
+    // - do not include query params
 
     const signature = generateHmacHexString(
       endPoint.secret,
@@ -150,7 +158,7 @@ function postResource(endPoint, params, payload) {
       'POST',
       JSON.stringify(payload),
       endpointPath
-    );
+    )
 
     const authHeader = `${signature}:${senderId}:${receiverId}:${timestamp}:${nonce}`
 
@@ -161,30 +169,25 @@ function postResource(endPoint, params, payload) {
       headers: {
         Authorization: authHeader
       }
-    };
+    }
 
     params.authorization = authHeader
-    params.endpointPath = endpointPath
 
-    const fetchUrl = endPoint.url + "?" + urlQueryString(params);
-    log(fetchUrl);
+    const fetchUrl = buildUrl(endPoint.url, endpointPath, params)
+    log(fetchUrl)
 
-    const response = UrlFetchApp.fetch(fetchUrl, options);
-    return response;
+    const response = UrlFetchApp.fetch(fetchUrl, options)
+    return response
   } catch (e) {
-    logError(e);
+    logError(e)
   }
 }
 
-// Return empty string when working with other ridesheet instances
-function extractPathFromUrl(url) {
-  const regex = /\/v1\/?(.*)/; // Regex to match "/v1" followed by anything
-  const match = url.match(regex);
-
-  if (match && match.length > 1) {
-    return "/v1" + match[1]; 
+function buildUrl(baseURL, path, params) {
+  if (baseURL.includes("script.google.com")) {
+    return baseURL + "?" + urlQueryString(params)
   } else {
-    return '';
+    return baseURL + path
   }
 }
 
