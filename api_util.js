@@ -56,13 +56,9 @@ function buildPhoneNumberFromSpec(value) {
 function urlQueryString(params) {
   try {
     const keys = Object.keys(params)
-    result = keys.reduce((a, key, i) => {
-      if (i === 0) {
-        return key + "=" + params[key]
-      } else {
-        return a + "&" + key + "=" + params[key]
-      }
-    },"")
+    const result = keys.map((key) => {
+      key + "=" + encodeURIComponent(params[key])
+    }).join("&")
     return result
   } catch(e) { logError(e) }
 }
