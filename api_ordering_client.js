@@ -24,7 +24,7 @@ function sendTripRequests() {
       // set necessary params: HMAC headers, resource (endpoint), ??
       trips.forEach(trip => {
         let payload = formatTripRequest(trip)
-        let response = postResource(endpoint, params, JSON.stringify(payload))
+        let response = postResource(endPoint, params, JSON.stringify(payload))
         try {
           let responseObject = JSON.parse(response.getContentText())
           log('#1A response', responseObject)
