@@ -73,13 +73,15 @@ function doPost(e) {
       return createErrorResponse("INVALID_API_KEY")
     }
 
-    const payload = JSON.parse(e.postData.contents)
+    const body = e.postData.contents
 
-    const isValid = validateHmacSignature(signature, senderId, receiverId, timestamp, nonce, 'POST', payload, pathHeader)
+    const isValid = validateHmacSignature(signature, senderId, receiverId, timestamp, nonce, 'POST', body, pathHeader)
 
     if (!isValid) {
       return createErrorResponse("UNAUTHORIZED")
     }
+
+    const payload = JSON.parse(body)
 
     let response = ContentService.createTextOutput()
     response.setMimeType(ContentService.MimeType.JSON)

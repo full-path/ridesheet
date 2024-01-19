@@ -152,7 +152,7 @@ function postResource(endPoint, params, payload) {
       timestamp,
       nonce,
       'POST',
-      JSON.stringify(payload),
+      payload,
       endpointPath
     )
 
