@@ -73,7 +73,7 @@ function doPost(e) {
       return createErrorResponse("INVALID_API_KEY")
     }
 
-    const payload = e.postData.contents
+    const payload = JSON.parse(e.postData.contents)
 
     const isValid = validateHmacSignature(signature, senderId, receiverId, timestamp, nonce, 'POST', payload, pathHeader)
 
@@ -84,16 +84,22 @@ function doPost(e) {
     let response = ContentService.createTextOutput()
     response.setMimeType(ContentService.MimeType.JSON)
     let content = {}
-
-    if (params.resource === "tripRequestResponses") {
-      const processedResponses = receiveTripRequestResponses(JSON.parse(payload))
-      content = returnClientOrderConfirmations(processedResponses, apiAccount)
-    } else if (params.resource === "providerOrderConfirmations") {
-      content = receiveProviderOrderConfirmationsReturnCustomerInformation(payload, apiAccount)
-    } else if (payload.TripRequest) {
-      content = receiveTripRequest(payload.TripRequest)
+    if (params.endpointPath) {
+      if (params.endpointPath === "/v1/TripRequest") {
+        content = receiveTripRequest(payload)
+      } else {
+        return createErrorResponse("INVALID_REQUEST")
+      }
     } else {
-      return createErrorResponse("INVALID_REQUEST")
+      // Old ridesheet "resource"-based API
+      if (params.resource === "tripRequestResponses") {
+        const processedResponses = receiveTripRequestResponses(payload)
+        content = returnClientOrderConfirmations(processedResponses, apiAccount)
+      } else if (params.resource === "providerOrderConfirmations") {
+        content = receiveProviderOrderConfirmationsReturnCustomerInformation(payload, apiAccount)
+      } else {
+        return createErrorResponse("INVALID_REQUEST")
+      }
     }
     response.setContent(JSON.stringify(content))
     return response

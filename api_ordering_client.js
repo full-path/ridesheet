@@ -23,11 +23,14 @@ function sendTripRequests() {
       })
       // set necessary params: HMAC headers, resource (endpoint), ??
       trips.forEach(trip => {
-        let payload = { TripRequest: formatTripRequest(trip)}
+        let payload = formatTripRequest(trip)
         let response = postResource(endpoint, params, JSON.stringify(payload))
         try {
           let responseObject = JSON.parse(response.getContentText())
           log('#1A response', responseObject)
+          if (responseObject.status === "OK") {
+            // mark "Shared" as true
+          }
           // TODO: Check for TDS status codes
           // if share is successful, mark 'Shared' as true
           // What to do if we don't receive a 200?

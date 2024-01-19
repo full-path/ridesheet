@@ -2,7 +2,12 @@
 // Received format is an array JSON objects, each element of which complies with
 // Telegram 1A of TCRP 210 Transactional Data Spec.
 function receiveTripRequest(tripRequest) {
-
+  log('Received TripRequest', JSON.stringify(tripRequest))
+  // Check/Validate Trip Request
+  // Add Trip Request to sheet
+  // if all goes correctly, return 200 resp
+  // if anything goes wrong, send appropriate error
+  return {status: "OK"}
 }
 
 function sendRequestForTripRequests() {
