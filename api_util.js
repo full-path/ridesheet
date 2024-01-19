@@ -57,7 +57,7 @@ function urlQueryString(params) {
   try {
     const keys = Object.keys(params)
     const result = keys.map((key) => {
-      key + "=" + encodeURIComponent(params[key])
+      return key + "=" + encodeURIComponent(params[key])
     }).join("&")
     return result
   } catch(e) { logError(e) }
