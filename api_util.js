@@ -1,28 +1,36 @@
+// TODO: Add more error handling and resilience. Add ability for addressName and other details
+// check components[i].types to make sure each is the correct component
+// Make errors do something a little more useful--return a partial address or similar? Try to parse the address manually?
 function buildAddressToSpec(address) {
   try {
-    let result = {}
-    const parsedAddress = parseAddress(address)
-    result["@addressName"] = parsedAddress.geocodeAddress
-    if (parsedAddress.parenText) {
-      let manualAddr = {}
-      manualAddr["@manualText"] = parsedAddress.parenText
-      manualAddr["@sendtoInvoice"] = true
-      manualAddr["@sendtoVehicle"] = true
-      manualAddr["@sendtoOperator"] = true
-      manualAddr["@vehicleConfirmation"] = false
-      result.manualDescriptionAddress = manualAddr
+    const geocoder = Maps.newGeocoder()
+    const result = geocoder.geocode(address)
+    if (result["status"] === "OK") {
+      const components = result.results[0].address_components
+      const addressObj = {
+        addressName: "",
+        street: components[0].short_name + " " + components[1].short_name,
+        street2: "",
+        notes: "",
+        city: components[2].long_name,
+        state: components[4].short_name,
+        postalCode: components[6].short_name,
+        country: components[5].short_name,
+        lat: result.results[0].geometry.location.lat,
+        long: result.results[0].geometry.location.lng,
+        formattedAddress: address
+      }
+      return addressObj
     }
-    return result
   } catch(e) { logError(e) }
 }
 
 function buildAddressFromSpec(address) {
   try {
-    let result = address["@addressName"]
-    if (address.manualDescriptionAddress) {
-      result = result + " (" + address.manualDescriptionAddress["@manualText"] + ")"
-    }
-    return result
+    if (address.formattedAddress) {
+      return address.formattedAddress
+    } 
+    return address.street + ", " + address.city + ", " + address.state + " " + address.postalCode + ", " + address.country
   } catch(e) { logError(e) }
 }
 
