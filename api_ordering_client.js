@@ -43,8 +43,7 @@ function sendTripRequests() {
 }
 
 // Following telegram #1A https://app.swaggerhub.com/apis/full-path/RideNoCo-TDS/0.5.a3#/Multiple%20Endpoints/post_v1_TripRequest
-// Currently Unsupported fields:
-// *NOTE* should pretty print in notes field
+// TODO: figure out how to support:
 // - detailedPickupLocationDescription
 // - detailedDropoffLocationDescription
 // - tripPurpose
@@ -52,9 +51,9 @@ function sendTripRequests() {
 // - detoursPermissible
 // - negotiatedPickupTime
 // - hardConstraintOnPickupTime
-// - hardConstraintOnDropoff Time
+// - hardConstraintOnDropoffTime
 // - transportServices
-// - tripTransfer (Must support!)
+// - tripTransfer
 function formatTripRequest(trip) {
   const formattedTrip = {
     tripTicketId: trip["Trip ID"],
@@ -62,14 +61,15 @@ function formatTripRequest(trip) {
     dropoffAddress: buildAddressToSpec(trip["DO Address"]),
     pickupTime: combineDateAndTime(trip["Trip Date"], trip["PU Time"]),
     dropoffTime:  combineDateAndTime(trip["Trip Date"], trip["DO Time"]),
-    customerInfo: getCustomerInfo(trip),
+    customerInfo: getCustomerInfo(trip), 
+    appointmentTime: trip["Appt Time"] ? combineDateAndTime(trip["Trip Date"], trip["Appt Time"]) : "",
+    notesForDriver: trip["Notes"],
+    numOtherReservedPassengers: trip["Guests"],
     openAttributes: {
       estimatedTripDurationInSeconds: timeOnlyAsMilliseconds(trip["Est Hours"] || 0)/1000,
       estimatedTripDistanceInMiles: trip["Est Miles"]
     }
   }
-  // To add conditionally: pickupWindowStartTime, pickupWindowEndTime,
-  // appointmentTime, numOtherReservedPassengers, notesForDriver
   return formattedTrip
 }
 

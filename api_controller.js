@@ -88,7 +88,7 @@ function doPost(e) {
     let content = {}
     if (params.endpointPath) {
       if (params.endpointPath === "/v1/TripRequest") {
-        content = receiveTripRequest(payload)
+        content = receiveTripRequest(payload, senderId)
       } else {
         return createErrorResponse("INVALID_REQUEST")
       }

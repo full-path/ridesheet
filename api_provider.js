@@ -1,13 +1,60 @@
 // Provider (this RideSheet instance) sends request for tripRequests to ordering client.
 // Received format is an array JSON objects, each element of which complies with
 // Telegram 1A of TCRP 210 Transactional Data Spec.
-function receiveTripRequest(tripRequest) {
+function receiveTripRequest(tripRequest, senderId) {
   log('Received TripRequest', JSON.stringify(tripRequest))
   // Check/Validate Trip Request
   // Add Trip Request to sheet
   // if all goes correctly, return 200 resp
   // if anything goes wrong, send appropriate error
-  return {status: "OK"}
+  try {
+    const ss              = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet       = ss.getSheetByName("Outside Trips")
+    const apiAccounts = getDocProp("apiGiveAccess")
+    const senderAccount = apiAccounts[senderId]
+    // Get Header values, set fields accordingly. Log any fields that 
+    // are in the tripRequest but not in ridesheet
+    // Note: put customerInfo and any fields not in Ridesheet into a string stored in a field
+    const supportedFields = [
+      tripTicketId,
+      pickupAddress,
+      dropoffAddress,
+      pickupTime,
+      dropoffTime,
+      customerInfo,
+      openAttributes,
+      appointmentTime,
+      notesForDriver
+    ]
+    const tripRequestKeys = Object.keys(tripRequest)
+    const extraDataFields = tripRequestKeys.filter(key => !supportedFields.includes(key));
+    const extraInfo = extraDataFields.reduce((obj, key) => {
+      obj[key] = tripRequest[key];
+      return obj;
+    }, {});
+    const tripData = {
+      'Trip Date' : formatDateFromTrip(tripRequest.pickupTime, 'M/d/yyyy'),
+      'Source' : senderAccount.name,
+      'Requested PU Time' : formatDateFromTrip(tripRequest.pickupTime, 'h:mm a'),
+      'Requested DO Time' : formatDateFromTrip(tripRequest.dropoffTime, 'h:mm a'),
+      'Appt Time' : tripRequest.appointmentTime ? formatDateFromTrip(tripRequest.appointmentTime, 'h:mm a') : '',
+      'PU Address' : buildAddressFromSpec(tripRequest.pickupAddress),
+      'DO Address' : buildAddressFromSpec(tripRequest.dropoffAddress),
+      'Trip ID' : tripRequest.tripTicketId,
+      'Est Hours' : tripRequest.openAttributes.estimatedTripDurationInSeconds / (60 * 60 * 24),
+      'Est Miles' : tripRequest.openAttributes.estimatedTripDistanceInMiles,
+      'Notes' : tripRequest.notesForDriver,
+      'Customer Info' : JSON.stringify(tripRequest.customerInfo),
+      'Extra Fields' : JSON.stringify(extraInfo),
+      'Decline' : false,
+      'Claim' : false
+    }
+    createRow(tripSheet, tripData)
+    return {status: "OK"}
+  } catch(e) {
+    logError(e)
+    return {status: "400"}
+  } 
 }
 
 function sendRequestForTripRequests() {
