@@ -16,15 +16,15 @@ function receiveTripRequest(tripRequest, senderId) {
     // are in the tripRequest but not in ridesheet
     // Note: put customerInfo and any fields not in Ridesheet into a string stored in a field
     const supportedFields = [
-      tripTicketId,
-      pickupAddress,
-      dropoffAddress,
-      pickupTime,
-      dropoffTime,
-      customerInfo,
-      openAttributes,
-      appointmentTime,
-      notesForDriver
+      "tripTicketId",
+      "pickupAddress",
+      "dropoffAddress",
+      "pickupTime",
+      "dropoffTime",
+      "customerInfo",
+      "openAttributes",
+      "appointmentTime",
+      "notesForDriver"
     ]
     const tripRequestKeys = Object.keys(tripRequest)
     const extraDataFields = tripRequestKeys.filter(key => !supportedFields.includes(key));
