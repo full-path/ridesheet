@@ -47,6 +47,7 @@ const sheetsWithHeaders = [
   "Vehicles",
   "Drivers",
   "Services",
+  "Outside Trips"
 ]
 
 const defaultDocumentProperties = {
@@ -487,6 +488,72 @@ const defaultColumns = {
     "Est Miles": {},
     "Trip ID": {},
     "Customer ID": {}
+  },
+  "Outside Trips": {
+    "Decline": {dataValidation: {
+      criteriaType: "CHECKBOX",
+      checkedValue: "TRUE",
+      allowInvalid: true,
+    }},
+    "Claim": {dataValidation: {
+      criteriaType: "CHECKBOX",
+      checkedValue: "TRUE",
+      allowInvalid: true,
+    }},
+    "Trip Date": {
+      numberFormat: "M/d/yyyy",
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid date.",
+      },
+    },
+    "Earliest PU Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Requested PU Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Latest PU Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Requested DO Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Appt Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "PU Address": {},
+    "DO Address": {},
+    "Guests": {},
+    "Mobility Factors": {},
+    "Notes": {},
+    "Est Hours": {
+      numberFormat: "0.00"
+    },
+    "Est Miles": {},
+    "Trip ID": {},
+    "Customer Info": {},
+    "Extra Fields": {}
   },
   "Trip Review": {
     "Trip Date": {
