@@ -59,10 +59,10 @@ function formatTripRequest(trip) {
     tripTicketId: trip["Trip ID"],
     pickupAddress: buildAddressToSpec(trip["PU Address"]),
     dropoffAddress: buildAddressToSpec(trip["DO Address"]),
-    pickupTime: combineDateAndTime(trip["Trip Date"], trip["PU Time"]),
-    dropoffTime:  combineDateAndTime(trip["Trip Date"], trip["DO Time"]),
+    pickupTime: {time: combineDateAndTime(trip["Trip Date"], trip["PU Time"])},
+    dropoffTime:  {time: combineDateAndTime(trip["Trip Date"], trip["DO Time"])},
     customerInfo: getCustomerInfo(trip), 
-    appointmentTime: trip["Appt Time"] ? combineDateAndTime(trip["Trip Date"], trip["Appt Time"]) : "",
+    appointmentTime: trip["Appt Time"] ? {time: combineDateAndTime(trip["Trip Date"], trip["Appt Time"])} : "",
     notesForDriver: trip["Notes"],
     numOtherReservedPassengers: trip["Guests"],
     openAttributes: {

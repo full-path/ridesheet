@@ -34,6 +34,7 @@ function buildAddressFromSpec(address) {
   } catch(e) { logError(e) }
 }
 
+// TODO: support other time fields than just "time"
 function buildTimeFromSpec(date, time) {
   try {
     return {"@time": combineDateAndTime(date, time)}

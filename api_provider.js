@@ -36,9 +36,9 @@ function receiveTripRequest(tripRequest, senderId) {
     const tripData = {
       'Trip Date' : formatDate(tripRequest.pickupTime, null, 'M/d/yyyy'),
       'Source' : senderAccount.name,
-      'Requested PU Time' : formatDate(tripRequest.pickupTime, null, 'h:mm a'),
-      'Requested DO Time' : formatDate(tripRequest.dropoffTime, null, 'h:mm a'),
-      'Appt Time' : tripRequest.appointmentTime ? formatDate(tripRequest.appointmentTime, null, 'h:mm a') : '',
+      'Requested PU Time' : formatDate(tripRequest.pickupTime.time, null, 'h:mm a'),
+      'Requested DO Time' : formatDate(tripRequest.dropoffTime.time, null, 'h:mm a'),
+      'Appt Time' : tripRequest.appointmentTime ? formatDate(tripRequest.appointmentTime.time, null, 'h:mm a') : '',
       'PU Address' : buildAddressFromSpec(tripRequest.pickupAddress),
       'DO Address' : buildAddressFromSpec(tripRequest.dropoffAddress),
       'Trip ID' : tripRequest.tripTicketId,
