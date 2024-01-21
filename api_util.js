@@ -1,5 +1,6 @@
 // TODO: Add more error handling and resilience. Add ability for addressName and other details
 // check components[i].types to make sure each is the correct component
+// This code is just for testing purposes!!!
 // Make errors do something a little more useful--return a partial address or similar? Try to parse the address manually?
 function buildAddressToSpec(address) {
   try {
@@ -9,16 +10,25 @@ function buildAddressToSpec(address) {
       const components = result.results[0].address_components
       const addressObj = {
         addressName: "",
-        street: components[0].short_name + " " + components[1].short_name,
         street2: "",
         notes: "",
-        city: components[2].long_name,
-        state: components[4].short_name,
-        postalCode: components[6].short_name,
-        country: components[5].short_name,
+        formattedAddress: address,
         lat: result.results[0].geometry.location.lat,
         long: result.results[0].geometry.location.lng,
-        formattedAddress: address
+      }
+      if (components.length >= 6) {
+        addressObj.street = components[0].short_name + " " + components[1].short_name
+        addressObj.city = components[2].long_name
+        addressObj.state = components[4].short_name
+        addressObj.postalCode = components[6].short_name
+        addressObj.country = components[5].short_name
+      }
+      if (components.length === 5) {
+        addressObj.street = components[0].long_name
+        addressObj.city = components[1].long_name
+        addressObj.state = components[3].short_name
+        addressObj.country = components[4].short_name
+        addressObj.postalCode = ""
       }
       return addressObj
     }
