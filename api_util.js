@@ -96,8 +96,8 @@ function generateHmacHexString(secret, senderId, receiverId, timestamp, nonce, m
 function getResource(endPoint, params) {
   try {
     const version = endPoint.version
-    const receiverId = endPoint.apiKey
-    const senderId = endPoint.apiKey
+    const receiverId = endPoint.receiverId
+    const senderId = getDocProp("apiSenderId")
     const nonce = Utilities.getUuid()
     const timestamp = new Date().getTime().toString()
     const endpointPath = params.endpointPath || ''
@@ -141,8 +141,8 @@ function getResource(endPoint, params) {
 function postResource(endPoint, params, payload) {
   try {
     const version = endPoint.version
-    const receiverId = endPoint.apiKey
-    const senderId = endPoint.apiKey
+    const receiverId = endPoint.receiverId
+    const senderId = getDocProp("apiSenderId")
     const nonce = Utilities.getUuid()
     const timestamp = new Date().getTime().toString()
     const endpointPath = params.endpointPath || ''

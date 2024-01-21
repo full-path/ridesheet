@@ -148,7 +148,7 @@ const defaultDocumentProperties = {
         name: "Example agency name",
         url: "https://example.com",
         apiVersion: "v1",
-        apiKey: "Enter key here",
+        receiverId: "Enter key here",
         secret: "Enter secret here",
         hasRuns: true,
         hasTrips: true
@@ -159,12 +159,17 @@ const defaultDocumentProperties = {
   apiGiveAccess: {
     type: "object",
     value: {
-      Enter_agency_key_here: {
+      Enter_agency_id_here: {
         name: "Example agency name with API access to data in this sheet",
           secret: "Enter secret here"
       }
     },
     description: "API information needed to allow agencies to connect to this sheet. We recommend using https://www.uuidgenerator.net/ to generate API keys."
+  },
+  apiSenderId: {
+    type: "string",
+    value: "",
+    description: "UUID for this agency"
   },
   apiShowMenuItems: {
     type: "boolean",
