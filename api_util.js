@@ -211,7 +211,7 @@ function validateHmacSignature(signature, senderId, receiverId, timestamp, nonce
   try {
     // Fetch the secret associated with the receiverId (apiKey)
     const apiAccounts = getDocProp("apiGiveAccess")
-    const statedApiAccount = apiAccounts[receiverId]
+    const statedApiAccount = apiAccounts[senderId]
 
     let receivedTimestamp = new Date(timestamp)
     let timeNow = new Date()

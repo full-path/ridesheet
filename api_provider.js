@@ -34,7 +34,7 @@ function receiveTripRequest(tripRequest, senderId) {
     }, {});
     // TODO: Format hours and miles? Either here or in the sheet
     const tripData = {
-      'Trip Date' : formatDate(tripRequest.pickupTime, null, 'M/d/yyyy'),
+      'Trip Date' : formatDate(tripRequest.pickupTime.time, null, 'M/d/yyyy'),
       'Source' : senderAccount.name,
       'Requested PU Time' : formatDate(tripRequest.pickupTime.time, null, 'h:mm a'),
       'Requested DO Time' : formatDate(tripRequest.dropoffTime.time, null, 'h:mm a'),
