@@ -80,34 +80,6 @@ function findFirstRowByHeaderNames(sheet, filter) {
   } catch(e) { logError(e) }
 }
 
-function moveRows(sourceSheet, destSheet, filter) {
-  try {
-    const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
-    const rowsToMove = sourceData.filter(row => filter(row))
-    if (rowsToMove.length < 1) {
-      log('moveRows', 'No data returned by filter. No rows moved.')
-      return
-    }
-    const rowsMovedSuccessfully = createRows(destSheet, rowsToMove)
-    if (rowsMovedSuccessfully) {
-      safelyDeleteRows(sourceSheet, rowsToMove)
-    } else {
-      SpreadsheetApp.getActiveSpreadsheet().toast('Error moving data. Please check for duplicate entries.')
-    }
-  } catch(e) { logError(e) }
-}
-
-function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
-  try {
-    const sourceSheet = sourceRange.getSheet()
-    const sourceData = getRangeValuesAsTable(sourceRange, {includeFormulaValues: false})[0]
-    Object.keys(extraFields).forEach(key => sourceData[key] = extraFields[key])
-    if (createRow(destSheet, sourceData)) {
-      safelyDeleteRow(sourceSheet, sourceData)
-    }
-  } catch(e) { logError(e) }
-}
-
 function createRows(destSheet, data) {
   try {
     let destColumnNames = getSheetHeaderNames(destSheet)
