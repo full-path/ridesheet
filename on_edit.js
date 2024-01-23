@@ -394,6 +394,6 @@ function updatePropertiesOnEdit(e) {
 function tripSheetTrigger(e) {
   try {
     updateTripID(e)
-    updateRuns(e)
+    completeTripRunValues(e)
   } catch(e) { logError(e) }
 }
