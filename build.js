@@ -60,15 +60,19 @@ function buildNamedRanges() {
 
 function buildNamedRange(ss, name, sheetName, column, headerName) {
   const sheet = ss.getSheetByName(sheetName)
-  if (headerName) {
-    const headerNames = getSheetHeaderNames(sheet)
-    const columnPosition = headerNames.indexOf(headerName) + 1
-    if (columnPosition > 0) column = sheet.getRange(1, columnPosition).getA1Notation().slice(0,-1)
-  }
-  if (column) {
-    const range = sheet.getRange(column + "1:" + column + (sheet.getMaxRows() + 1000))
-    log(name,range.getSheet().getName() + "!" + column + "1:" + column + (sheet.getMaxRows() + 1000))
-    ss.setNamedRange(name, range)
+  if (sheet) {
+    if (headerName) {
+      const headerNames = getSheetHeaderNames(sheet)
+      const columnPosition = headerNames.indexOf(headerName) + 1
+      if (columnPosition > 0) column = sheet.getRange(1, columnPosition).getA1Notation().slice(0,-1)
+    }
+    if (column) {
+      const range = sheet.getRange(column + "1:" + column + (sheet.getMaxRows() + 1000))
+      log(name,range.getSheet().getName() + "!" + column + "1:" + column + (sheet.getMaxRows() + 1000))
+      ss.setNamedRange(name, range)
+    }
+  } else {
+    log(`Attempted to build named Range to '${name}' to sheet '${sheetName}', but sheet not found.`)
   }
 }
 
@@ -143,7 +147,6 @@ function assessMetadata() {
       sheetResults["notTracked"] = sheetHeaderNamesForConfig.filter(x => !sheetResults["configPresent"].includes(x))
       results[sheetName] = sheetResults
     })
-    log(JSON.stringify(results))
   } catch(e) { logError(e) }
 }
 
@@ -155,36 +158,44 @@ function buildMetadata() {
       withKey("sheetName").find()
     let labeledSheets = sheetMetadata.map(md => md.getValue())
     defaultSheets.forEach(sheetName => {
-     if (!labeledSheets.includes(sheetName)) {
-       let sheet = ss.getSheetByName(sheetName)
-       sheet.addDeveloperMetadata("sheetName",sheetName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
-     }
+      if (!labeledSheets.includes(sheetName)) {
+        let sheet = ss.getSheetByName(sheetName)
+        if (sheet) {
+          sheet.addDeveloperMetadata("sheetName",sheetName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+        } else {
+          log(`Attempted to add metadata to 'defaultSheets' sheet '${sheetName}', but sheet not found.`)
+        }
+      }
     })
     sheetsWithHeaders.forEach(sheetName => {
       let sheet = ss.getSheetByName(sheetName)
-      let extraHeaderNames = getDocProp("extraHeaderNames")
-      let sheetHeaderNames = getSheetHeaderNames(sheet)
-      let registeredColumns = [...Object.keys(defaultColumns[sheetName] || {}),...extraHeaderNames[sheetName]]
-      sheetHeaderNames.forEach((columnName, i) => {
-        if (registeredColumns.includes(columnName)) {
-          let letter = getColumnLettersFromPosition(i + 1)
-          let range = sheet.getRange(`${letter}:${letter}`)
-          let colMetadata = range.createDeveloperMetadataFinder()
-            .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN)
-            .find()
-          if (colMetadata.length < 1) {
-            let colSettings = defaultColumns[sheetName][columnName]
-            range.addDeveloperMetadata("headerName",columnName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
-            if (colSettings && colSettings["numberFormat"]) {
-              range.addDeveloperMetadata("numberFormat", colSettings["numberFormat"], SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
-            }
-            if (colSettings && colSettings["dataValidation"]) {
-              let validationRules = JSON.stringify(colSettings["dataValidation"])
-              range.addDeveloperMetadata("dataValidation", validationRules, SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+      if (sheet) {
+        let extraHeaderNames = getDocProp("extraHeaderNames")
+        let sheetHeaderNames = getSheetHeaderNames(sheet)
+        let registeredColumns = [...Object.keys(defaultColumns[sheetName] || {}),...extraHeaderNames[sheetName]]
+        sheetHeaderNames.forEach((columnName, i) => {
+          if (registeredColumns.includes(columnName)) {
+            let letter = getColumnLettersFromPosition(i + 1)
+            let range = sheet.getRange(`${letter}:${letter}`)
+            let colMetadata = range.createDeveloperMetadataFinder()
+              .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN)
+              .find()
+            if (colMetadata.length < 1) {
+              let colSettings = defaultColumns[sheetName][columnName]
+              range.addDeveloperMetadata("headerName",columnName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+              if (colSettings && colSettings["numberFormat"]) {
+                range.addDeveloperMetadata("numberFormat", colSettings["numberFormat"], SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+              }
+              if (colSettings && colSettings["dataValidation"]) {
+                let validationRules = JSON.stringify(colSettings["dataValidation"])
+                range.addDeveloperMetadata("dataValidation", validationRules, SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+              }
             }
           }
-        }
-      })
+        })
+      } else {
+        log(`Attempted to add metadata to 'sheetsWithHeaders' sheet '${sheetName}', but sheet not found.`)
+      }
     })
   } catch(e) {
     logError(e)
@@ -198,27 +209,35 @@ function rebuildAllMetadata() {
     const extraHeaderNames = getDocProp("extraHeaderNames")
     defaultSheets.forEach(sheetName => {
       const sheet = ss.getSheetByName(sheetName)
-      sheet.addDeveloperMetadata("sheetName",sheetName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+      if (sheet) {
+        sheet.addDeveloperMetadata("sheetName",sheetName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+      } else {
+        log(`Attempted to add metadata to 'defaultSheets' sheet '${sheetName}', but sheet not found.`)
+      }
     })
     sheetsWithHeaders.forEach(sheetName => {
       const sheet = ss.getSheetByName(sheetName)
-      const sheetHeaderNames = getSheetHeaderNames(sheet)
-      const correctHeaderNames = [...Object.keys(defaultColumns[sheetName] || {}),...extraHeaderNames[sheetName]]
-      sheetHeaderNames.forEach((shn, i) => {
-        if (correctHeaderNames.includes(shn)) {
-          let letter = getColumnLettersFromPosition(i + 1)
-          let range = sheet.getRange(`${letter}:${letter}`)
-          range.addDeveloperMetadata("headerName",shn,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
-          let colSettings = defaultColumns[sheetName][shn]
-          if (colSettings && colSettings["numberFormat"]) {
-            range.addDeveloperMetadata("numberFormat", colSettings["numberFormat"], SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+      if (sheet) {
+        const sheetHeaderNames = getSheetHeaderNames(sheet)
+        const correctHeaderNames = [...Object.keys(defaultColumns[sheetName] || {}),...extraHeaderNames[sheetName]]
+        sheetHeaderNames.forEach((shn, i) => {
+          if (correctHeaderNames.includes(shn)) {
+            let letter = getColumnLettersFromPosition(i + 1)
+            let range = sheet.getRange(`${letter}:${letter}`)
+            range.addDeveloperMetadata("headerName",shn,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+            let colSettings = defaultColumns[sheetName][shn]
+            if (colSettings && colSettings["numberFormat"]) {
+              range.addDeveloperMetadata("numberFormat", colSettings["numberFormat"], SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+            }
+            if (colSettings && colSettings["dataValidation"]) {
+              let validationRules = JSON.stringify(colSettings["dataValidation"])
+              range.addDeveloperMetadata("dataValidation", validationRules, SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+            }
           }
-          if (colSettings && colSettings["dataValidation"]) {
-            let validationRules = JSON.stringify(colSettings["dataValidation"])
-            range.addDeveloperMetadata("dataValidation", validationRules, SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
-          }
-        }
-      })
+        })
+      } else {
+        log(`Attempted to add metadata to 'sheetsWithHeaders' sheet '${sheetName}', but sheet not found.`)
+      }
     })
   } catch(e) { logError(e) }
 }
