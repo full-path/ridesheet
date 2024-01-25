@@ -24,7 +24,8 @@ function receiveTripRequest(tripRequest, senderId) {
       "customerInfo",
       "openAttributes",
       "appointmentTime",
-      "notesForDriver"
+      "notesForDriver",
+      "numOtherReservedPassengers"
     ]
     const tripRequestKeys = Object.keys(tripRequest)
     const extraDataFields = tripRequestKeys.filter(key => !supportedFields.includes(key));
@@ -47,6 +48,7 @@ function receiveTripRequest(tripRequest, senderId) {
       'Notes' : tripRequest.notesForDriver,
       'Customer Info' : JSON.stringify(tripRequest.customerInfo),
       'Extra Fields' : JSON.stringify(extraInfo),
+      'Guests' : tripRequest.numOtherReservedPassengers,
       'Decline' : false,
       'Claim' : false
     }

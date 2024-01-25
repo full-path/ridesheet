@@ -308,7 +308,6 @@ function getValidationRule(ruleAttributes) {
       } else {
         builder = SpreadsheetApp.newDataValidation().requireCheckbox().setAllowInvalid(allowInvalid)
       }
-      log(criteria, JSON.stringify(args))
       //builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     } else if (criteriaName === "TEXT_IS_VALID_EMAIL") {
       builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)

@@ -156,13 +156,6 @@ function postResource(endPoint, params, payload) {
     const nonce = Utilities.getUuid()
     const timestamp = new Date().getTime().toString()
     const endpointPath = params.endpointPath || ''
-    // Path should always be sent in params... that is easy with how it is set up
-    // If the endPoint URL is ridesheet (google)
-    // - Do not include path in fetchUrl
-    // - Do include path as a param & in the signature
-    // If the URL is not ridesheet:
-    // - do append the path to the fetchUrl
-    // - do not include query params
 
     const signature = generateHmacHexString(
       endPoint.secret,
