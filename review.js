@@ -1,18 +1,49 @@
-function addDeadheadDataToRunsForDate(date) {
+function addDataToRunsInReview() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const ui = SpreadsheetApp.getUi()
     const vehicleSheet = ss.getSheetByName("Vehicles")
     const vehicles = getRangeValuesAsTable(vehicleSheet.getDataRange())
     const runsSheet = ss.getSheetByName("Run Review")
     const tripSheet = ss.getSheetByName("Trip Review")
+    const runs = getRangeValuesAsTable(runsSheet.getDataRange())
     const trips = getRangeValuesAsTable(tripSheet.getDataRange())
     const tripReviewCompletedTripResults = getDocProp("tripReviewCompletedTripResults")
+    const earliestRunDateReadyForAddingData = runs.filter((row) => {
+      return isUserReviewedRun(row) && !isFullyReviewedRun(row)
+    }).map((row) => {
+      return row["Run Date"].valueOf()
+    }).reduce((earliest, thisDate) => {
+      return thisDate < earliest ? thisDate : earliest
+    })
+
+    const promptResult = ui.prompt("Add Data to Runs in Review",
+        "Enter date for runs to add data to. Leave blank for " + formatDate(earliestRunDateReadyForAddingData),
+        ui.ButtonSet.OK_CANCEL)
+    let date
+    if (promptResult.getResponseText() == "") {
+      date = new Date(earliestRunDateReadyForAddingData)
+    } else {
+      date = parseDate(promptResult.getResponseText(),"Invalid Date")
+    }
+
+    if (!isValidDate(date)) {
+      ui.alert("Invalid date, action cancelled.")
+      return
+    } else if (promptResult.getSelectedButton() !== ui.Button.OK) {
+      ui.alert("Action cancelled as requested.")
+      return
+    }
+
     const completedTripsThisDay = trips.filter((row) => {
       return row["Trip Date"].valueOf() === date.valueOf() &&
         tripReviewCompletedTripResults.includes(row["Trip Result"])
     })
-    let runs = getRangeValuesAsTable(runsSheet.getDataRange())
     let runsThisDay = runs.filter((row) => row["Run Date"].valueOf() === date.valueOf())
+    if (!runsThisDay.length) {
+      ui.alert(`No runs found for ${formatDate(date)}. No action taken.`)
+      return
+    }
 
     const dataErrorMessages = getDeadheadDataErrorMessages(completedTripsThisDay, runsThisDay)
     if (dataErrorMessages.length) {
@@ -20,11 +51,15 @@ function addDeadheadDataToRunsForDate(date) {
         `Deadhead data could not be added for ${formatDate(date)} to the due to the following error${dataErrorMessages.length === 1 ? '' : 's'}:\n\n- ${dataErrorMessages.join("\n\n- ")}`
       )
     } else {
+      newRunData = runs.map((row) => {
+        return { _rowPosition: row._rowPosition, _rowIndex: row._rowIndex }
+      })
       runsThisDay.forEach((run) => {
         const deadheadData = getDeadheadDataForRun(run, completedTripsThisDay, vehicles)
-        run = {...run, ...deadheadData}
+        let newRunDataRow = newRunData.find((row) => row._rowPosition === run._rowPosition)
+        Object.assign(newRunDataRow, deadheadData)
       })
-      setValuesByHeaderNames(runs, runsSheet.getDataRange())
+      setValuesByHeaderNames(newRunData, runsSheet.getDataRange())
     }
   } catch(e) { logError(e) }
 }
@@ -46,26 +81,27 @@ function getDeadheadDataForRun(run, tripsThisDay, vehicles) {
       timeOnlyAsMilliseconds(row["PU Time"]) > timeOnlyAsMilliseconds(latestRow["PU Time"]) ? 
       row : latestRow
     )
-  const vehicle = vehicles.find((row) => row["Vehicle ID"] === vehicleId)
+  const vehicle = vehicles.find((row) => row["Vehicle ID"] === run["Vehicle ID"])
 
-  result = {}
+  let result = {}
   result["First PU Address"] = parseAddress(firstTrip["PU Address"]).geocodeAddress
   result["Last DO Address"] = parseAddress(lastTrip["DO Address"]).geocodeAddress
   result["Vehicle Garage Address"] = parseAddress(vehicle["Garage Address"]).geocodeAddress
   result["Starting Deadhead Miles"] =
-      getTripEstimate(result["Vehicle Garage Address"], result["First PU Address"], "miles")
+      getTripEstimate(result["Vehicle Garage Address"], result["First PU Address"], "miles").toFixed(1)
   result["Ending Deadhead Miles"] =
-      getTripEstimate(result["Last DO Address"], result["Vehicle Garage Address"], "miles")
+      getTripEstimate(result["Last DO Address"], result["Vehicle Garage Address"], "miles").toFixed(1)
   return result
 }
 
 function getDeadheadDataErrorMessages(tripsThisDay, runsThisDay) {
-  return [
+  const result = [
     ...hasOrphans(tripsThisDay, runsThisDay),
     hasDuplicateRuns(runsThisDay),
     hasIncompleteTrips(tripsThisDay),
     hasIncompleteRuns(runsThisDay)
   ].filter((msg) => msg.length > 0)
+  return result
 }
 
 function hasOrphans(tripsThisDay, runsThisDay) {
@@ -76,20 +112,21 @@ function hasOrphans(tripsThisDay, runsThisDay) {
   let runErrorMessage = ""
   let tripErrorMessage = ""
   runKeys.forEach((runKey) => {
-    if (!tripKeys.indexOf(tripKey) === -1) runKeyErrors.push(runKey)
+    if (!tripKeys.indexOf(runKey) === -1) runKeyErrors.push(runKey)
   })
   tripKeys.forEach((tripKey) => {
-    if (runKeys.indexOf(tripKey) === -1) tripKeyErrors.push(runKey)
+    if (runKeys.indexOf(tripKey) === -1) tripKeyErrors.push(tripKey)
   })
   if (runKeyErrors.length) {
     runErrorMessage = (runKeyErrors.length === 1 ? "1 run" : runKeyErrors.length + " runs") +
       " with no matching trips:\n" + 
       runKeyErrors.join("\n")
   }
-  if (tripKeyErrors.length) {
-    tripErrorMessage = (tripKeyErrors.length === 1 ? "1 trip" : tripKeyErrors.length + " trips") +
-      " with no matching runs:\n" + 
+  if (tripKeyErrors.length === 1) {
+    tripErrorMessage = "There is 1 completed trip with no matching run:\n" +
       tripKeyErrors.join("\n")
+  } else if (tripKeyErrors.length > 1) {
+    tripErrorMessage = `There are ${tripKeyErrors.length} completed trips with no matching runs:\n${tripKeyErrors.join("\n")}`
   }
   return [runErrorMessage, tripErrorMessage]
 }
@@ -99,12 +136,12 @@ function hasDuplicateRuns(runsThisDay) {
   if (new Set(runKeys).size !== runKeys.length) {
     return "There are duplicate runs for this day."
   } else {
-    return
+    return ""
   }
 }
 
 function hasIncompleteTrips(tripsThisDay) {
-  const incompleteTrips = tripsThisDay.filter(!isReviewedTrip)
+  const incompleteTrips = tripsThisDay.filter((row) => !isReviewedTrip(row))
   if (incompleteTrips.length) {
     return "There are " + incompleteTrips.length + " trips with incomplete data."
   } else {
@@ -113,7 +150,7 @@ function hasIncompleteTrips(tripsThisDay) {
 }
 
 function hasIncompleteRuns(runsThisDay) {
-  const incompleteRuns = runsThisDay.filter(!isUserReviewedRun)
+  const incompleteRuns = runsThisDay.filter((row) => !isUserReviewedRun(row))
   if (incompleteRuns.length) {
     return "There are " + incompleteRuns.length + " runs with incomplete data."
   } else {
@@ -136,22 +173,26 @@ function isReviewedTrip(trip) {
 
 function isUserReviewedRun(run) {
   const runReviewRequiredFields = getDocProp("runUserReviewRequiredFields")
-  blankColumns = runReviewRequiredFields.filter(column => !run[column])
+  const blankColumns = runReviewRequiredFields.filter(column => {
+    return run[column] === 0 ? false : !run[column]
+  })
   return blankColumns.length === 0
 }
 
 function isFullyReviewedRun(run) {
   const runReviewRequiredFields = getDocProp("runFullReviewRequiredFields")
-  blankColumns = runReviewRequiredFields.filter(column => !run[column])
+  const blankColumns = runReviewRequiredFields.filter(column => {
+    return run[column] === 0 ? false : !run[column]
+  })
   return blankColumns.length === 0
 }
 
 function getRunKey(runOrTrip) {
   return [
-    "Driver ID:" + runOrTrip["Driver ID"],
-    "Vehicle ID:" + runOrTrip["Vehicle ID"],
-    "Run ID:" + (runOrTrip["Run ID"] ? runOrTrip["Run ID"] : "<Blank>")
-  ].join()
+    "Driver ID: " + runOrTrip["Driver ID"],
+    "Vehicle ID: " + runOrTrip["Vehicle ID"],
+    "Run ID: " + (runOrTrip["Run ID"] ? runOrTrip["Run ID"] : "<Blank>")
+  ].join(", ")
 }
 
 function moveTripsToReview() {
@@ -177,16 +218,17 @@ function moveTripsToArchive() {
     const tripArchiveSheet        = ss.getSheetByName("Trip Archive")
     const runArchiveSheet         = ss.getSheetByName("Run Archive")
 
-    let trips = getRangeValuesAsTable(tripArchiveSheet.getDataRange(),{includeFormulaValues: false})
+    let trips = getRangeValuesAsTable(tripReviewSheet.getDataRange(),{includeFormulaValues: false})
     let runs  = getRangeValuesAsTable(runReviewSheet.getDataRange(),{includeFormulaValues: false})
-    let allDates = new Set([...trips.map((row) => row["Trip Date"]), ...runs.map((row) => row["Run Date"])])
+    let allDates = Array.from(new Set([...trips.map((row) => row["Trip Date"].valueOf()), ...runs.map((row) => row["Run Date"].valueOf())]))
     let moveDates = []
 
     allDates.forEach((date) => {
-      const theseTrips = trips.filter((row) => row["Trip Date"].valueOf() === date.valueOf())
-      const theseRuns = runs.filter((row) => row["Run Date"].valueOf() === date.valueOf())
+      const theseTrips = trips.filter((row) => row["Trip Date"].valueOf() === date)
+      const theseRuns = runs.filter((row) => row["Run Date"].valueOf() === date)
       const incompleteTrips = theseTrips.filter((row) => !isReviewedTrip(row))
       const incompleteRuns = theseRuns.filter((row) => !isFullyReviewedRun(row))
+      log(new Date(date),incompleteTrips.length, incompleteRuns.length)
       if (!incompleteTrips.length && !incompleteRuns.length) moveDates.push(date)
     })
 
@@ -204,7 +246,6 @@ function moveRows(sourceSheet, destSheet, filter) {
     const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
     const rowsToMove = sourceData.filter(row => filter(row))
     if (rowsToMove.length < 1) {
-      log('moveRows', 'No data returned by filter. No rows moved.')
       return
     }
     const rowsMovedSuccessfully = createRows(destSheet, rowsToMove)
