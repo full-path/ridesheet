@@ -281,8 +281,8 @@ const defaultColumns = {
         helpText: "Value must be a valid customer name and ID.",
       },
     },
-    "Action": {},
-    "Go": {},
+    "|Action|": {},
+    "|Go|": {},
     "Share": {},
     "Declined By": {},
     "Trip Result": {

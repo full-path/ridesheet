@@ -9,6 +9,7 @@ function buildMenus() {
   menu.addItem('Create manifests for day', 'createManifests')
   menu.addItem('Create manifests for selected items', 'createSelectedManifests')
   menu.addItem('Move past data to review', 'moveTripsToReview')
+  menu.addItem('Add data to runs in review','addDataToRunsInReview')
   menu.addItem('Move reviewed data to archive', 'moveTripsToArchive')
   menu.addSeparator()
   let settingsMenu = ui.createMenu('Settings')
@@ -471,60 +472,4 @@ function updatePropertyRange(dataRange, propName, newPropValue) {
   dataRange.forEach(row => {
     if (row[0] === propName) { row[1] = newPropValue }
   })
-}
-
-// Take spreadsheet's column-type metadata and put in a note in the top
-// cell of the associated column. Useful for testing configurations.
-function showColumnMetadata() {
-  try {
-    clearHeaderNotes()
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
-    let mds = ss.createDeveloperMetadataFinder().
-      withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN).find()
-    let metadata = {}
-    mds.forEach(md => {
-      const range = md.getLocation().getColumn()
-      const sheetName = range.getSheet().getName()
-      const column = range.getColumn()
-      if (!metadata.hasOwnProperty(sheetName)) metadata[sheetName] = {}
-      if (metadata[sheetName].hasOwnProperty(column)) {
-        metadata[sheetName][column] =  metadata[sheetName][column] + "\n" + md.getKey() + ": " + md.getValue()
-      } else {
-        metadata[sheetName][column] =  md.getKey() + ": " + md.getValue()
-      }
-    })
-    Object.keys(metadata).forEach ((sheetName) => {
-      //Logger.log(Object.keys(metadata[sheetName]).map((key) ))
-      const lastColumnNumber = Math.max(...Object.keys(metadata[sheetName]))
-      //Logger.log(sheetName + ": " + lastColumnNumber)
-      let headerNotes = new Array(lastColumnNumber - 1)
-      for (let i = 0; i < lastColumnNumber; i++) {
-        if (metadata[sheetName].hasOwnProperty(i + 1)) {
-          headerNotes[i] = metadata[sheetName][i + 1]
-        } else {
-          headerNotes[i] = ""
-        }
-      }
-      const sheet = ss.getSheetByName(sheetName)
-      const range = sheet.getRange(1,1,1,lastColumnNumber)
-      range.setNotes([headerNotes])
-    })
-  } catch(e) { logError(e) }
-}
-
-// Clears out the notes fields of the top row of sheets.
-// Useful for clearing out the notes put in place by showColumnMetadata()
-function clearHeaderNotes() {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
-    sheetsWithHeaders.forEach((sheetName) => {
-      const sheet = ss.getSheetByName(sheetName)
-      if (sheet) {
-        let range = sheet.getRange(1, 1, 1, sheet.getLastColumn())
-        let notes = []
-        for (let i = 0; i < range.getNumColumns(); i++) { notes.push("") }
-        range.setNotes([notes])
-      }
-    })
-  } catch(e) { logError(e) }
 }
