@@ -80,8 +80,9 @@ function findFirstRowByHeaderNames(sheet, filter) {
   } catch(e) { logError(e) }
 }
 
-function createRows(destSheet, data) {
+function createRows(destSheet, data, timestampColName) {
   try {
+    const timestamp = new Date()
     let destColumnNames = getSheetHeaderNames(destSheet)
     let sourceColumnNames = Object.keys(data[0])
     let missingDestColumns = sourceColumnNames.reduce((a, c) => {
@@ -95,7 +96,13 @@ function createRows(destSheet, data) {
       return false
     }
     let values = data.map(row => {
-      return destColumnNames.map(colName => row[colName] ? row[colName] : null)
+      return destColumnNames.map(colName => {
+        if (timestampColName && colName === timestampColName) {
+          return timestamp
+        } else {
+          return row[colName] ? row[colName] : null
+        }
+      })
     })
     let firstRow = destSheet.getLastRow() + 1
     let newRows = destSheet.getRange(firstRow, 1, values.length, values[0].length)
