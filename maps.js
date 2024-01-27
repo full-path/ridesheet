@@ -50,8 +50,9 @@ function setAddressByShortName(app, range) {
     const sheet = ss.getSheetByName('Addresses')
     const dataRange = sheet.getDataRange()
     const data = getRangeValuesAsTable(dataRange)
-    const result = data.find((row) => row["Short Name"].toLowerCase() === range.getValue().trim().toLowerCase())["Address"]
-    if (!result.trim()) { throw new Error('No true address found') }
+    const searchTerm = range.getValue().toString().toLowerCase().trim()
+    const result = data.find((row) => row["Short Name"].toString().toLowerCase().trim() === searchTerm)["Address"].trim()
+    if (!result) { throw new Error('No address found by short name') }
     range.setValue(result)
     range.setNote("")
     range.setBackground(null)
@@ -126,7 +127,7 @@ function getTripEstimate(origin, destination, returnType) {
 
 function parseAddress(rawAddress) {
   result = {}
-  const parenText = rawAddress.match(/\(([^)]*)\)/)
+  const parenText = rawAddress.toString().match(/\(([^)]*)\)/)
   if (parenText) {
     result.parenText      = parenText[1]
     result.geocodeAddress = rawAddress.replace(parenText[0],"").trim()

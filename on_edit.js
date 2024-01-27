@@ -149,7 +149,7 @@ function callCellTriggers(e) {
 
 function formatAddressOnEdit(range) {
   try {
-    if (range.getValue() && range.getValue().trim()) {
+    if (range.getValue() && range.getValue().toString().trim()) {
       const app = SpreadsheetApp
       if (!setAddressByShortName(app, range)) {
         setAddressByApi(app, range)
