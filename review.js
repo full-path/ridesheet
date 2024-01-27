@@ -201,12 +201,12 @@ function moveTripsToReview() {
     const tripSheet       = ss.getSheetByName("Trips")
     const tripReviewSheet = ss.getSheetByName("Trip Review")
     const tripFilter      = function(row) { return row["Trip Date"] && row["Trip Date"] < dateToday() }
-    moveRows(tripSheet, tripReviewSheet, tripFilter)
+    moveRows(tripSheet, tripReviewSheet, tripFilter, "Review TS")
 
     const runSheet        = ss.getSheetByName("Runs")
     const runReviewSheet  = ss.getSheetByName("Run Review")
     const runFilter       = function(row) { return row["Run Date"] && row["Run Date"] < dateToday() }
-    moveRows(runSheet, runReviewSheet, runFilter)
+    moveRows(runSheet, runReviewSheet, runFilter, "Review TS")
   } catch(e) { logError(e) }
 }
 
@@ -228,27 +228,30 @@ function moveTripsToArchive() {
       const theseRuns = runs.filter((row) => row["Run Date"].valueOf() === date)
       const incompleteTrips = theseTrips.filter((row) => !isReviewedTrip(row))
       const incompleteRuns = theseRuns.filter((row) => !isFullyReviewedRun(row))
-      log(new Date(date),incompleteTrips.length, incompleteRuns.length)
-      if (!incompleteTrips.length && !incompleteRuns.length) moveDates.push(date)
+      if (theseTrips.length &&
+          theseRuns.length &&
+          !incompleteTrips.length &&
+          !incompleteRuns.length
+      ) moveDates.push(date)
     })
 
     moveRows(tripReviewSheet, tripArchiveSheet, function(row){
       return moveDates.find(thisDate => thisDate.valueOf() === row["Trip Date"].valueOf())
-    })
+    }, "Archive TS")
     moveRows(runReviewSheet, runArchiveSheet, function(row){
       return moveDates.find(thisDate => thisDate.valueOf() === row["Run Date"].valueOf())
-    })
+    }, "Archive TS")
   } catch(e) { logError(e) }
 }
 
-function moveRows(sourceSheet, destSheet, filter) {
+function moveRows(sourceSheet, destSheet, filter, timestampColName) {
   try {
     const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
     const rowsToMove = sourceData.filter(row => filter(row))
     if (rowsToMove.length < 1) {
       return
     }
-    const rowsMovedSuccessfully = createRows(destSheet, rowsToMove)
+    const rowsMovedSuccessfully = createRows(destSheet, rowsToMove, timestampColName)
     if (rowsMovedSuccessfully) {
       safelyDeleteRows(sourceSheet, rowsToMove)
     } else {
