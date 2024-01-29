@@ -3,18 +3,12 @@
 // Telegram 1A of TCRP 210 Transactional Data Spec.
 function receiveTripRequest(tripRequest, senderId) {
   log('Received TripRequest', JSON.stringify(tripRequest))
-  // Check/Validate Trip Request
-  // Add Trip Request to sheet
-  // if all goes correctly, return 200 resp
-  // if anything goes wrong, send appropriate error
   try {
     const ss              = SpreadsheetApp.getActiveSpreadsheet()
     const tripSheet       = ss.getSheetByName("Outside Trips")
     const apiAccounts = getDocProp("apiGiveAccess")
     const senderAccount = apiAccounts[senderId]
-    // Get Header values, set fields accordingly. Log any fields that 
-    // are in the tripRequest but not in ridesheet
-    // Note: put customerInfo and any fields not in Ridesheet into a string stored in a field
+
     const supportedFields = [
       "tripTicketId",
       "pickupAddress",
@@ -60,6 +54,7 @@ function receiveTripRequest(tripRequest, senderId) {
   } 
 }
 
+// TODO: Deprecate
 function sendRequestForTripRequests() {
   try {
     const lastColumnLetter = "R"
@@ -233,13 +228,64 @@ function sendRequestForTripRequests() {
   } catch(e) { logError(e) }
 }
 
+function sendTripRequestResponses() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const outsideTrips = ss.getSheetByName("Outside Trips")
+    const trips = getRangeValuesAsTable(outsideTrips.getDataRange()).filter(tripRow => {
+      return (
+        tripRow["Trip Date"] >=  dateToday() &&
+        ( tripRow["Decline"]   === true || tripRow["Claim"] === true) &&
+        !(tripRow["Decline"]   === true && tripRow["Claim"] === true)
+      )
+    })
+    // For each trip: Check the 'Source column' and find the appropriate agency
+    const endPoints = getDocProp("apiGetAccess")
+    trips.forEach((trip) => {
+      const source = trip["Source"]
+      const endpoint = endPoints.find(endpoint => endpoint.name === source)
+      const params = {endpointPath: "/v1/TripRequestResponse"}
+      const claimed = tripRow["Claim"] === true
+      const telegram = {
+        tripTicketId: trip["Trip ID"],
+        tripAvailable: claimed
+      }
+      if (trip["Scheduled PU Time"]) {
+        telegram.scheduledPickupTime = {
+          time: combineDateAndTime(trip["Trip Date"], trip["Scheduled PU Time"])
+        }
+      }
+      try {
+        const response = postResource(endpoint, params, JSON.stringify(telegram))
+        const responseObject = JSON.parse(response.getContentText())
+          log('#1B response', responseObject)
+          if (responseObject.status === "OK") {
+            // Mark the response as "sent" -- wait for telegram #2A to actually handle a claim
+            // If the trip was declined, go ahead and process it now.
+            if (!claimed) {
+              safelyDeleteRow(outsideTrips, trip)
+            }
+          } else {
+            // TODO: Show an error in some way that the trip response was not received, 
+            // unless the error is that the trip does not exist. What to do in Ridesheet 
+            // if a trip is not available upon claim? How to notify person?
+          }
+      } catch (e) {
+        logError(e)
+      }
+    })
+  } catch (e) {
+    logError(e)
+  }
+}
+
 // Provider (this RideSheet instance) sends tripRequestResponses
 // (whether service for each tripRequest is available or not) to ordering client.
 // Send an array of tripRequestResponse JSON objects which comply with
 // Telegram 1B of TCRP 210 Transactional Data Spec.
 // Receive in response an array of clientOrderConfirmation JSON objects which comply with
 // Telegram 2A of TCRP 210 Transactional Data Spec.
-function sendTripRequestResponses() {
+function sendTripRequestResponsesOld() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     //TODO: Update so that only the relevant endpoint (the source) receives the responses
