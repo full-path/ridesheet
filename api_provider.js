@@ -237,7 +237,7 @@ function sendTripRequestResponses() {
         tripRow["Trip Date"] >=  dateToday() &&
         ( tripRow["Decline"]  === true || tripRow["Claim"] === true) &&
         !(tripRow["Decline"]  === true && tripRow["Claim"] === true) &&
-        !(tripRow["Pending"]) === 'True' 
+        !(tripRow["Pending"] === 'True') 
       )
     })
     // For each trip: Check the 'Source column' and find the appropriate agency
