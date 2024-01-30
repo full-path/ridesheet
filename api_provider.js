@@ -246,7 +246,7 @@ function sendTripRequestResponses() {
       const source = trip["Source"]
       const endpoint = endPoints.find(endpoint => endpoint.name === source)
       const params = {endpointPath: "/v1/TripRequestResponse"}
-      const claimed = tripRow["Claim"] === true
+      const claimed = trip["Claim"] === true
       const telegram = {
         tripTicketId: trip["Trip ID"],
         tripAvailable: claimed
