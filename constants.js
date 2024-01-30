@@ -558,7 +558,8 @@ const defaultColumns = {
     "Est Miles": {},
     "Trip ID": {},
     "Customer Info": {},
-    "Extra Fields": {}
+    "Extra Fields": {},
+    "Pending": {},
   },
   "Trip Review": {
     "Trip Date": {

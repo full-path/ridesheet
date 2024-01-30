@@ -235,8 +235,9 @@ function sendTripRequestResponses() {
     const trips = getRangeValuesAsTable(outsideTrips.getDataRange()).filter(tripRow => {
       return (
         tripRow["Trip Date"] >=  dateToday() &&
-        ( tripRow["Decline"]   === true || tripRow["Claim"] === true) &&
-        !(tripRow["Decline"]   === true && tripRow["Claim"] === true)
+        ( tripRow["Decline"]  === true || tripRow["Claim"] === true) &&
+        !(tripRow["Decline"]  === true && tripRow["Claim"] === true) &&
+        !(tripRow["Pending"]) === 'True' 
       )
     })
     // For each trip: Check the 'Source column' and find the appropriate agency
@@ -260,15 +261,17 @@ function sendTripRequestResponses() {
         const responseObject = JSON.parse(response.getContentText())
           log('#1B response', responseObject)
           if (responseObject.status === "OK") {
-            // Mark the response as "sent" -- wait for telegram #2A to actually handle a claim
+            // Mark the response as "pending" -- wait for telegram #2A to actually handle a claim
             // If the trip was declined, go ahead and process it now.
             if (!claimed) {
               safelyDeleteRow(outsideTrips, trip)
+            } else {
+              markTripAsPending(outsideTrips, trip)
             }
           } else {
-            // TODO: Show an error in some way that the trip response was not received, 
-            // unless the error is that the trip does not exist. What to do in Ridesheet 
-            // if a trip is not available upon claim? How to notify person?
+            // TODO: Handle the case where the 400-error is on a trip decline
+            log('Claim Trip Rejected', JSON.stringify(responseObject))
+            markTripAsFailure(outsideTrips, trip)
           }
       } catch (e) {
         logError(e)
@@ -277,6 +280,23 @@ function sendTripRequestResponses() {
   } catch (e) {
     logError(e)
   }
+}
+
+function markTripAsPending(sheet, tripRow) {
+  const headers = getSheetHeaderNames(sheet)
+  const headerPosition = headers.indexOf("Pending") + 1
+  const rowPosition = tripRow._rowPosition
+  const currentRow = sheet.getRange("A" + rowPosition + ":" + rowPosition)
+  currentRow.setBackgroundRGB(20,204,204)
+  currentRow.getCell(1,1).setNote('Trip claim pending')
+  currentRow.getCell(1, headerPosition).setValue("True")
+}
+
+function markTripAsFailure(sheet, tripRow) {
+  const rowPosition = tripRow._rowPosition
+  const currentRow = sheet.getRange("A" + rowPosition + ":" + rowPosition)
+  currentRow.setBackgroundRGB(255,102,102)
+  currentRow.getCell(1,1).setNote('Claim rejected. See log for details.')
 }
 
 // Provider (this RideSheet instance) sends tripRequestResponses

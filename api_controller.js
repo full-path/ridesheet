@@ -93,7 +93,7 @@ function doPost(e) {
         // Doing this is a little tricky. We would like to 
         // send a response that it was received fine. Ideally, we would just
         // send telegram #2A right now, but that is no longer the spec
-        
+        content.status = "OK"
       } else {
         return createErrorResponse("INVALID_REQUEST")
       }
