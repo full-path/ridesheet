@@ -90,18 +90,17 @@ function receiveTripRequestResponse(response, senderId) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const allTrips = getAllTrips()
   const tripSheet = ss.getSheetByName("Trips")
-  const tripRange = tripSheet.getDataRange()
   const apiAccounts = getDocProp("apiGiveAccess")
   const senderAccount = apiAccounts[senderId]
   const trip = allTrips.find(row => row["Trip ID"] === response.tripTicketId)
-  const headers = getSheetHeaderNames(sheet)
-  const rowPosition = tripRow._rowPosition
-  const currentRow = sheet.getRange("A" + rowPosition + ":" + rowPosition)
+  const headers = getSheetHeaderNames(tripSheet)
 
   if (!response.tripAvailable) {
     if (!trip) {
       log(`${senderAccount.name} attempted to decline invalid trip`, JSON.stringify(response))
     } else {
+      const rowPosition = trip._rowPosition
+      const currentRow = tripSheet.getRange("A" + rowPosition + ":" + rowPosition)
       const declinedBy = trip["Declined By"] ? JSON.parse(trip["Declined By"]) : []
       declinedBy.push(senderAccount.name)
       if (apiAccounts.length === declinedBy.length) {
@@ -117,6 +116,8 @@ function receiveTripRequestResponse(response, senderId) {
       log(`${senderAccount.name} attempted to claim invalid trip`, JSON.stringify(response))
       return {status: "400", message: "Trip no longer available"}
     }
+    const rowPosition = trip._rowPosition
+    const currentRow = tripSheet.getRange("A" + rowPosition + ":" + rowPosition)
     const shared = trip["Share"]
     const claimed = trip["Claim Pending"]
     if (claimed || (!shared)) {
