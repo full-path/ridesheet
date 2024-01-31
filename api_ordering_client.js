@@ -1,11 +1,6 @@
 // Ordering client (this RideSheet instance) receives request for tripRequests from provider and
 // returns an array JSON objects, each element of which complies with
 // Telegram 1A of TCRP 210 Transactional Data Spec.
-
-
-// Notes: must send each trip request individually - is there a way to do this more efficiently in 
-// sheets, rather than waiting synchronously on each one? 
-// Also - could be updated to *only* send new shared trips
 function sendTripRequests() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const endPoints = getDocProp("apiGetAccess")
@@ -140,57 +135,74 @@ function receiveTripRequestResponse(response, senderId) {
   }
 }
 
-function receiveRequestForTripRequestsReturnTripRequests(apiAccount) {
+function sendClientOrderConfirmation(sourceTripRange = null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const tripSheet = ss.getSheetByName("Trips")
+  const currentTrip = sourceTripRange ? sourceTripRange : getFullRow(tripSheet.getActiveCell())
+  const trip = getRangeValuesAsTable(currentTrip,{includeFormulaValues: false})
+  const endPoints = getDocProp("apiGetAccess")
+  const endPoint = endPoints.find(endpoint => endpoint.name === trip["Claim Pending"])
+  const params = {endpointPath: "/v1/ClientOrderConfirmation"}
+  const telegram = {
+    tripTicketId: trip["Trip ID"],
+    tripConfirmed: true
+  }
+  const response = postResource(endPoint, params, JSON.stringify(telegram))
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
-    const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
-      if (tripRow["Declined By"]) {
-          let declinedBy = JSON.parse(tripRow["Declined By"])
-          if (declinedBy.includes(apiAccount.name)) {
-            return false
-          }
-        }
-      return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true && tripRow["Source"] === ""
-    })
-    let result = trips.map(tripIn => {
-      let tripOut = {}
-      tripOut.pickupAddress = buildAddressToSpec(tripIn["PU Address"])
-      tripOut.dropoffAddress = buildAddressToSpec(tripIn["DO Address"])
-      if (tripIn["Earliest PU Time"]) {
-        tripOut.pickupWindowStartTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["Earliest PU Time"])}
+    const responseObject = JSON.parse(response.getContentText())
+    if (responseObject.status === "OK") {
+      // move to sent trips
+      log('Trip successfully confirmed', telegram)
+      const sentTripSheet = ss.getSheetByName("Sent Trips")
+      const claimTime = new Date()
+      const tripColumnNames = getSheetHeaderNames(tripSheet)
+      const ignoredFields = ["Action", "Go", "Share", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By", "Shared"]
+      const sentTripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
+      const sentTripData = {
+        "Claimed By" : apiAccount.name,
+        "Claim Time" : claimTime,
+        "Sched PU Time" : claim.scheduledPickupTime
       }
-      if (tripIn["Latest PU Time"]) {
-        tripOut.pickupWindowEndTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["Latest PU Time"])}
-      }
-      tripOut.pickupTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["PU Time"])}
-      tripOut.dropoffTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["DO Time"])}
-      if (tripIn["Appt Time"]) {
-        tripOut.appointmentTime = {"@time": combineDateAndTime(tripIn["Trip Date"], tripIn["Appt Time"])}
-      }
-
-      let openAttributes = {}
-      openAttributes.tripTicketId = tripIn["Trip ID"]
-      openAttributes.estimatedTripDurationInSeconds = timeOnlyAsMilliseconds(tripIn["Est Hours"] || 0)/1000
-      openAttributes.estimatedTripDistanceInMiles = tripIn["Est Miles"]
-      if (tripIn["Guests"]) openAttributes.guestCount = tripIn["Guests"]
-      if (tripIn["Mobility Factors"]) openAttributes.mobilityFactors = tripIn["Mobility Factors"]
-      if (tripIn["Notes"]) openAttributes.notes = tripIn["Notes"]
-      tripOut["@openAttribute"] = JSON.stringify(openAttributes)
-
-      return {tripRequest: tripOut}
-    })
-    result.sort((a, b) => a.tripRequest.pickupTime["@time"].getTime() - b.tripRequest.pickupTime["@time"].getTime())
-    return result
-  } catch(e) { logError(e) }
+      sentTripFields.forEach(key => {
+        sentTripData[key] = trip[key]
+      });
+      createRow(sentTripSheet, sentTripData)
+      tripSheet.deleteRow(trip._rowPosition)
+    } else {
+      logError(`Failure to confirm trip with ${endPoint.name}`, responseObject)
+    }
+  } catch(e) {
+    logError(e)
+  }
 }
 
-// Ordering client (this RideSheet instance) receives tripRequestResponses
-// (whether service for each tripRequest is available or not) from provider.
-// Message in is an array of JSON tripRequestResponses objects, each element of which complies with
-// Telegram 1B of TCRP 210 Transactional Data Spec.
-// Response out is an array of JSON clientOrderConfirmations objects, each element of which complies with
-// Telegram 2A of TCRP 210 Transactional Data Spec.
-// This will include "confirmations" that returns rescinded orders.
+function moveAcceptedClaimsToSentTrips(acceptedClaims, apiAccount) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const sentTripSheet = ss.getSheetByName("Sent Trips")
+  const tripSheet = ss.getSheetByName("Trips")
+  const allTrips = getAllTrips()
+  const claimTime = new Date()
+
+  // Remove certain fields from the trip, while leaving in any custom
+  // columns that may have been created
+  let tripColumnNames = getSheetHeaderNames(tripSheet)
+  let ignoredFields = ["Action", "Go", "Share", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By", "Shared"]
+  let sentTripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
+  acceptedClaims.reverse()
+  acceptedClaims.forEach(claim => {
+    let trip = allTrips.find(row => row["Trip ID"] === claim.tripID)
+    let sentTripData = {
+      "Claimed By" : apiAccount.name,
+      "Claim Time" : claimTime,
+      "Sched PU Time" : claim.scheduledPickupTime
+    }
+    sentTripFields.forEach(key => {
+      sentTripData[key] = trip[key]
+    });
+    createRow(sentTripSheet, sentTripData)
+    tripSheet.deleteRow(trip._rowPosition)
+  })
+}
 
 function receiveTripRequestResponses(payload) { 
   const tripRequestResponses = formatTripRequestResponses(payload)
@@ -365,33 +377,6 @@ function processRescindedClaims(rescindedClaims) {
   return results
 }
 
-function moveAcceptedClaimsToSentTrips(acceptedClaims, apiAccount) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const sentTripSheet = ss.getSheetByName("Sent Trips")
-  const tripSheet = ss.getSheetByName("Trips")
-  const allTrips = getAllTrips()
-  const claimTime = new Date()
-
-  // Remove certain fields from the trip, while leaving in any custom
-  // columns that may have been created
-  let tripColumnNames = getSheetHeaderNames(tripSheet)
-  let ignoredFields = ["Action", "Go", "Share", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By", "Shared"]
-  let sentTripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
-  acceptedClaims.reverse()
-  acceptedClaims.forEach(claim => {
-    let trip = allTrips.find(row => row["Trip ID"] === claim.tripID)
-    let sentTripData = {
-      "Claimed By" : apiAccount.name,
-      "Claim Time" : claimTime,
-      "Sched PU Time" : claim.scheduledPickupTime
-    }
-    sentTripFields.forEach(key => {
-      sentTripData[key] = trip[key]
-    });
-    createRow(sentTripSheet, sentTripData)
-    tripSheet.deleteRow(trip._rowPosition)
-  })
-}
 
 // TODO: change "Declined By" into comma separated values, in order to be more human-readable
 function logDeclinedTripRequests(declinedTripRequests, apiAccount) {
