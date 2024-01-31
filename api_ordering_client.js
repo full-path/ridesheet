@@ -125,7 +125,7 @@ function receiveTripRequestResponse(response, senderId) {
       return {status: "400", message: "Trip no longer available"}
     }
     // Process successfully pending claim
-    const pendingIndex = headers.indexOf("Claim Pending")
+    const pendingIndex = headers.indexOf("Claim Pending") + 1
     currentRow.getCell(1, pendingIndex).setValue(senderAccount.name)
     currentRow.setBackgroundRGB(0,230,153)
     currentRow.getCell(1,1).setNote('Trip claim pending. Please approve/deny')
