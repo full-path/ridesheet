@@ -8,18 +8,19 @@
 // Also - could be updated to *only* send new shared trips
 function sendTripRequests() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
-  endPoints = getDocProp("apiGetAccess")
+  const endPoints = getDocProp("apiGetAccess")
+  const tripSheet = ss.getSheetByName("Trips")
   endPoints.forEach(endPoint => {
     if (endPoint.hasTrips) {
       const params = {endpointPath: "/v1/TripRequest"}
-      const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
+      const trips = getRangeValuesAsTable(tripSheet.getDataRange()).filter(tripRow => {
         if (tripRow["Declined By"]) {
             const declinedBy = JSON.parse(tripRow["Declined By"])
             if (declinedBy.includes(apiAccount.name)) {
               return false
             }
           }
-        return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true && tripRow["Source"] === ""
+        return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true && tripRow["Source"] === "" && tripRow["Shared"] === ""
       })
       // set necessary params: HMAC headers, resource (endpoint), ??
       trips.forEach(trip => {
@@ -28,11 +29,17 @@ function sendTripRequests() {
         try {
           let responseObject = JSON.parse(response.getContentText())
           log('#1A response', responseObject)
+          const rowPosition = trip._rowPosition
+          const currentRow = tripSheet.getRange("A" + rowPosition + ":" + rowPosition)
+          const headers = getSheetHeaderNames(tripSheet)
           if (responseObject.status === "OK") {
-            // TODO: mark "Shared" as true
+            const colPosition = headers.indexOf("Shared") + 1
+            currentRow.getCell(1, colPosition).setValue("True")
+          } else {
+            currentRow.setBackgroundRGB(255,221,153)
+            currentRow.getCell(1,1).setNote('Failed to share trip with 1 or more providers. Check logs for more details.')
+            logError(`Failure to share trip with ${endPoint.name}`, responseObject)
           }
-          // TODO: Check for TDS status codes
-          // What to do if we don't receive a 200?
         } catch(e) {
           logError(e)
         }
