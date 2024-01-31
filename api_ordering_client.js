@@ -29,10 +29,9 @@ function sendTripRequests() {
           let responseObject = JSON.parse(response.getContentText())
           log('#1A response', responseObject)
           if (responseObject.status === "OK") {
-            // mark "Shared" as true
+            // TODO: mark "Shared" as true
           }
           // TODO: Check for TDS status codes
-          // if share is successful, mark 'Shared' as true
           // What to do if we don't receive a 200?
         } catch(e) {
           logError(e)
@@ -85,6 +84,52 @@ function getCustomerInfo(trip) {
     customerId: customer["Customer ID"]
   }
   return formattedCustomer
+}
+
+function receiveTripRequestResponse(response, senderId) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const allTrips = getAllTrips()
+  const tripSheet = ss.getSheetByName("Trips")
+  const tripRange = tripSheet.getDataRange()
+  const apiAccounts = getDocProp("apiGiveAccess")
+  const senderAccount = apiAccounts[senderId]
+  const trip = allTrips.find(row => row["Trip ID"] === response.tripTicketId)
+  const headers = getSheetHeaderNames(sheet)
+  const rowPosition = tripRow._rowPosition
+  const currentRow = sheet.getRange("A" + rowPosition + ":" + rowPosition)
+
+  if (!response.tripAvailable) {
+    if (!trip) {
+      log(`${senderAccount.name} attempted to decline invalid trip`, JSON.stringify(response))
+    } else {
+      const declinedBy = trip["Declined By"] ? JSON.parse(trip["Declined By"]) : []
+      declinedBy.push(senderAccount.name)
+      if (apiAccounts.length === declinedBy.length) {
+        currentRow.setBackgroundRGB(255,255,204)
+        currentRow.getCell(1,1).setNote('Notice: Trip has been declined by all agencies')
+      }
+      const declinedIndex = headers.indexOf("Declined By") + 1
+      currentRow.getCell(1, declinedIndex).setValue(JSON.stringify(declinedBy))
+    }
+    return {status: "OK"}
+  } else {
+    if (!trip) {
+      log(`${senderAccount.name} attempted to claim invalid trip`, JSON.stringify(response))
+      return {status: "400", message: "Trip no longer available"}
+    }
+    const shared = trip["Share"]
+    const claimed = trip["Claim Pending"]
+    if (claimed || (!shared)) {
+      log(`${senderAccount.name} attempted to claim unavailable trip`, JSON.stringify(response))
+      return {status: "400", message: "Trip no longer available"}
+    }
+    // Process successfully pending claim
+    const pendingIndex = headers.indexOf("Claim Pending")
+    currentRow.getCell(1, pendingIndex).setValue(senderAccount.name)
+    currentRow.setBackgroundRGB(0,230,153)
+    currentRow.getCell(1,1).setNote('Trip claim pending. Please approve/deny')
+    return {status: "OK"}
+  }
 }
 
 function receiveRequestForTripRequestsReturnTripRequests(apiAccount) {

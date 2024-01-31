@@ -90,10 +90,7 @@ function doPost(e) {
       if (params.endpointPath === "/v1/TripRequest") {
         content = receiveTripRequest(payload, senderId)
       } else if (params.endpointPath === "/v1/TripRequestResponse") {
-        // Doing this is a little tricky. We would like to 
-        // send a response that it was received fine. Ideally, we would just
-        // send telegram #2A right now, but that is no longer the spec
-        content.status = "OK"
+        content = receiveTripRequestResponse(payload, senderId)
       } else {
         return createErrorResponse("INVALID_REQUEST")
       }

@@ -497,12 +497,12 @@ const defaultColumns = {
   "Outside Trips": {
     "Decline": {dataValidation: {
       criteriaType: "CHECKBOX",
-      checkedValue: "True",
+      checkedValue: "TRUE",
       allowInvalid: true,
     }},
     "Claim": {dataValidation: {
       criteriaType: "CHECKBOX",
-      checkedValue: "True",
+      checkedValue: "TRUE",
       allowInvalid: true,
     }},
     "Trip Date": {

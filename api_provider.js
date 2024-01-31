@@ -237,7 +237,7 @@ function sendTripRequestResponses() {
         tripRow["Trip Date"] >=  dateToday() &&
         ( tripRow["Decline"]  === true || tripRow["Claim"] === true) &&
         !(tripRow["Decline"]  === true && tripRow["Claim"] === true) &&
-        !(tripRow["Pending"] === 'True') 
+        !(tripRow["Pending"] === 'TRUE') 
       )
     })
     // For each trip: Check the 'Source column' and find the appropriate agency
@@ -289,7 +289,7 @@ function markTripAsPending(sheet, tripRow) {
   const currentRow = sheet.getRange("A" + rowPosition + ":" + rowPosition)
   currentRow.setBackgroundRGB(20,204,204)
   currentRow.getCell(1,1).setNote('Trip claim pending')
-  currentRow.getCell(1, headerPosition).setValue("True")
+  currentRow.getCell(1, headerPosition).setValue("TRUE")
 }
 
 function markTripAsFailure(sheet, tripRow) {
