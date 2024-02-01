@@ -138,7 +138,7 @@ function receiveClientOrderConfirmation(confirmation) {
   }
   const customerInfo = JSON.parse(trip["Customer Info"])
   // Add customer 
-
+  return {status: "OK"}
 
 }
 
