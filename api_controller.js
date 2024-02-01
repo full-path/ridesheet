@@ -91,6 +91,8 @@ function doPost(e) {
         content = receiveTripRequest(payload, senderId)
       } else if (params.endpointPath === "/v1/TripRequestResponse") {
         content = receiveTripRequestResponse(payload, senderId)
+      } else if (params.endpointPath === "/v1/ClientOrderConfirmation") {
+        content = receiveClientOrderConfirmation(payload)
       } else {
         return createErrorResponse("INVALID_REQUEST")
       }
