@@ -29,22 +29,46 @@ function receiveTripRequest(tripRequest, senderId) {
     }, {});
     // TODO: Format hours and miles? Either here or in the sheet
     const tripData = {
-      'Trip Date' : formatDate(tripRequest.pickupTime.time, null, 'M/d/yyyy'),
       'Source' : senderAccount.name,
-      'Requested PU Time' : formatDate(tripRequest.pickupTime.time, null, 'h:mm a'),
-      'Requested DO Time' : formatDate(tripRequest.dropoffTime.time, null, 'h:mm a'),
-      'Appt Time' : tripRequest.appointmentTime ? formatDate(tripRequest.appointmentTime.time, null, 'h:mm a') : '',
       'PU Address' : buildAddressFromSpec(tripRequest.pickupAddress),
       'DO Address' : buildAddressFromSpec(tripRequest.dropoffAddress),
       'Trip ID' : tripRequest.tripTicketId,
-      'Est Hours' : tripRequest.openAttributes.estimatedTripDurationInSeconds / (60 * 60 * 24),
-      'Est Miles' : tripRequest.openAttributes.estimatedTripDistanceInMiles,
       'Notes' : tripRequest.notesForDriver,
       'Customer Info' : JSON.stringify(tripRequest.customerInfo),
       'Extra Fields' : JSON.stringify(extraInfo),
       'Guests' : tripRequest.numOtherReservedPassengers,
       'Decline' : false,
       'Claim' : false
+    }
+    let dateFlag = false
+    // Time fields are not required, check for at least one to get the trip date from
+    if (tripRequest.pickupTime && tripRequest.pickupTime.time) {
+      tripData["Trip Date"] = formatDate(tripRequest.pickupTime.time, null, 'M/d/yyyy')
+      tripData["Requested PU Time"] = formatDate(tripRequest.pickupTime.time, null, 'h:mm a')
+      dateFlag = true
+    }
+    if (tripRequest.dropoffTime && tripRequest.dropoffTime.time) {
+      if (!dateFlag) {
+        tripData["Trip Date"] = formatDate(tripRequest.dropoffTime.time, null, 'M/d/yyyy')
+        dateFlag = true
+      }
+      tripData["Requested DO Time"] = formatDate(tripRequest.dropoffTime.time, null, 'h:mm a')
+    }
+    if (tripRequest.appointmentTime && tripRequest.appointmentTime.time) {
+      if (!dateFlag) {
+        tripData["Appt Time"] = formatDate(tripRequest.appointmentTime.time, null, 'M/d/yyyy')
+        dateFlag = true
+      }
+      tripData["Requested DO Time"] = formatDate(tripRequest.appointmentTime.time, null, 'h:mm a')
+    }
+
+    if (tripRequest.openAttributes) {
+      if (tripRequest.openAttributes.estimatedTripDurationInSeconds) {
+        tripData["Est Hours"] = tripRequest.openAttributes.estimatedTripDurationInSeconds / (60 * 60 * 24)
+      }
+      if (tripRequest.openAttributes.estimatedTripDistanceInMiles) {
+        tripData["Est Miles"] = tripRequest.openAttributes.estimatedTripDistanceInMiles
+      }
     }
     createRow(tripSheet, tripData)
     return {status: "OK"}

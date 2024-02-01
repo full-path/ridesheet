@@ -82,7 +82,7 @@ function getCustomerInfo(trip) {
     firstLegalName: customer["Customer First Name"],
     lastName: customer["Customer Last Name"],
     address: buildAddressToSpec(customer["Home Address"]),
-    phone: buildPhoneNumberToSpec(customer["Phone Number"]),
+    phone: customer["Phone Number"],
     customerId: customer["Customer ID"]
   }
   return formattedCustomer
