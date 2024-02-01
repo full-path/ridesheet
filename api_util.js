@@ -13,8 +13,8 @@ function buildAddressToSpec(address) {
         street2: "",
         notes: "",
         formattedAddress: address,
-        lat: result.results[0].geometry.location.lat,
-        long: result.results[0].geometry.location.lng,
+        lat: null,
+        long: null,
       }
       if (components.length >= 6) {
         addressObj.street = components[0].short_name + " " + components[1].short_name
