@@ -16,7 +16,7 @@ function buildAddressToSpec(address) {
         lat: null,
         long: null,
       }
-      if (components.length === 8) {
+      if (components.length >= 8) {
         addressObj.street = components[0].short_name + " " + components[1].short_name
         addressObj.city = components[3].long_name
         addressObj.state = components[5].short_name
