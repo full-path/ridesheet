@@ -100,7 +100,7 @@ function createRows(destSheet, data, timestampColName) {
         if (timestampColName && colName === timestampColName) {
           return timestamp
         } else {
-          return row[colName] ? row[colName] : null
+          return isBlankCell(row[colName]) ? null: row[colName]
         }
       })
     })
@@ -530,4 +530,10 @@ function getColumnLettersFromPosition(colPosition) {
     }
     return columnLetters.join("")
   } catch(e) { logError(e) }
+}
+
+// Null and zero-length strings are considered blank values.
+// Numeric "0" and boolean "false" are not blank.
+function isBlankCell(value) {
+  return (value === "" || value === null)
 }
