@@ -16,7 +16,14 @@ function buildAddressToSpec(address) {
         lat: null,
         long: null,
       }
-      if (components.length >= 6) {
+      if (components.length === 8) {
+        addressObj.street = components[0].short_name + " " + components[1].short_name
+        addressObj.city = components[3].long_name
+        addressObj.state = components[5].short_name
+        addressObj.postalCode = components[7].short_name
+        addressObj.country = components[6].short_name
+      }
+      if (components.length === 6 || components.length === 7 ) {
         addressObj.street = components[0].short_name + " " + components[1].short_name
         addressObj.city = components[2].long_name
         addressObj.state = components[4].short_name
