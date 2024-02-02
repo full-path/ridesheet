@@ -65,7 +65,7 @@ function formatTripRequest(trip) {
     customerInfo: getCustomerInfo(trip), 
     appointmentTime: trip["Appt Time"] ? {time: combineDateAndTime(trip["Trip Date"], trip["Appt Time"])} : "",
     notesForDriver: trip["Notes"],
-    numOtherReservedPassengers: trip["Guests"],
+    numOtherReservedPassengers: trip["Guests"] ? trip["Guests"] : 0,
     openAttributes: {
       estimatedTripDurationInSeconds: timeOnlyAsMilliseconds(trip["Est Hours"] || 0)/1000,
       estimatedTripDistanceInMiles: trip["Est Miles"]
@@ -83,7 +83,7 @@ function getCustomerInfo(trip) {
     lastName: customer["Customer Last Name"],
     address: buildAddressToSpec(customer["Home Address"]),
     phone: customer["Phone Number"],
-    customerId: customer["Customer ID"]
+    customerId: customer["Customer ID"].toString()
   }
   return formattedCustomer
 }
