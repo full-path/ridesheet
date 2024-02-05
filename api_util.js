@@ -7,35 +7,51 @@ function buildAddressToSpec(address) {
     const geocoder = Maps.newGeocoder()
     const result = geocoder.geocode(address)
     if (result["status"] === "OK") {
-      const components = result.results[0].address_components
-      const addressObj = {
+      const mainResult = result.results[0]
+      const components = mainResult.address_components
+      let addressObj = {
         addressName: "",
+        fullResult: JSON.stringify(result),
+        addressName: "",
+        street: "",
         street2: "",
+        city: "",
+        state: "",
+        zip_code: "",
+        country: "",
         notes: "",
-        formattedAddress: address,
-        lat: null,
-        long: null,
+        lat: mainResult.geometry.location.lat,
+        long: mainResult.geometry.location.lng,
+        formattedAddress: mainResult.formatted_address,
       }
-      if (components.length >= 8) {
-        addressObj.street = components[0].short_name + " " + components[1].short_name
-        addressObj.city = components[3].long_name
-        addressObj.state = components[5].short_name
-        addressObj.postalCode = components[7].short_name
-        addressObj.country = components[6].short_name
+      let street_number
+      let route
+      components.forEach((component) => {
+        if (component.types.includes('street_number')) street_number = component.short_name
+        if (component.types.includes('route')) route = component.short_name
+        if (component.types.includes('subpremise')) {
+          if (isNaN(+component.short_name)) {
+            addressObj.street2 = component.short_name
+          } else {
+            addressObj.street2 = `#${component.short_name}`
+          }
+        }
+        if (component.types.includes('locality')) addressObj.city = component.short_name
+        if (component.types.includes('administrative_area_level_1')) {
+          addressObj.state = component.short_name
+        }
+        if (component.types.includes('postal_code')) addressObj.zip_code = component.short_name
+        if (component.types.includes('country')) addressObj.country = component.short_name
+      })
+      if (!street_number && !route) {
+        addressObj.street = "Refer to lat/long coordinates"
+      } else {
+        addressObj.street = `${street_number} ${route}`
       }
-      if (components.length === 6 || components.length === 7 ) {
-        addressObj.street = components[0].short_name + " " + components[1].short_name
-        addressObj.city = components[2].long_name
-        addressObj.state = components[4].short_name
-        addressObj.postalCode = components[6].short_name
-        addressObj.country = components[5].short_name
-      }
-      if (components.length === 5) {
-        addressObj.street = components[0].long_name
-        addressObj.city = components[1].long_name
-        addressObj.state = components[3].short_name
-        addressObj.country = components[4].short_name
-        addressObj.postalCode = ""
+      return addressObj
+    } else {
+      addressObj = {
+        fullResult: JSON.stringify(result)
       }
       return addressObj
     }
