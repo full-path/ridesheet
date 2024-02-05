@@ -1,18 +1,56 @@
 function buildAddressToSpec(address) {
   try {
-    let result = {}
-    const parsedAddress = parseAddress(address)
-    result["@addressName"] = parsedAddress.geocodeAddress
-    if (parsedAddress.parenText) {
-      let manualAddr = {}
-      manualAddr["@manualText"] = parsedAddress.parenText
-      manualAddr["@sendtoInvoice"] = true
-      manualAddr["@sendtoVehicle"] = true
-      manualAddr["@sendtoOperator"] = true
-      manualAddr["@vehicleConfirmation"] = false
-      result.manualDescriptionAddress = manualAddr
+    const geocoder = Maps.newGeocoder()
+    const result = geocoder.geocode(address)
+    if (result["status"] === "OK") {
+      const mainResult = result.results[0]
+      const components = mainResult.address_components
+      let addressObj = {
+        addressName: "",
+        fullResult: JSON.stringify(result),
+        addressName: "",
+        street: "",
+        street2: "",
+        city: "",
+        state: "",
+        zip_code: "",
+        country: "",
+        notes: "",
+        lat: mainResult.geometry.location.lat,
+        long: mainResult.geometry.location.lng,
+        formattedAddress: mainResult.formatted_address,
+      }
+      let street_number
+      let route
+      components.forEach((component) => {
+        if (component.types.includes('street_number')) street_number = component.short_name
+        if (component.types.includes('route')) route = component.short_name
+        if (component.types.includes('subpremise')) {
+          if (isNaN(+component.short_name)) {
+            addressObj.street2 = component.short_name
+          } else {
+            addressObj.street2 = `#${component.short_name}`
+          }
+        }
+        if (component.types.includes('locality')) addressObj.city = component.short_name
+        if (component.types.includes('administrative_area_level_1')) {
+          addressObj.state = component.short_name
+        }
+        if (component.types.includes('postal_code')) addressObj.zip_code = component.short_name
+        if (component.types.includes('country')) addressObj.country = component.short_name
+      })
+      if (!street_number && !route) {
+        addressObj.street = "Refer to lat/long coordinates"
+      } else {
+        addressObj.street = `${street_number} ${route}`
+      }
+      return addressObj
+    } else {
+      addressObj = {
+        fullResult: JSON.stringify(result)
+      }
+      return addressObj
     }
-    return result
   } catch(e) { logError(e) }
 }
 
