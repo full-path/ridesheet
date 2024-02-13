@@ -5,32 +5,82 @@
 * @customfunction
 */
 function getGeocode(address,returnType) {
-  const bounds = getDocProps([
-    {name: "geocoderBoundSwLatitude"},
-    {name: "geocoderBoundSwLongitude"},
-    {name: "geocoderBoundNeLatitude"},
-    {name: "geocoderBoundNeLongitude"}
-    ])
-  let mapGeo = Maps.newGeocoder().setBounds(
-    bounds["geocoderBoundSwLatitude"],
-    bounds["geocoderBoundSwLongitude"],
-    bounds["geocoderBoundNeLatitude"],
-    bounds["geocoderBoundNeLongitude"]
-  )
-  let result = mapGeo.geocode(address)
-  if (returnType === "raw") {
-    return JSON.stringify(result).slice(0,50000)
-  } else if (result["status"] != "OK") {
-    return "Error: " + result["status"]
-  } else if (isPartialMatch(result)) {
-    return "Error: partial match: " + result["results"][0]["formatted_address"]
-  }
-  switch(returnType){
-    case "lat":               return result["results"][0]["geometry"]["location"]["lat"]
-    case "lng":               return result["results"][0]["geometry"]["location"]["lng"]
-    case "formatted_address": return result["results"][0]["formatted_address"]
-    default:                  return "Error: Invalid Return Type"
-  }
+  try {
+    const bounds = getDocProps([
+      {name: "geocoderBoundSwLatitude"},
+      {name: "geocoderBoundSwLongitude"},
+      {name: "geocoderBoundNeLatitude"},
+      {name: "geocoderBoundNeLongitude"}
+      ])
+    let mapGeo = Maps.newGeocoder().setBounds(
+      bounds["geocoderBoundSwLatitude"],
+      bounds["geocoderBoundSwLongitude"],
+      bounds["geocoderBoundNeLatitude"],
+      bounds["geocoderBoundNeLongitude"]
+    )
+    let result = mapGeo.geocode(address)
+    if (returnType === "raw") {
+      return JSON.stringify(result).slice(0,50000)
+    } else if (result["status"] != "OK") {
+      if (returnType === "object") {
+        return {status: result.status}
+      } else {
+        return "Error: " + result.status
+      }
+    } else if (isPartialMatch(result)) {
+      if (returnType === "object") {
+        return {status: "partial_match"}
+      } else {
+        return "Error: partial match: " + result["results"][0]["formatted_address"]
+      }
+    } else {
+      const mainResult = result.results[0]
+      switch(returnType){
+        case "lat":               return mainResult.geometry.location.lat
+        case "lng":               return mainResult.geometry.location.lng
+        case "formatted_address": return mainResult.formatted_address
+        case "global_plus_code":  return mainResult.plus_code.global_code
+        case "object": {
+          const components = mainResult.address_components
+          let street_number
+          let route
+          let addressObj = {}
+          addressObj.status = "OK"
+          components.forEach((component) => {
+            if (component.types.includes('street_number')) street_number = component.short_name
+            if (component.types.includes('route')) route = component.short_name
+            if (component.types.includes('subpremise')) {
+              if (isNaN(+component.short_name)) {
+                addressObj.street2 = component.short_name
+              } else {
+                addressObj.street2 = `#${component.short_name}`
+              }
+            }
+            if (component.types.includes('locality')) addressObj.city = component.short_name
+            if (component.types.includes('administrative_area_level_1')) {
+              addressObj.state = component.short_name
+            }
+            if (component.types.includes('postal_code')) addressObj.zip_code = component.short_name
+            if (component.types.includes('country')) addressObj.country = component.short_name
+          })
+          if (!street_number && !route) {
+            addressObj.street = "Refer to lat/long coordinates"
+          } else {
+            addressObj.street = `${street_number} ${route}`
+          }
+          addressObj.lat = mainResult.geometry.location.lat
+          addressObj.lng = mainResult.geometry.location.lng
+          addressObj.long = mainResult.geometry.location.lng
+          if (mainResult.hasOwnProperty("plus_code")) {
+            addressObj.global_plus_code = mainResult.plus_code.global_code
+            addressObj.compound_plus_code = mainResult.plus_code.compound_code
+          }
+          return addressObj
+        }
+        default: return "Error: Invalid Return Type"
+      }
+    }
+  } catch(e) { logError(e) }
 }
 
 function isPartialMatch(geocodeResults) {
@@ -64,19 +114,37 @@ function setAddressByShortName(app, range) {
 
 function setAddressByApi(app, range) {
   try {
-    let backgroundColor = app.newColor()
-    addressParts = parseAddress(range.getValue())
-    let formattedAddress = getGeocode(addressParts.geocodeAddress, "formatted_address")
-    if (addressParts.parenText) formattedAddress = formattedAddress + " (" + addressParts.parenText + ")"
-    if (formattedAddress.startsWith("Error")) {
-      const msg = "Address " + formattedAddress
+    const rawAddressParts = parseAddress(range.getValue())
+    let globalPlusCode = ""
+    let formattedAddress = ""
+    if (rawAddressParts.compoundPlusCode) {
+      globalPlusCode = getGeocode(rawAddressParts.compoundPlusCode, "global_plus_code")
+    } else if (rawAddressParts.globalPlusCode) {
+      globalPlusCode = rawAddressParts.globalPlusCode
+    }
+    if (rawAddressParts.addressToFormat) {
+      formattedAddress = getGeocode(rawAddressParts.addressToFormat, "formatted_address")
+    }
+
+    let errorMsgs = []
+    if (globalPlusCode.startsWith("Error")) errorMsgs.push("Plus Code " + globalPlusCode)
+    if (formattedAddress.startsWith("Error")) errorMsgs.push("Address " + formattedAddress)
+
+    if (errorMsgs.length) {
+      const backgroundColor = app.newColor()
+      const msg = errorMsgs.join("\n")
       range.setNote(msg)
       app.getActiveSpreadsheet().toast(msg)
       backgroundColor.setRgbColor(errorBackgroundColor)
       range.setBackgroundObject(backgroundColor.build())
       return false
     } else {
-      range.setValue(formattedAddress)
+      let resultParts = []
+      if (globalPlusCode) resultParts.push(globalPlusCode)
+      if (formattedAddress) resultParts.push(formattedAddress)
+      let result = resultParts.join("; ")
+      if (rawAddressParts.parenText) result = `${result} (${rawAddressParts.parenText})`
+      range.setValue(result)
       range.setNote("")
       range.setBackground(null)
       return true
@@ -125,14 +193,46 @@ function getTripEstimate(origin, destination, returnType) {
   }
 }
 
+// parenText = Whatever user puts in parentheses. It's not further evaluated or sent to Maps
+// geocodeAddress = The string that can be directly passed to Google Maps for driving directions
+//     This can be a plus code or street address
+// compoundPlusCode = example: CWC7+RW Mountain View, California
+// globalPlusCode = example: 849VCWC7+RW
+// addressToFormat = If plus code is found, this value is whatever text remains after plus code
+//     and parenText is removed. This allows a rawAddress to contain both a manually
+//     entered plus code and a street address that can be parsed by the Maps geocoding API
+//     to get the elements needed for TDS compliance. This combination is useful for
+//     rural scenarios where Maps return lat/longs that can be off by a significant distance.
 function parseAddress(rawAddress) {
-  result = {}
-  const parenText = rawAddress.toString().match(/\(([^)]*)\)/)
+  let result = {}
+  let remainingAddress = rawAddress
+  const parenText = rawAddress.match(/\(([^)]*)\)/)
   if (parenText) {
-    result.parenText      = parenText[1]
-    result.geocodeAddress = rawAddress.replace(parenText[0],"").trim()
+    result.parenText  = parenText[1]
+    remainingAddress = rawAddress.replace(parenText[0],"").trim()
+  }
+  const globalPlusCode = remainingAddress.match(/(^|\s)(([23456789C][23456789CFGHJMPQRV][23456789CFGHJMPQRVWX]{6}\+[23456789CFGHJMPQRVWX]{2,3})\s*;?)(\s|$)/)
+  if (globalPlusCode) {
+    result.geocodeAddress = globalPlusCode[3]
+    result.globalPlusCode = globalPlusCode[3]
+    remainingAddress = remainingAddress.replace(globalPlusCode[0],"").trim()
+    if (remainingAddress) {
+      result.addressToFormat = remainingAddress
+    }
   } else {
-    result.geocodeAddress = rawAddress
+    const compoundPlusCode = remainingAddress.match(/(^|\s)(([23456789CFGHJMPQRVWX]{4,6}\+[23456789CFGHJMPQRVWX]{2,3}.*);)(\s|$)/)
+    if (compoundPlusCode) {
+      remainingAddress = remainingAddress.replace(compoundPlusCode[0],"").trim()
+      if (remainingAddress) {
+        result.compoundPlusCode = compoundPlusCode[3].trim()
+        result.addressToFormat = remainingAddress
+      } else {
+        result.geocodeAddress = compoundPlusCode[3].trim()
+      }
+    } else {
+      result.geocodeAddress = remainingAddress
+      result.addressToFormat = remainingAddress
+    }
   }
   return result
 }

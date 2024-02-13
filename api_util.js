@@ -1,56 +1,43 @@
+// Breaks a raw address down into the required TDS attributes.
+// If the source address includes a plus code, then the plus code will
+// be the source of lat/long data.
+// If only a plus code is provided, then the function will return
+// as much information as can supplied from Google Maps based on that
+// lat/long (usually just city, state and country)
 function buildAddressToSpec(address) {
   try {
-    const geocoder = Maps.newGeocoder()
-    const result = geocoder.geocode(address)
-    if (result["status"] === "OK") {
-      const mainResult = result.results[0]
-      const components = mainResult.address_components
-      let addressObj = {
-        addressName: "",
-        fullResult: JSON.stringify(result),
-        addressName: "",
-        street: "",
-        street2: "",
-        city: "",
-        state: "",
-        zip_code: "",
-        country: "",
-        notes: "",
-        lat: mainResult.geometry.location.lat,
-        long: mainResult.geometry.location.lng,
-        formattedAddress: mainResult.formatted_address,
-      }
-      let street_number
-      let route
-      components.forEach((component) => {
-        if (component.types.includes('street_number')) street_number = component.short_name
-        if (component.types.includes('route')) route = component.short_name
-        if (component.types.includes('subpremise')) {
-          if (isNaN(+component.short_name)) {
-            addressObj.street2 = component.short_name
-          } else {
-            addressObj.street2 = `#${component.short_name}`
-          }
-        }
-        if (component.types.includes('locality')) addressObj.city = component.short_name
-        if (component.types.includes('administrative_area_level_1')) {
-          addressObj.state = component.short_name
-        }
-        if (component.types.includes('postal_code')) addressObj.zip_code = component.short_name
-        if (component.types.includes('country')) addressObj.country = component.short_name
-      })
-      if (!street_number && !route) {
-        addressObj.street = "Refer to lat/long coordinates"
-      } else {
-        addressObj.street = `${street_number} ${route}`
-      }
-      return addressObj
-    } else {
-      addressObj = {
-        fullResult: JSON.stringify(result)
-      }
-      return addressObj
+    const rawAddressParts = parseAddress(address)
+    let result = {
+      addressName: "",
+      street: "",
+      street2: "",
+      city: "",
+      state: "",
+      zip_code: "",
+      country: "",
+      notes: "",
+      lat: "",
+      long: "",
     }
+    if (rawAddressParts.addressToFormat) {
+      const addressObj = getGeocode(rawAddressParts.addressToFormat,"object")
+      if (addressObj.status === "OK") {
+        Object.keys(result).forEach(key => result[key] = addressObj[key] || "")
+      }
+      if (rawAddressParts.globalPlusCode) {
+        const plusCodeObj = getGeocode(rawAddressParts.globalPlusCode,"object")
+        if (plusCodeObj.status === "OK") {
+          result.lat = plusCodeObj.lat
+          result.long = plusCodeObj.long
+        }
+      }
+    } else if (rawAddressParts.globalPlusCode) {
+      const plusCodeObj = getGeocode(rawAddressParts.globalPlusCode,"object")
+      if (plusCodeObj.status === "OK") {
+        Object.keys(result).forEach(key => result[key] = plusCodeObj[key] || "")
+      }
+    }
+    return result
   } catch(e) { logError(e) }
 }
 
