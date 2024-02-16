@@ -131,11 +131,11 @@ function hasOrphans(tripsThisDay, runsThisDay) {
 
 function hasDuplicateRuns(runsThisDay) {
   const runKeys = runsThisDay.map((row) => getRunKey(row))
-  const duplicateRunKeys = runKeys.filter((item, index) => {
-     return runKeys.indexOf(item) !== index && runKeys.lastIndexOf(item) === index
+  const dupeRunKeysWithCount = Object.entries(getDupesWithCount(runKeys)).map(([dupe, count]) => {
+    return `${dupe} (${count} occurances)`
   })
-  if (duplicateRunKeys.length) {
-    return `Duplicate runs:\n-- ${duplicateRunKeys.join("\n-- ")}`
+  if (dupeRunKeysWithCount.length) {
+    return `Duplicate runs:\n-- ${dupeRunKeysWithCount.join("\n-- ")}`
   } else {
     return ""
   }
@@ -143,11 +143,11 @@ function hasDuplicateRuns(runsThisDay) {
 
 function hasDuplicateTrips(tripsThisDay) {
   const tripKeys = tripsThisDay.map((row) => getTripKey(row))
-  const duplicateTripKeys = tripKeys.filter((item, index) => {
-     return tripKeys.indexOf(item) !== index && tripKeys.lastIndexOf(item) === index
+  const dupeTripKeysWithCount = Object.entries(getDupesWithCount(tripKeys)).map(([dupe, count]) => {
+    return `${dupe} (${count} occurances)`
   })
-  if (duplicateTripKeys.length) {
-    return `Duplicate trips:\n-- ${duplicateTripKeys.join("\n-- ")}`
+  if (dupeTripKeysWithCount.length) {
+    return `Duplicate trips:\n-- ${dupeTripKeysWithCount.join("\n-- ")}`
   } else {
     return ""
   }
@@ -225,7 +225,7 @@ function getRunKey(runOrTrip) {
 function getTripKey(trip) {
   const tz = getDocProp("localTimeZone")
   return [
-    "Customer: " + trip["Customer Name and ID"],
+    trip["Customer Name and ID"],
     "PU Time: " + (trip["PU Time"] ? Utilities.formatDate(trip["PU Time"],tz,"h:mm a") : "<Blank>")
   ].join(", ")
 }
@@ -306,3 +306,12 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
   } catch(e) { logError(e) }
 }
 
+function getDupesWithCount(arr) {
+  const counts = {}
+  const dupes = {}
+  arr.forEach((value) => {
+    counts[value] = (counts[value] || 0) + 1
+    if (counts[value] > 1) dupes[value] = counts[value]
+  })
+  return dupes
+}
