@@ -48,7 +48,7 @@ function addDataToRunsInReview() {
     const dataErrorMessages = getDeadheadDataErrorMessages(completedTripsThisDay, runsThisDay)
     if (dataErrorMessages.length) {
       SpreadsheetApp.getUi().alert(
-        `Deadhead data could not be added for ${formatDate(date)} to the due to the following error${dataErrorMessages.length === 1 ? '' : 's'}:\n\n- ${dataErrorMessages.join("\n\n- ")}`
+        `Deadhead data could not be added for ${formatDate(date)} to the due to the following ${pluralize(dataErrorMessages.length,"error")}:\n\n- ${dataErrorMessages.join("\n\n- ")}`
       )
     } else {
       newRunData = runs.map((row) => {
@@ -60,6 +60,7 @@ function addDataToRunsInReview() {
         Object.assign(newRunDataRow, deadheadData)
       })
       setValuesByHeaderNames(newRunData, runsSheet.getDataRange())
+      ss.toast(`Data successfully added for ${runsThisDay.length} runs`)
     }
   } catch(e) { logError(e) }
 }
@@ -97,44 +98,56 @@ function getDeadheadDataForRun(run, tripsThisDay, vehicles) {
 function getDeadheadDataErrorMessages(tripsThisDay, runsThisDay) {
   const result = [
     ...hasOrphans(tripsThisDay, runsThisDay),
+    hasDuplicateTrips(tripsThisDay),
     hasDuplicateRuns(runsThisDay),
     hasIncompleteTrips(tripsThisDay),
-    hasIncompleteRuns(runsThisDay)
+    hasIncompleteRuns(runsThisDay),
+    hasNegativeRunDistance(runsThisDay)
   ].filter((msg) => msg.length > 0)
   return result
 }
 
 function hasOrphans(tripsThisDay, runsThisDay) {
   const runKeys = runsThisDay.map((row) => getRunKey(row))
-  const tripKeys = tripsThisDay.map((row) => getRunKey(row))
+  const runForeignKeys = tripsThisDay.map((row) => getRunKey(row))
   let runKeyErrors = []
   let tripKeyErrors = []
   let runErrorMessage = ""
   let tripErrorMessage = ""
   runKeys.forEach((runKey) => {
-    if (!tripKeys.indexOf(runKey) === -1) runKeyErrors.push(runKey)
+    if (runForeignKeys.indexOf(runKey) === -1) runKeyErrors.push(runKey)
   })
-  tripKeys.forEach((tripKey) => {
-    if (runKeys.indexOf(tripKey) === -1) tripKeyErrors.push(tripKey)
+  runForeignKeys.forEach((runKey, index) => {
+    if (runKeys.indexOf(runKey) === -1) tripKeyErrors.push(getTripKey(tripsThisDay[index]))
   })
   if (runKeyErrors.length) {
-    runErrorMessage = (runKeyErrors.length === 1 ? "1 run" : runKeyErrors.length + " runs") +
-      " with no matching trips:\n" + 
-      runKeyErrors.join("\n")
+    runErrorMessage = `${pluralize(runKeyErrors.length,"run")} with no matching trip:\n-- ${runKeyErrors.join("\n-- ")}`
   }
-  if (tripKeyErrors.length === 1) {
-    tripErrorMessage = "There is 1 completed trip with no matching run:\n" +
-      tripKeyErrors.join("\n")
-  } else if (tripKeyErrors.length > 1) {
-    tripErrorMessage = `There are ${tripKeyErrors.length} completed trips with no matching runs:\n${tripKeyErrors.join("\n")}`
+  if (tripKeyErrors.length) {
+    tripErrorMessage = `${pluralize(tripKeyErrors.length,"trip")} with no matching run:\n-- ${tripKeyErrors.join("\n-- ")}`
   }
   return [runErrorMessage, tripErrorMessage]
 }
 
 function hasDuplicateRuns(runsThisDay) {
   const runKeys = runsThisDay.map((row) => getRunKey(row))
-  if (new Set(runKeys).size !== runKeys.length) {
-    return "There are duplicate runs for this day."
+  const duplicateRunKeys = runKeys.filter((item, index) => {
+     return runKeys.indexOf(item) !== index && runKeys.lastIndexOf(item) === index
+  })
+  if (duplicateRunKeys.length) {
+    return `Duplicate runs:\n-- ${duplicateRunKeys.join("\n-- ")}`
+  } else {
+    return ""
+  }
+}
+
+function hasDuplicateTrips(tripsThisDay) {
+  const tripKeys = tripsThisDay.map((row) => getTripKey(row))
+  const duplicateTripKeys = tripKeys.filter((item, index) => {
+     return tripKeys.indexOf(item) !== index && tripKeys.lastIndexOf(item) === index
+  })
+  if (duplicateTripKeys.length) {
+    return `Duplicate trips:\n-- ${duplicateTripKeys.join("\n-- ")}`
   } else {
     return ""
   }
@@ -143,7 +156,8 @@ function hasDuplicateRuns(runsThisDay) {
 function hasIncompleteTrips(tripsThisDay) {
   const incompleteTrips = tripsThisDay.filter((row) => !isReviewedTrip(row))
   if (incompleteTrips.length) {
-    return "There are " + incompleteTrips.length + " trips with incomplete data."
+    const incompleteTripKeys = incompleteTrips.map((row) => getTripKey(row))
+    return `${pluralize(incompleteTrips.length,"trip")} with incomplete data:\n-- ${incompleteTripKeys.join("\n-- ")}`
   } else {
     return ""
   }
@@ -152,7 +166,20 @@ function hasIncompleteTrips(tripsThisDay) {
 function hasIncompleteRuns(runsThisDay) {
   const incompleteRuns = runsThisDay.filter((row) => !isUserReviewedRun(row))
   if (incompleteRuns.length) {
-    return "There are " + incompleteRuns.length + " runs with incomplete data."
+    const incompleteRunKeys = incompleteRuns.map((row) => getRunKey(row))
+    return `${pluralize(incompleteRuns.length,"run")} with incomplete data:\n-- ${incompleteRunKeys.join("\n-- ")}`
+  } else {
+    return ""
+  }
+}
+
+function hasNegativeRunDistance(runsThisDay) {
+  const badRuns = runsThisDay.filter((row) => {
+    return (row["Odometer Start"] > row["Odometer End"])
+  })
+  if (badRuns.length) {
+    const badRunKeys = badRuns.map((row) => getRunKey(row))
+    return `${pluralize(badRuns.length,"run")} with a negative distance traveled:\n-- ${badRunKeys.join("\n-- ")}`
   } else {
     return ""
   }
@@ -192,6 +219,14 @@ function getRunKey(runOrTrip) {
     "Driver ID: " + runOrTrip["Driver ID"],
     "Vehicle ID: " + runOrTrip["Vehicle ID"],
     "Run ID: " + (runOrTrip["Run ID"] ? runOrTrip["Run ID"] : "<Blank>")
+  ].join(", ")
+}
+
+function getTripKey(trip) {
+  const tz = getDocProp("localTimeZone")
+  return [
+    "Customer: " + trip["Customer Name and ID"],
+    "PU Time: " + (trip["PU Time"] ? Utilities.formatDate(trip["PU Time"],tz,"h:mm a") : "<Blank>")
   ].join(", ")
 }
 
@@ -270,3 +305,4 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
     }
   } catch(e) { logError(e) }
 }
+
