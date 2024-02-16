@@ -189,6 +189,20 @@ function convertNamedRangeToTriggerName(namedRange) {
   return namedRange.getName().replace(/\d+$/g,'')
 }
 
+function pluralize(count, singular, plural){
+  try {
+    let word = ""
+    if (count == 1 || /^1(\.0+)?$/.test((count || "").toString())) {
+      word = singular
+    } else {
+      word = plural || `${singular}s`
+    }
+    return `${count || 0} ${word}`
+  } catch (e) {
+    logError(e)
+  }
+}
+
 function loadConfigFile(fileName) {
   try {
     const configFolderId = getDocProp("configFolderId")
