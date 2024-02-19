@@ -28,34 +28,43 @@ function buildMenus() {
 }
 
 function buildNamedRanges() {
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
-    const namedRanges = ss.getNamedRanges()
-    const currentRangeNames = namedRanges.map(nr => nr.getName())
-    const configuredNamedRanges = {...defaultNamedRanges, ...localNamedRanges}
-    const buildRangeNames = Object.keys(configuredNamedRanges)
-    namedRanges.forEach(namedRange => {
-      try {
-        if (buildRangeNames.indexOf(namedRange.getName()) !== -1 && 
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const existingNamedRanges = ss.getNamedRanges()
+  const currentRangeNames = existingNamedRanges.map(nr => nr.getName())
+  const configuredNamedRanges = (function() {
+    const defaultNamedRangesMinusRemoved = Object.fromEntries(
+      Object.entries(defaultNamedRanges).filter(([key]) => !localNamedRangesToRemove.includes(key))
+    )
+    return {...defaultNamedRangesMinusRemoved, ...localNamedRanges}
+  })()
+  const buildRangeNames = Object.keys(configuredNamedRanges)
+  existingNamedRanges.forEach(namedRange => {
+    try {
+      if (localNamedRangesToRemove.includes(namedRange.getName())) {
+        namedRange.remove()
+      } else if (buildRangeNames.indexOf(namedRange.getName()) !== -1 &&
           (namedRange.getRange().getRow() !== 1 || 
           namedRange.getRange().getLastRow() !== namedRange.getRange().getSheet().getMaxRows() + 1000)) {
         const name = namedRange.getName()
         let newRange = configuredNamedRanges[name]
         buildNamedRange(ss, name, newRange.sheetName, newRange.column, newRange.headerName)
       }
-      } catch(e) {
-        logError(e)
-      }
-    })
-    buildRangeNames.forEach(rangeName => {
-      try {
+    } catch(e) {
+      logError(e)
+    }
+  })
+  buildRangeNames.forEach(rangeName => {
+    try {
+      const newRange = configuredNamedRanges[rangeName]
+      if (!localSheetsToRemove.includes(newRange.sheetName)) {
         if (currentRangeNames.indexOf(rangeName) === -1) {
-          let newRange = configuredNamedRanges[rangeName]
           buildNamedRange(ss, rangeName, newRange.sheetName, newRange.column, newRange.headerName)
         }
-      } catch(e) {
-        logError(e)
       }
-    })
+    } catch(e) {
+      logError(e)
+    }
+  })
 }
 
 function buildNamedRange(ss, name, sheetName, column, headerName) {
