@@ -139,7 +139,7 @@ function sendClientOrderConfirmation(sourceTripRange = null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const tripSheet = ss.getSheetByName("Trips")
   const currentTrip = sourceTripRange ? sourceTripRange : getFullRow(tripSheet.getActiveCell())
-  const trip = getRangeValuesAsTable(currentTrip,{includeFormulaValues: false})
+  const trip = getRangeValuesAsTable(currentTrip,{includeFormulaValues: false})[0]
   const endPoints = getDocProp("apiGetAccess")
   const endPoint = endPoints.find(endpoint => endpoint.name === trip["Claim Pending"])
   const params = {endpointPath: "/v1/ClientOrderConfirmation"}
