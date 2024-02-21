@@ -163,10 +163,10 @@ function sendClientOrderConfirmation(sourceTripRange = null) {
       const ignoredFields = ["Action", "Go", "Share", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By", "Shared"]
       const sentTripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
       const sentTripData = {
-        "Claimed By" : apiAccount.name,
+        "Claimed By" : endPoint.name,
         "Claim Time" : claimTime,
-        "Sched PU Time" : claim.scheduledPickupTime
       }
+      // "Sched PU Time" : claim.scheduledPickupTime
       sentTripFields.forEach(key => {
         sentTripData[key] = trip[key]
       });
