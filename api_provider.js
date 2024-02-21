@@ -3,6 +3,7 @@
 // Telegram 1A of TCRP 210 Transactional Data Spec.
 function receiveTripRequest(tripRequest, senderId) {
   log('Received TripRequest', JSON.stringify(tripRequest))
+  const referenceId = (Math.floor(Math.random() * 10000000)).toString()
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const tripSheet = ss.getSheetByName("Outside Trips")
@@ -71,10 +72,10 @@ function receiveTripRequest(tripRequest, senderId) {
       }
     }
     createRow(tripSheet, tripData)
-    return {status: "OK"}
+    return {status: "OK", message: "OK", referenceId}
   } catch(e) {
     logError(e)
-    return {status: "400"}
+    return {status: "400", message: "Unknown Error: Check Logs", referenceId}
   } 
 }
 
@@ -110,18 +111,16 @@ function sendTripRequestResponses() {
         const response = postResource(endpoint, params, JSON.stringify(telegram))
         const responseObject = JSON.parse(response.getContentText())
           log('#1B response', responseObject)
-          if (responseObject.status === "OK") {
-            // Mark the response as "pending" -- wait for telegram #2A to actually handle a claim
-            // If the trip was declined, go ahead and process it now.
+          // TODO: Handle the case where the 400-error is on a trip decline
+          if (responseObject.status && responseObject.status !== "OK") {
+            log('Claim Trip Rejected', JSON.stringify(responseObject))
+            markTripAsFailure(outsideTrips, trip)
+          } else {
             if (!claimed) {
               safelyDeleteRow(outsideTrips, trip)
             } else {
               markTripAsPending(outsideTrips, trip)
             }
-          } else {
-            // TODO: Handle the case where the 400-error is on a trip decline
-            log('Claim Trip Rejected', JSON.stringify(responseObject))
-            markTripAsFailure(outsideTrips, trip)
           }
       } catch (e) {
         logError(e)
@@ -156,14 +155,14 @@ function receiveClientOrderConfirmation(confirmation) {
   const outsideTrips = ss.getSheetByName("Outside Trips")
   const trips = getRangeValuesAsTable(outsideTrips.getDataRange())
   const trip = trips.find(row => row["Trip ID"] === tripTicketId)
+  const referenceId = (Math.floor(Math.random() * 10000000)).toString()
   if (!tripConfirmed) {
     markTripAsFailure(outsideTrips, trip)
-    return {status: "OK"}
+    return {status: "OK", message: "OK", referenceId}
   }
   const customerInfo = JSON.parse(trip["Customer Info"])
   // Add customer 
-  return {status: "OK"}
-
+  return {status: "OK", message: "OK", referenceId}
 }
 
 function removeDeclinedTrips() {

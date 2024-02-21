@@ -20,20 +20,20 @@ function sendTripRequests() {
       // set necessary params: HMAC headers, resource (endpoint), ??
       trips.forEach(trip => {
         let payload = formatTripRequest(trip)
-        let response = postResource(endPoint, params, JSON.stringify(payload))
         try {
+          let response = postResource(endPoint, params, JSON.stringify(payload))
           let responseObject = JSON.parse(response.getContentText())
           log('#1A response', responseObject)
           const rowPosition = trip._rowPosition
           const currentRow = tripSheet.getRange("A" + rowPosition + ":" + rowPosition)
           const headers = getSheetHeaderNames(tripSheet)
-          if (responseObject.status === "OK") {
-            const colPosition = headers.indexOf("Shared") + 1
-            currentRow.getCell(1, colPosition).setValue("True")
-          } else {
+          if (responseObject.status && responseObject.status !== "OK") {
             currentRow.setBackgroundRGB(255,221,153)
             currentRow.getCell(1,1).setNote('Failed to share trip with 1 or more providers. Check logs for more details.')
             logError(`Failure to share trip with ${endPoint.name}`, responseObject)
+          } else {
+            const colPosition = headers.indexOf("Shared") + 1
+            currentRow.getCell(1, colPosition).setValue("True")
           }
         } catch(e) {
           logError(e)
@@ -96,6 +96,7 @@ function receiveTripRequestResponse(response, senderId) {
   const senderAccount = apiAccounts[senderId]
   const trip = allTrips.find(row => row["Trip ID"] === response.tripTicketId)
   const headers = getSheetHeaderNames(tripSheet)
+  const referenceId = (Math.floor(Math.random() * 10000000)).toString()
 
   if (!response.tripAvailable) {
     if (!trip) {
@@ -112,11 +113,11 @@ function receiveTripRequestResponse(response, senderId) {
       const declinedIndex = headers.indexOf("Declined By") + 1
       currentRow.getCell(1, declinedIndex).setValue(JSON.stringify(declinedBy))
     }
-    return {status: "OK"}
+    return {status: "OK", message: "OK", referenceId}
   } else {
     if (!trip) {
       log(`${senderAccount.name} attempted to claim invalid trip`, JSON.stringify(response))
-      return {status: "400", message: "Trip no longer available"}
+      return {status: "400", message: "Trip no longer available", referenceId}
     }
     const rowPosition = trip._rowPosition
     const currentRow = tripSheet.getRange("A" + rowPosition + ":" + rowPosition)
@@ -124,14 +125,14 @@ function receiveTripRequestResponse(response, senderId) {
     const claimed = trip["Claim Pending"]
     if (claimed || (!shared)) {
       log(`${senderAccount.name} attempted to claim unavailable trip`, JSON.stringify(response))
-      return {status: "400", message: "Trip no longer available"}
+      return {status: "400", message: "Trip no longer available", referenceId}
     }
     // Process successfully pending claim
     const pendingIndex = headers.indexOf("Claim Pending") + 1
     currentRow.getCell(1, pendingIndex).setValue(senderAccount.name)
     currentRow.setBackgroundRGB(0,230,153)
     currentRow.getCell(1,1).setNote('Trip claim pending. Please approve/deny')
-    return {status: "OK"}
+    return {status: "OK", message: "OK", referenceId}
   }
 }
 
@@ -147,10 +148,13 @@ function sendClientOrderConfirmation(sourceTripRange = null) {
     tripTicketId: trip["Trip ID"],
     tripConfirmed: true
   }
-  const response = postResource(endPoint, params, JSON.stringify(telegram))
   try {
+    const response = postResource(endPoint, params, JSON.stringify(telegram))
     const responseObject = JSON.parse(response.getContentText())
-    if (responseObject.status === "OK") {
+    if (responseObject.status && responseObject.status !== "OK") {
+      logError(`Failure to confirm trip with ${endPoint.name}`, responseObject)
+    }
+    else {
       // move to sent trips
       log('Trip successfully confirmed', telegram)
       const sentTripSheet = ss.getSheetByName("Sent Trips")
@@ -168,9 +172,7 @@ function sendClientOrderConfirmation(sourceTripRange = null) {
       });
       createRow(sentTripSheet, sentTripData)
       tripSheet.deleteRow(trip._rowPosition)
-    } else {
-      logError(`Failure to confirm trip with ${endPoint.name}`, responseObject)
-    }
+    } 
   } catch(e) {
     logError(e)
   }
