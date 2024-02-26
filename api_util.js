@@ -239,11 +239,11 @@ function validateHmacSignature(signature, senderId, receiverId, timestamp, nonce
   }
 }
 
-function createErrorResponse(status) {
+function createErrorResponse(status, message) {
   const response = ContentService.createTextOutput()
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
   response.setMimeType(ContentService.MimeType.JSON)
-  const errorContent = { status: status, message: status, referenceId}
+  const errorContent = { status: status, message: message, referenceId}
   response.setContent(JSON.stringify(errorContent))
   return response
 }

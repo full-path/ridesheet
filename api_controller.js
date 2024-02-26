@@ -6,26 +6,26 @@ function doGet(e) {
 
     // TODO: match error response with actual TDS spec
     if (!hmacHeader) {
-      return createErrorResponse("MISSING_AUTHORIZATION_HEADER")
+      return createErrorResponse("403", "MISSING_AUTHORIZATION_HEADER")
     }
 
     const [signature, senderId, receiverId, timestamp, nonce] = hmacHeader.split(':')
 
     if (!(signature && senderId && receiverId && timestamp && nonce)) {
-      return createErrorResponse("INVALID_AUTHORIZATION_HEADER")
+      return createErrorResponse("403", "INVALID_AUTHORIZATION_HEADER")
     }
 
     const apiAccounts = getDocProp("apiGiveAccess")
     const apiAccount = apiAccounts[senderId]
 
     if (!apiAccount) {
-      return createErrorResponse("INVALID_API_KEY")
+      return createErrorResponse("403", "INVALID_API_KEY")
     }
 
     const isValid = validateHmacSignature(signature, senderId, receiverId, timestamp, nonce, 'GET', '', pathHeader)
 
     if (!isValid) {
-      return createErrorResponse("UNAUTHORIZED")
+      return createErrorResponse("403", "UNAUTHORIZED")
     }
 
     let response = ContentService.createTextOutput()
@@ -39,7 +39,7 @@ function doGet(e) {
       content.status = "OK"
       content.results = receiveRequestForTripRequestsReturnTripRequests(apiAccount)
     } else {
-      return createErrorResponse("INVALID_REQUEST");
+      return createErrorResponse("400","INVALID_REQUEST");
     }
 
     response.setContent(JSON.stringify(content))
@@ -57,20 +57,20 @@ function doPost(e) {
 
     // TODO: match error response with actual TDS spec
     if (!hmacHeader) {
-      return createErrorResponse("MISSING_AUTHORIZATION_HEADER")
+      return createErrorResponse("403", "MISSING_AUTHORIZATION_HEADER")
     }
 
     const [signature, senderId, receiverId, timestamp, nonce] = hmacHeader.split(':')
 
     if (!(signature && senderId && receiverId && timestamp && nonce)) {
-      return createErrorResponse("INVALID_AUTHORIZATION_HEADER")
+      return createErrorResponse("403","INVALID_AUTHORIZATION_HEADER")
     }
 
     const apiAccounts = getDocProp("apiGiveAccess")
     const apiAccount = apiAccounts[senderId]
 
     if (!apiAccount) {
-      return createErrorResponse("INVALID_API_KEY")
+      return createErrorResponse("403", "INVALID_API_KEY")
     }
 
     const body = e.postData.contents
@@ -78,7 +78,7 @@ function doPost(e) {
     const isValid = validateHmacSignature(signature, senderId, receiverId, timestamp, nonce, 'POST', body, pathHeader)
 
     if (!isValid) {
-      return createErrorResponse("UNAUTHORIZED")
+      return createErrorResponse("403", "Unauthorized")
     }
 
     const payload = JSON.parse(body)
@@ -94,7 +94,7 @@ function doPost(e) {
       } else if (params.endpointPath === "/v1/ClientOrderConfirmation") {
         content = receiveClientOrderConfirmation(payload)
       } else {
-        return createErrorResponse("INVALID_REQUEST")
+        return createErrorResponse("400", "Invalid request")
       }
     } else {
       // Old ridesheet "resource"-based API
@@ -104,7 +104,7 @@ function doPost(e) {
       } else if (params.resource === "providerOrderConfirmations") {
         content = receiveProviderOrderConfirmationsReturnCustomerInformation(payload, apiAccount)
       } else {
-        return createErrorResponse("INVALID_REQUEST")
+        return createErrorResponse("400", "Invalid request")
       }
     }
     response.setContent(JSON.stringify(content))
