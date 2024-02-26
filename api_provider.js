@@ -158,11 +158,65 @@ function receiveClientOrderConfirmation(confirmation) {
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
   if (!tripConfirmed) {
     markTripAsFailure(outsideTrips, trip)
+    log('Trip not confirmed', confirmation)
     return {status: "OK", message: "OK", referenceId}
   }
   const customerInfo = JSON.parse(trip["Customer Info"])
-  // Add customer 
+  const customerSuccess = addCustomer(customerInfo)
+  if (!customerSuccess.status) {
+    logError('Error confirming trip. Customer Info invalid.', trip)
+    return {status: "400", message: customerSuccess.message, referenceId}
+  }
+  // Move into trips
+  const tripSheet = ss.getSheetByName("Trips")
+  const tripColumnNames = getSheetHeaderNames(OutisdeTrips)
+  const ignoredFields = ["Scheduled PU Time", "Decline", "Claim", "Customer Info", "Pending", "Extra Fields"]
+  const tripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
+  const tripData = {}
+  tripFields.forEach(key => {
+   tripData[key] = trip[key]
+  });
+  if (trip['Scheduled PU Time']) {
+    tripData['PU Time'] = trip['Scheduled PU Time']
+  }
+  createRow(tripSheet, tripData)
+  outsideTrips.deleteRow(trip._rowPosition)
   return {status: "OK", message: "OK", referenceId}
+}
+
+function addCustomer(customerInfo) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const customers = ss.getSheetByName('Customers')
+  const customerRange = customers.getDataRange()
+  const allCustomers = getRangeValuesAsTable(customerRange)
+  const { customerId, firstLegalName, lastName } = customerInfo
+  const referralId = `Ref:${customerId}`
+  let customer = allCustomers.find(row => row["Customer ID"] === referralId)
+  let customerNameAndID = lastName + ', ' + firstLegalName + ' (' + customerID + ')'
+  if (!customer) {
+    const newCustomer = {
+      'Customer ID': referralId,
+      'Customer First Name': firstLegalName,
+      'Customer Last Name': lastName,
+      'Home Address': buildAddressFromSpec(customerInfo['address']),
+      'Customer Name and ID' : customerNameAndID
+    }
+    // TODO: add all the fields!!
+    if (customerInfo['mobilePhone'] && customerInfo['phone']) {
+      newCustomer['Phone Number'] = customerInfo['mobilePhone']
+      newCustomer['Alt. Phone'] = customerInfo['phone']
+    } else if (customerInfo['mobilePhone']) {
+      newCustomer['Phone Number'] = customerInfo['mobilePhone']
+    } else if (customerInfo['phone']) {
+      newCustomer['Phone Number'] = customerInfo['phone']
+    } else {
+      return {status: false, message: 'Missing phone number'}
+    }
+    createRow(customers, newCustomer)
+  } else {
+    log('Customer ID already exists', customerInfo)
+  }
+  return {status: true}
 }
 
 function removeDeclinedTrips() {
