@@ -93,7 +93,11 @@ function doPost(e) {
         content = receiveTripRequestResponse(payload, senderId)
       } else if (params.endpointPath === "/v1/ClientOrderConfirmation") {
         content = receiveClientOrderConfirmation(payload)
-      } else {
+      } else if (params.endpointPath === "/v1/CustomerReferral") {
+        content = receiveCustomerReferral(payload, senderId)
+      } else if (params.endpointPath === "/v1/TripStatusChange") {
+        content = receiveTripStatusChange(payload, senderId)
+      }else {
         return createErrorResponse("400", "Invalid request")
       }
     } else {

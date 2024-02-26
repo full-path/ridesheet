@@ -219,6 +219,18 @@ function addCustomer(customerInfo) {
   return {status: true}
 }
 
+function receiveCustomerReferral(customerReferral, senderId) {
+  log('Telegram #0A', customerReferral)
+  const referenceId = (Math.floor(Math.random() * 10000000)).toString()
+  return {status: "OK", message: "OK", referenceId} 
+}
+
+function receiveTripStatusChange(tripStatusChange, senderId) {
+  log('Telegram #1C', tripStatusChange)
+  const referenceId = (Math.floor(Math.random() * 10000000)).toString()
+  return {status: "OK", message: "OK", referenceId} 
+}
+
 function removeDeclinedTrips() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const outsideTrips = ss.getSheetByName('Outside Trips')
