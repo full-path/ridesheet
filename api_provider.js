@@ -219,9 +219,19 @@ function addCustomer(customerInfo) {
   return {status: true}
 }
 
+// TODO: Add support for all fields, in particular, add place in sheet to handle
+// customerReferralId, customerContactDate, and customerInfo
+// Question: Are referrals going to their own tab, rather than into the main customers sheet
+// initially?
 function receiveCustomerReferral(customerReferral, senderId) {
   log('Telegram #0A', customerReferral)
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
+  const {customerReferralId, customerContactDate, customerInfo} = customerReferral
+  const customerSuccess = addCustomer(customerInfo)
+  if (!customerSuccess.status) {
+    logError('Error confirming trip. Customer Info invalid.', trip)
+    return {status: "400", message: customerSuccess.message, referenceId}
+  }
   return {status: "OK", message: "OK", referenceId} 
 }
 

@@ -178,6 +178,48 @@ function sendClientOrderConfirmation(sourceTripRange = null) {
   }
 }
 
+function sendCustomerReferral(sourceRow = null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const customerSheet = ss.getSheetByName("Customers")
+  const currentCustomer = sourceRow? sourceRow : getFullRow(customerSheet.getActiveCell())
+  const customer = getRangeValuesAsTable(currentCustomer,{includeFormulaValues: false})[0]
+  const customerId = customer["Customer ID"]
+  const dateTime = new Date().toISOString();
+  const referralId = customerId + ":" + dateTime
+  const params = {endpointPath: "/v1/CustomerReferral"}
+  const telegram = {
+    customerReferralId: referralId,
+    customerContactDate: combineDateAndTime("2/15/2024", "12:00 PM"),
+    note: "This is just a test",
+    customerInfo: {
+      firstLegalName: "Fake",
+      lastName: "Test",
+      address: buildAddressToSpec("2003 NE 70th Ave, Portland, OR 97213"),
+      phone: "+18001231234"
+    }
+  }
+  const endPoints = getDocProp("apiGetAccess")
+  const endPoint = endPoints[0]
+  try {
+    const response = postResource(endPoint, params, JSON.stringify(telegram))
+    const responseObject = JSON.parse(response.getContentText())
+    if (responseObject.status && responseObject.status !== "OK") {
+      logError(`Failure to send referral to ${endPoint.name}`, responseObject)
+    }
+    else {
+      log('Referral success', telegram)
+    } 
+  } catch(e) {
+    logError(e)
+  }
+}
+
+function receiveCustomerReferralResponse(response, senderId) {
+  log('Telegram #0B', response)
+  const referenceId = (Math.floor(Math.random() * 10000000)).toString()
+  return {status: "OK", message: "OK", referenceId} 
+}
+
 function getAllTrips() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const tripSheet = ss.getSheetByName("Trips")
