@@ -178,34 +178,6 @@ function sendClientOrderConfirmation(sourceTripRange = null) {
   }
 }
 
-function moveAcceptedClaimsToSentTrips(acceptedClaims, apiAccount) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const sentTripSheet = ss.getSheetByName("Sent Trips")
-  const tripSheet = ss.getSheetByName("Trips")
-  const allTrips = getAllTrips()
-  const claimTime = new Date()
-
-  // Remove certain fields from the trip, while leaving in any custom
-  // columns that may have been created
-  let tripColumnNames = getSheetHeaderNames(tripSheet)
-  let ignoredFields = ["Action", "Go", "Share", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By", "Shared"]
-  let sentTripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
-  acceptedClaims.reverse()
-  acceptedClaims.forEach(claim => {
-    let trip = allTrips.find(row => row["Trip ID"] === claim.tripID)
-    let sentTripData = {
-      "Claimed By" : apiAccount.name,
-      "Claim Time" : claimTime,
-      "Sched PU Time" : claim.scheduledPickupTime
-    }
-    sentTripFields.forEach(key => {
-      sentTripData[key] = trip[key]
-    });
-    createRow(sentTripSheet, sentTripData)
-    tripSheet.deleteRow(trip._rowPosition)
-  })
-}
-
 function getAllTrips() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const tripSheet = ss.getSheetByName("Trips")
