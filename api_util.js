@@ -58,11 +58,33 @@ function buildTimeFromSpec(date, time) {
   } catch(e) { logError(e) }
 }
 
-// Takes a value and removes all characters that are not 0-9 and converts to integer
-function buildPhoneNumberToSpec(value) {
-  try {
-    return parseInt([...value.toString()].map(char => isNaN(+char) ? '' : char.trim()).join(''))
-  } catch(e) { logError(e) }
+//TODO: This is not very robust since the country code can be two digits
+function buildPhoneNumberToSpec(phoneNumber, countryCode = "+1") {
+  // Remove all non-digit characters from the input
+  const cleaned = phoneNumber.replace(/\D/g, '')
+  if (cleaned.length === 10) {
+    return `${countryCode}${cleaned}`
+  } else if (cleaned.length === 11) {
+    return `+${cleaned}`
+  } else {
+    logError("Unsupported phone format")
+    return ""
+  }
+}
+
+function buildPhoneNumberFromSpec(e164Number) {
+  if (!e164Number.startsWith('+')) {
+    logError('Invalid E.164 phone number format - missing plus sign');
+    return e164Number
+  }
+  const cleaned = e164Number.replace(/\D/g, '').slice(-10);
+  if (cleaned.length === 10) {
+    // Reformat the number to '123-123-1234' format
+    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+  } else {
+    logError('Invalid E.164 phone number format - incorrect number of digits');
+    return e164Number
+  }
 }
 
 function buildPhoneNumberFromSpec(value) {
