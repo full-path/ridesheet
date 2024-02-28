@@ -169,7 +169,7 @@ function receiveClientOrderConfirmation(confirmation) {
   }
   // Move into trips
   const tripSheet = ss.getSheetByName("Trips")
-  const tripColumnNames = getSheetHeaderNames(OutisdeTrips)
+  const tripColumnNames = getSheetHeaderNames(OutsideTrips)
   const ignoredFields = ["Scheduled PU Time", "Decline", "Claim", "Customer Info", "Pending", "Extra Fields"]
   const tripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
   const tripData = {}
@@ -203,12 +203,12 @@ function addCustomer(customerInfo) {
     }
     // TODO: add all the fields!!
     if (customerInfo['mobilePhone'] && customerInfo['phone']) {
-      newCustomer['Phone Number'] = customerInfo['mobilePhone']
-      newCustomer['Alt. Phone'] = customerInfo['phone']
+      newCustomer['Phone Number'] = buildPhoneNumberFromSpec(customerInfo['mobilePhone'])
+      newCustomer['Alt. Phone'] = buildPhoneNumberFromSpec(customerInfo['phone'])
     } else if (customerInfo['mobilePhone']) {
-      newCustomer['Phone Number'] = customerInfo['mobilePhone']
+      newCustomer['Phone Number'] = buildPhoneNumberFromSpec(customerInfo['mobilePhone'])
     } else if (customerInfo['phone']) {
-      newCustomer['Phone Number'] = customerInfo['phone']
+      newCustomer['Phone Number'] = buildPhoneNumberFromSpec(customerInfo['phone'])
     } else {
       return {status: false, message: 'Missing phone number'}
     }
@@ -235,6 +235,7 @@ function receiveCustomerReferral(customerReferral, senderId) {
   return {status: "OK", message: "OK", referenceId} 
 }
 
+// TODO: Finish function
 function receiveTripStatusChange(tripStatusChange, senderId) {
   log('Telegram #1C', tripStatusChange)
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
