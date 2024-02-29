@@ -74,6 +74,7 @@ function formatTripRequest(trip) {
   return formattedTrip
 }
 
+// TODO: Add more fields, support optional callsheet fields
 function getCustomerInfo(trip) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const allCustomers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
@@ -178,10 +179,12 @@ function sendClientOrderConfirmation(sourceTripRange = null) {
   }
 }
 
+// TODO: actually make this work with callsheet fields, ensure it uses the correct sheet
+// and gets real data for contact date and note
 function sendCustomerReferral(sourceRow = null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const customerSheet = ss.getSheetByName("Customers")
-  const currentCustomer = sourceRow? sourceRow : getFullRow(customerSheet.getActiveCell())
+  const currentCustomer = sourceRow ? sourceRow : getFullRow(customerSheet.getActiveCell())
   const customer = getRangeValuesAsTable(currentCustomer,{includeFormulaValues: false})[0]
   const customerId = customer["Customer ID"]
   const dateTime = new Date().toISOString();
@@ -189,15 +192,17 @@ function sendCustomerReferral(sourceRow = null) {
   const params = {endpointPath: "/v1/CustomerReferral"}
   const telegram = {
     customerReferralId: referralId,
-    customerContactDate: combineDateAndTime("2/15/2024", "12:00 PM"),
+    customerContactDate: dateTime,
     note: "This is just a test",
     customerInfo: {
-      firstLegalName: "Fake",
-      lastName: "Test",
-      address: buildAddressToSpec("2003 NE 70th Ave, Portland, OR 97213"),
-      phone: "+18001231234"
+      firstLegalName: customer["Customer First Name"],
+      lastName: customer["Customer Last Name"],
+      address: buildAddressToSpec(customer["Home Address"]),
+      phone: buildPhoneNumberToSpec(customer["Phone Number"]),
+      customerId: customer["Customer ID"].toString()
     }
   }
+  // Get the endpoint (referral provider) from the sheet
   const endPoints = getDocProp("apiGetAccess")
   const endPoint = endPoints[0]
   try {
