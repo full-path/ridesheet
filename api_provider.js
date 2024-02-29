@@ -169,7 +169,7 @@ function receiveClientOrderConfirmation(confirmation) {
   }
   // Move into trips
   const tripSheet = ss.getSheetByName("Trips")
-  const tripColumnNames = getSheetHeaderNames(OutsideTrips)
+  const tripColumnNames = getSheetHeaderNames(outsideTrips)
   const ignoredFields = ["Scheduled PU Time", "Decline", "Claim", "Customer Info", "Pending", "Extra Fields"]
   const tripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
   const tripData = {}
@@ -233,6 +233,14 @@ function receiveCustomerReferral(customerReferral, senderId) {
     return {status: "400", message: customerSuccess.message, referenceId}
   }
   return {status: "OK", message: "OK", referenceId} 
+}
+
+// TODO: Talk over what we want to happen here. I assume we will
+// be adding a referrals sheet, which can have options
+function sendCustomerReferralResponse(customerRow = null) {
+  // Get response value
+  // Get correct endpoint (original sender)
+  // 
 }
 
 // TODO: Finish function
