@@ -40,12 +40,13 @@ function buildNamedRanges() {
     try {
       if (localNamedRangesToRemove.includes(namedRange.getName())) {
         namedRange.remove()
-      } else if (buildRangeNames.indexOf(namedRange.getName()) !== -1 &&
-          (namedRange.getRange().getRow() !== 1 || 
-          namedRange.getRange().getLastRow() !== namedRange.getRange().getSheet().getMaxRows() + 1000)) {
-        const name = namedRange.getName()
-        let newRange = configuredNamedRanges[name]
-        buildNamedRange(ss, name, newRange.sheetName, newRange.column, newRange.headerName)
+      } else if (buildRangeNames.indexOf(namedRange.getName()) !== -1) {
+        const namedRangeName = namedRange.getName()
+        const namedRangeConfig = configuredNamedRanges[namedRangeName]
+        const startRow = namedRangeConfig.headerName ? 2 : 1
+        if (namedRange.getRange().getRow() !== startRow || namedRange.getRange().getLastRow() !== namedRange.getRange().getSheet().getMaxRows() + 1000) {
+          buildNamedRange(ss, namedRangeName, namedRangeConfig)
+        }
       }
     } catch(e) {
       logError(e)
@@ -53,10 +54,10 @@ function buildNamedRanges() {
   })
   buildRangeNames.forEach(rangeName => {
     try {
-      const newRange = configuredNamedRanges[rangeName]
-      if (!localSheetsToRemove.includes(newRange.sheetName)) {
+      const newRangeConfig = configuredNamedRanges[rangeName]
+      if (!localSheetsToRemove.includes(newRangeConfig.sheetName)) {
         if (currentRangeNames.indexOf(rangeName) === -1) {
-          buildNamedRange(ss, rangeName, newRange.sheetName, newRange.column, newRange.headerName)
+          buildNamedRange(ss, rangeName, newRangeConfig)
         }
       }
     } catch(e) {
@@ -65,17 +66,32 @@ function buildNamedRanges() {
   })
 }
 
-function buildNamedRange(ss, name, sheetName, column, headerName) {
-  const sheet = ss.getSheetByName(sheetName)
+function buildNamedRange(ss, rangeName, rangeConfigObj) {
+  const sheet = ss.getSheetByName(rangeConfigObj.sheetName)
   if (sheet) {
-    if (headerName) {
+    if (rangeConfigObj.headerName) {
       const headerNames = getSheetHeaderNames(sheet)
-      const columnPosition = headerNames.indexOf(headerName) + 1
-      if (columnPosition > 0) column = sheet.getRange(1, columnPosition).getA1Notation().slice(0,-1)
-    }
-    if (column) {
-      const range = sheet.getRange(column + "1:" + column + (sheet.getMaxRows() + 1000))
-      ss.setNamedRange(name, range)
+      const columnPosition = headerNames.indexOf(rangeConfigObj.headerName) + 1
+      if (columnPosition) {
+        const columnLetter = getColumnLettersFromPosition(columnPosition)
+        const range = sheet.getRange(`${columnLetter}2:${columnLetter}${sheet.getMaxRows() + 1000}`)
+        ss.setNamedRange(rangeName, range)
+      }
+    } else if (rangeConfigObj.column) {
+      const range = sheet.getRange(`${rangeConfigObj.column}1:${rangeConfigObj.column}${sheet.getMaxRows() + 1000}`)
+      ss.setNamedRange(rangeName, range)
+    } else if (rangeConfigObj.startHeaderName && rangeConfigObj.endHeaderName) {
+      const headerNames = getSheetHeaderNames(sheet)
+      const startColumnPosition = headerNames.indexOf(rangeConfigObj.startHeaderName) + 1
+      const endColumnPosition = headerNames.indexOf(rangeConfigObj.endHeaderName) + 1
+      if (startColumnPosition && endColumnPosition) {
+        const startColumnLetter = getColumnLettersFromPosition(startColumnPosition)
+        const endColumnLetter = getColumnLettersFromPosition(endColumnPosition)
+        const firstRow = rangeConfigObj.headerOnly ? 1 : 2
+        const lastRow = rangeConfigObj.headerOnly ? 1 : sheet.getMaxRows() + 1000
+        const range = sheet.getRange(`${startColumnLetter}${firstRow}:${endColumnLetter}${lastRow}`)
+        ss.setNamedRange(rangeName, range)
+      }
     }
   }
 }
@@ -183,7 +199,7 @@ function buildMetadata() {
             let range = sheet.getRange(`${letter}:${letter}`)
             let columnSettings = configuredColumns[sheetName][columnName]
             if (columnSettings) {
-              range.addDeveloperMetadata("headerName",columnName,SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
+              range.addDeveloperMetadata("headerName",JSON.stringify(columnName),SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
               Object.keys(columnSettings).forEach((key) => {
                 range.addDeveloperMetadata(key, JSON.stringify(columnSettings[key]), SpreadsheetApp.DeveloperMetadataVisibility.DOCUMENT)
               })
@@ -261,24 +277,23 @@ function fixRowDataValidation(range) {
 
 function getValidationRule(ruleAttributes) {
   try {
-    let ss = SpreadsheetApp.getActiveSpreadsheet()
-    let criteriaName = ruleAttributes.criteriaType
-    let criteria = SpreadsheetApp.DataValidationCriteria[criteriaName]
-    let allowInvalid = !!ruleAttributes.allowInvalid
-    let builder
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const criteriaName = ruleAttributes.criteriaType
+    const criteria = SpreadsheetApp.DataValidationCriteria[criteriaName]
+    const allowInvalid = !!ruleAttributes.allowInvalid
     let args = []
+    let builder
     if (criteriaName === "VALUE_IN_RANGE") {
-      let rng = ss.getRangeByName(ruleAttributes.namedRange)
-      let a1 = rng.getA1Notation()
-      let lookupsheet = rng.getSheet()
-      let colLetter = a1.substring(0,1)
-      let simplifiedRange = lookupsheet.getRange(colLetter + ':' + colLetter)
-      let dropdown = ruleAttributes.showDropdown
-      args = [simplifiedRange, dropdown]
+      // Named ranges can extend past the actual number of rows, but
+      // the ranges used for data validation cannot, so we're building a new range.
+      const lookupRange = ss.getRangeByName(ruleAttributes.namedRange)
+      const inBoundsRange = getInBoundsRange(lookupRange)
+      const dropdown = ruleAttributes.showDropdown
+      args = [inBoundsRange, dropdown]
       builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     } else if (criteriaName === "VALUE_IN_LIST") {
-      let dropdown = ruleAttributes.showDropdown
-      let values = ruleAttributes.values
+      const dropdown = ruleAttributes.showDropdown
+      const values = ruleAttributes.values
       args = [values, dropdown]
       builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     } else if (criteriaName === "CHECKBOX") {
@@ -296,7 +311,7 @@ function getValidationRule(ruleAttributes) {
     } else if (criteriaName === "DATE_IS_VALID_DATE") {
       builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     }
-    if (builder !== undefined) {
+    if (builder) {
       if (ruleAttributes.hasOwnProperty("helpText")) {
         builder = builder.setHelpText(ruleAttributes.helpText)
       }
@@ -359,32 +374,49 @@ function fixRowNumberFormatting(range) {
     })
 }
 
-function fixHeaderNames(range) {
+function fixHeaderNames(rangeIn) {
   try {
-    const mds = range.createDeveloperMetadataFinder().
+    const headerMetadata = rangeIn.createDeveloperMetadataFinder().
       withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN).
-      onIntersectingLocations().
-      withKey("headerName").
-      find()
+      onIntersectingLocations().find()
+    const metadataByColumn = headerMetadata.reduce((metadataAcc,metadataItem) => {
+      const column = metadataItem.getLocation().getColumn()
+      const columnPosition = column.getColumn()
+      metadataAcc[columnPosition] = metadataAcc[columnPosition] || {}
+      metadataAcc[columnPosition][metadataItem.getKey()] = JSON.parse(metadataItem.getValue())
+      return metadataAcc
+    },{})
+    const rangeValues = rangeIn.getValues()
+    const rangeFormulas = rangeIn.getFormulas()
+    const rangeStartColumnPosition = rangeIn.getColumn()
+    const currentHeaderFormulasOrValues = rangeFormulas[0].reduce((acc, formula, index) => {
+      acc[index + rangeStartColumnPosition] = (formula || rangeValues[0][index])
+      return acc
+    },{})
     let columnsPositionsToFix = []
-    let headerNames = {}
-    mds.forEach(md => {
-      const column = md.getLocation().getColumn()
-      const columnIndex = column.getColumn()
-      const actualHeaderValue = column.getValue()
-      const intendedHeaderValue = md.getValue()
-
-      headerNames[columnIndex] = intendedHeaderValue;
-      if (actualHeaderValue !== intendedHeaderValue) {
-        columnsPositionsToFix.push(columnIndex);
+    let intendedHeaderNames = {}
+    Object.keys(currentHeaderFormulasOrValues).forEach((columnPosition) => {
+      let examineColumn = true
+      if (Object.hasOwn(metadataByColumn[columnPosition] || {},"headerFormula")) {
+        intendedHeaderNames[columnPosition] = metadataByColumn[columnPosition].headerFormula
+      } else if (Object.hasOwn(metadataByColumn[columnPosition] || {},"headerName")) {
+        intendedHeaderNames[columnPosition] = metadataByColumn[columnPosition].headerName
+      } else {
+        examineColumn = false
+      }
+      if (
+        examineColumn &&
+        currentHeaderFormulasOrValues[columnPosition] !== intendedHeaderNames[columnPosition]
+      ) {
+        columnsPositionsToFix.push(columnPosition)
       }
     })
     if (columnsPositionsToFix.length) {
       let firstColPos = Math.min(...columnsPositionsToFix)
       let lastColPos = Math.max(...columnsPositionsToFix)
-      let newRange = range.getSheet().getRange(1, firstColPos, 1, lastColPos - firstColPos + 1)
+      let newRange = rangeIn.getSheet().getRange(1, firstColPos, 1, lastColPos - firstColPos + 1)
       let values = [[]]
-      for (let i = firstColPos; i <= lastColPos; i++) values[0].push(headerNames[i])
+      for (let i = firstColPos; i <= lastColPos; i++) values[0].push(intendedHeaderNames[i])
       newRange.setValues(values)
     }
   } catch(e) { logError(e) }
@@ -481,7 +513,7 @@ function showColumnMetadata() {
 function clearHeaderNotes() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
-    getConfiguredSheetsWithHeaders.forEach((sheetName) => {
+    getConfiguredSheetsWithHeaders().forEach((sheetName) => {
       const sheet = ss.getSheetByName(sheetName)
       if (sheet) {
         let range = sheet.getRange(1, 1, 1, sheet.getLastColumn())
@@ -521,4 +553,11 @@ function getConfiguredSheets() {
 
 function getConfiguredSheetsWithHeaders() {
   return [...sheetsWithHeaders.filter((sheetName) => !localSheetsToRemove.includes(sheetName)),...localSheetsWithHeaders]
+}
+
+function getInBoundsRange(range) {
+  const sheet = range.getSheet()
+  const sheetLastRow = sheet.getMaxRows()
+  const newRowCount = range.getLastRow() > sheetLastRow ? sheetLastRow - range.getRow() + 1 : range.getNumRows()
+  return sheet.getRange(range.getRow(),range.getColumn(), newRowCount,range.getNumColumns())
 }
