@@ -47,6 +47,7 @@ const sheetsWithHeaders = [
   "Vehicles",
   "Drivers",
   "Services",
+  "Lookups"
 ]
 
 const defaultDocumentProperties = {
@@ -281,9 +282,32 @@ const defaultColumns = {
         helpText: "Value must be a valid customer name and ID.",
       },
     },
-    "|Action|": {},
-    "|Go|": {},
-    "Share": {},
+    "|Action|": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_LIST",
+        values: [
+          "Add return trip",
+          "Add stop",
+        ],
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid action.",
+      },
+    },
+    "|Go|": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "TRUE",
+        allowInvalid: true,
+      }
+    },
+    "Share": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "TRUE",
+        allowInvalid: true,
+      }
+    },
     "Declined By": {},
     "Trip Result": {
       dataValidation: {
@@ -350,6 +374,7 @@ const defaultColumns = {
         helpText: "Value must be a valid vehicle ID.",
       },
     },
+    "Run ID": {},
     "Service ID": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -398,6 +423,7 @@ const defaultColumns = {
         helpText: "Value must be a valid vehicle ID.",
       },
     },
+    "Run ID": {},
     "Scheduled Start Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -510,22 +536,6 @@ const defaultColumns = {
         helpText: "Value must be a valid customer name and ID.",
       },
     },
-    "Action": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_LIST",
-        values: ["Add return trip","Add stop"],
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid action.",
-      },
-    },
-    "Go": {
-        dataValidation: {
-        criteriaType: "CHECKBOX",
-        checkedValue: "TRUE",
-        allowInvalid: false,
-      },
-    },
     "Trip Result": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -536,9 +546,11 @@ const defaultColumns = {
       },
     },
     "Share": {
+      dataValidation: {
         criteriaType: "CHECKBOX",
         checkedValue: "TRUE",
-        allowInvalid: false,
+        allowInvalid: true,
+      }
     },
     "Actual PU Time": {
       numberFormat: 'h":"mm am/pm',
@@ -596,6 +608,7 @@ const defaultColumns = {
         helpText: "Value must be a valid vehicle ID.",
       },
     },
+    "Run ID": {},
     "PU Address": {},
     "DO Address": {},
     "Service ID": {
@@ -614,9 +627,12 @@ const defaultColumns = {
       numberFormat: "0.00"
     },
     "Est Miles": {},
-    "Manifest ID": {},
+    "Trip ID": {},
     "Calendar ID": {},
-    "Customer ID": {}
+    "Customer ID": {},
+    "Review TS": {
+      numberFormat: "m/d/yyyy h:mm:ss"
+    },
   },
   "Run Review": {
     "Run Date": {
@@ -644,6 +660,7 @@ const defaultColumns = {
         helpText: "Value must be a valid vehicle ID.",
       },
     },
+    "Run ID": {},
     "Scheduled Start Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -687,7 +704,10 @@ const defaultColumns = {
       },
     },
     "Odometer Start": {},
-    "Odometer End": {}
+    "Odometer End": {},
+    "Review TS": {
+      numberFormat: "m/d/yyyy h:mm:ss"
+    },
   },
   "Trip Archive": {
     "Trip Date": {
@@ -702,7 +722,7 @@ const defaultColumns = {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupCustomerNames",
         showDropdown: true,
-        allowInvalid: false,
+        allowInvalid: true,
         helpText: "Value must be a valid customer name and ID.",
       },
     },
@@ -711,7 +731,7 @@ const defaultColumns = {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupTripResults",
         showDropdown: true,
-        allowInvalid: false,
+        allowInvalid: true,
         helpText: "Value must be a valid trip result.",
       },
     },
@@ -756,7 +776,7 @@ const defaultColumns = {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupDriverIds",
         showDropdown: true,
-        allowInvalid: false,
+        allowInvalid: true,
         helpText: "Value must be a valid driver ID.",
       },
     },
@@ -765,10 +785,11 @@ const defaultColumns = {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
         showDropdown: true,
-        allowInvalid: false,
+        allowInvalid: true,
         helpText: "Value must be a valid vehicle ID.",
       },
     },
+    "Run ID": {},
     "PU Address": {},
     "DO Address": {},
     "Service ID": {
@@ -776,7 +797,7 @@ const defaultColumns = {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupServiceIds",
         showDropdown: true,
-        allowInvalid: false,
+        allowInvalid: true,
         helpText: "Value must be a valid service ID.",
       },
     },
@@ -787,9 +808,15 @@ const defaultColumns = {
       numberFormat: "0.00"
     },
     "Est Miles": {},
-    "Manifest ID": {},
+    "Trip ID": {},
     "Calendar ID": {},
-    "Customer ID": {}
+    "Customer ID": {},
+    "Review TS": {
+      numberFormat: "m/d/yyyy h:mm:ss"
+    },
+    "Archive TS": {
+      numberFormat: "m/d/yyyy h:mm:ss"
+    },
   },
   "Run Archive": {
     "Run Date": {
@@ -804,7 +831,7 @@ const defaultColumns = {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupDriverIds",
         showDropdown: true,
-        allowInvalid: false,
+        allowInvalid: true,
         helpText: "Value must be a valid driver ID.",
       },
     },
@@ -813,10 +840,11 @@ const defaultColumns = {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
         showDropdown: true,
-        allowInvalid: false,
+        allowInvalid: true,
         helpText: "Value must be a valid vehicle ID.",
       },
     },
+    "Run ID": {},
     "First PU Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -860,7 +888,13 @@ const defaultColumns = {
       },
     },
     "Odometer Start": {},
-    "Odometer End": {}
+    "Odometer End": {},
+    "Review TS": {
+      numberFormat: "m/d/yyyy h:mm:ss"
+    },
+    "Archive TS": {
+      numberFormat: "m/d/yyyy h:mm:ss"
+    },
   },
   "Vehicles": {
     "Vehicle ID": {},
@@ -873,14 +907,14 @@ const defaultColumns = {
       dataValidation: {
         criteriaType: "CHECKBOX",
         checkedValue: "TRUE",
-        allowInvalid: false,
+        allowInvalid: true,
       },
     },
     "Has Lift": {
       dataValidation: {
         criteriaType: "CHECKBOX",
         checkedValue: "TRUE",
-        allowInvalid: false,
+        allowInvalid: true,
       },
     },
     "Vehicle Start Date": {
@@ -951,6 +985,21 @@ const defaultColumns = {
         helpText: "Value must be a valid date.",
       }
     }
+  },
+  "Lookups": {
+    "Customer Names and IDs": {
+      headerFormula: `={"Customer Names and IDs";QUERY({queryCustomerNameAndId,queryCustomerEndDate},"SELECT Col1 WHERE Col1 IS NOT NULL AND Col2 IS NULL ORDER BY Col1",0)}`
+    },
+    "Driver IDs": {
+      headerFormula: `={"Driver IDs";QUERY({queryDriverId,queryDriverEndDate},"SELECT Col1 WHERE Col1 IS NOT NULL AND Col2 IS NULL ORDER BY Col1",0)}`
+    },
+    "Vehicle IDs": {
+      headerFormula: `={"Vehicle IDs";QUERY({queryVehicleID,queryVehicleEndDate},"SELECT Col1 WHERE Col1 IS NOT NULL AND Col2 IS NULL ORDER BY Col1",0)}`
+    },
+    "Service IDs": {
+      headerFormula: `={"Service IDs";QUERY({queryServiceId,queryServiceEndDate},"SELECT Col1 WHERE Col1 IS NOT NULL AND Col2 IS NULL ORDER BY Col1",0)}`},
+    "Trip Purposes": {},
+    "Trip Results": {}
   }
 }
 
@@ -989,7 +1038,7 @@ const defaultNamedRanges = {
   },
   "codeFormatAddress4": {
     "sheetName":"Customers",
-    "headerName":"Default DO Address"
+    "headerName":"Default PU Address"
   },
   "codeFormatAddress5": {
     "sheetName":"Vehicles",
@@ -1049,27 +1098,27 @@ const defaultNamedRanges = {
   },
   "lookupCustomerNames": {
     "sheetName":"Lookups",
-    "column":"A"
+    "headerName":"Customer Names and IDs"
   },
   "lookupDriverIds": {
     "sheetName":"Lookups",
-    "column":"B"
+    "headerName":"Driver IDs"
   },
   "lookupVehicleIds": {
     "sheetName":"Lookups",
-    "column":"C"
+    "headerName":"Vehicle IDs"
   },
   "lookupServiceIds": {
     "sheetName":"Lookups",
-    "column":"D"
+    "headerName":"Service IDs"
   },
   "lookupTripPurposes": {
     "sheetName":"Lookups",
-    "column":"E"
+    "headerName":"Trip Purposes"
   },
   "lookupTripResults": {
     "sheetName":"Lookups",
-    "column":"F"
+    "headerName":"Trip Results"
   },
   "queryCustomerNameAndId": {
     "sheetName":"Customers",
