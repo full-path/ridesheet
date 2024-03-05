@@ -179,27 +179,47 @@ function sendClientOrderConfirmation(sourceTripRange = null) {
   }
 }
 
-// TODO: actually make this work with callsheet fields, ensure it uses the correct sheet
-// and gets real data for contact date and note
 function sendCustomerReferral(sourceRow = null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const customerSheet = ss.getSheetByName("Customers")
-  const currentCustomer = sourceRow ? sourceRow : getFullRow(customerSheet.getActiveCell())
-  const customer = getRangeValuesAsTable(currentCustomer,{includeFormulaValues: false})[0]
-  const customerId = customer["Customer ID"]
-  const dateTime = new Date().toISOString();
-  const referralId = customerId + ":" + dateTime
+  const referralSheet = ss.getSheetByName("TDS Referrals")
+  const currentReferral = sourceRow ? sourceRow : getFullRow(referralSheet.getActiveCell())
+  const referral = getRangeValuesAsTable(currentReferral,{includeFormulaValues: false})[0]
+  const customerId = referral["Customer ID"]
+  const referralDateString = referral["Referral Date"].toISOString();
+  const agencyCode = referral["Agency"].replace(/[^A-Za-z]/g, '').toLowerCase()
+  const referralId = `${customerId}:${agencyCode}:${referralDateString}`
   const params = {endpointPath: "/v1/CustomerReferral"}
   const telegram = {
     customerReferralId: referralId,
-    customerContactDate: dateTime,
-    note: "This is just a test",
+    customerContactDate: referral["Referral Date"],
+    note: referral["Referral Notes"],
     customerInfo: {
-      firstLegalName: customer["Customer First Name"],
-      lastName: customer["Customer Last Name"],
-      address: buildAddressToSpec(customer["Home Address"]),
-      phone: buildPhoneNumberToSpec(customer["Phone Number"]),
-      customerId: customer["Customer ID"].toString()
+      firstLegalName: referral["Customer First Name"],
+      middleName: referral["Customer Middle Name"],
+      lastName: referral["Customer Last Name"],
+      nickName: referral["Customer Nickname"],
+      address: buildAddressToSpec(referral["Home Address"]),
+      phone: buildPhoneNumberToSpec(referral["Home Phone Number"]),
+      mobilePhone: buildPhoneNumberToSpec(referral["Cell Phone Number"]),
+      mailingBillingAddress: buildAddressToSpec(referral["Mailing Address"]),
+      fundingEntityBillingInformation: referral["Billing Information"],
+      fundingType: valueToBoolean(referral["Funding Type?"]),
+      fundingEntityId: referral["Funding Entity"],
+      gender: referral["Gender"],
+      lowIncome: valueToBoolean(referral["Low Income?"]),
+      disability: valueToBoolean(referral["Disability?"]),
+      language: referral["Language"],
+      race: referral["Race"],
+      ethnicity: referral["Ethnicity"],
+      emailAddress: referral["Email"],
+      veteran: valueToBoolean(referral["Veteran?"]),
+      caregiverContactInformation: referral["Caregiver Contact Information"],
+      emergencyPhoneNumber: referral["Emergency Phone Number"],
+      emergencyContactName: referral["Emergency Contact Name"],
+      emergencyContactRelationship: referral["Emergency Contact Relationship"]  ,
+      requiredCareComments: referral["Comments About Care Required"],
+      dateOfBirth: referral["Date of Birth"],
+      customerId: referral["Customer ID"].toString()
     }
   }
   // Get the endpoint (referral provider) from the sheet

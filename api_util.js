@@ -269,3 +269,22 @@ function createErrorResponse(status, message) {
   response.setContent(JSON.stringify(errorContent))
   return response
 }
+
+function valueToBoolean(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    value.toString().toLowerCase().slice(0, 3) === "unk"
+  ) {
+    return null
+  } else if (
+    !value ||
+    value.toString().toLowerCase() === "false" ||
+    value.toString().toLowerCase() === "no"
+  ) {
+    return false
+  } else {
+    return true
+  }
+}
