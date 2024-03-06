@@ -87,20 +87,6 @@ function buildPhoneNumberFromSpec(e164Number) {
   }
 }
 
-function buildPhoneNumberFromSpec(value) {
-  try {
-    if (!value) return ""
-    const v = value.toString()
-
-    if (v.length === 7) return `${v.slice(0,3)}-${v.slice(-4)}`
-    if (v.length === 10) return `(${v.slice(0,3)})${v.slice(3,6)}-${v.slice(-4)}`
-    if (v.length === 11 && v.slice(0,1) === '1') return `1(${v.slice(1,4)})${v.slice(4,7)}-${v.slice(-4)}`
-    if (v.length > 11 && v.slice(0,1) === '1') return `1(${v.slice(1,4)})${v.slice(4,7)}-${v.slice(7,11)} x${v.slice(11)}`
-    if (v.length > 10) return `(${v.slice(0,3)})${v.slice(3,6)}-${v.slice(6,10)} x${v.slice(10)}`
-    return v
-  } catch(e) { logError(e) }
-}
-
 function urlQueryString(params) {
   try {
     const keys = Object.keys(params)
