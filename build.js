@@ -22,6 +22,7 @@ function buildMenus() {
     menuApi.addItem('Get trip requests (Deprecated)', 'sendRequestForTripRequests')
     menuApi.addItem('Send trip requests', 'sendTripRequests')
     menuApi.addItem('Send responses to trip requests', 'sendTripRequestResponses')
+    menuApi.addItem('Respond to pending claims', 'sendClientOrderConfirmations')
     menuApi.addItem('Refresh outside runs', 'sendRequestForRuns')
     menuApi.addToUi()
   }

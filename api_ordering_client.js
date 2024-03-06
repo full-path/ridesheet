@@ -161,17 +161,44 @@ function receiveTripRequestResponse(response, senderId) {
   }
 }
 
-function sendClientOrderConfirmation(sourceTripRange = null) {
+// Handle sending all confirmations from menu trigger
+function sendClientOrderConfirmations() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet = ss.getSheetByName("Trips")
+    const trips = getRangeValuesAsTable(tripSheet.getDataRange()).filter(tripRow => {
+      return (
+        tripRow["TDS Actions"] ===  'Confirm pending claim' ||
+        tripRow["TDS Actions"] === 'Deny pending claim'
+      )
+    })
+    trips.forEach((trip) => {
+      sendClientOrderConfirmation(trip)
+    })
+  } catch (e) {
+    logError(e)
+  }
+}
+
+// Telegram #2A
+function sendClientOrderConfirmation(sourceTrip = null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const tripSheet = ss.getSheetByName("Trips")
-  const currentTrip = sourceTripRange ? sourceTripRange : getFullRow(tripSheet.getActiveCell())
-  const trip = getRangeValuesAsTable(currentTrip,{includeFormulaValues: false})[0]
+  const trip = sourceTrip ? sourceTrip : getRangeValuesAsTable(getFullRow(tripSheet.getActiveCell()),{includeFormulaValues: false})[0]
   const endPoints = getDocProp("apiGetAccess")
   const endPoint = endPoints.find(endpoint => endpoint.name === trip["Claim Pending"])
   const params = {endpointPath: "/v1/ClientOrderConfirmation"}
   const telegram = {
     tripTicketId: trip["Trip ID"],
-    tripConfirmed: true
+  }
+  if (trip["TDS Actions"] === "Confirm pending claim") {
+    telegram.tripConfirmed = true
+  } else if (trip["TDS Actions" === "Deny pending claim"]) {
+    telegram.tripConfirmed = false
+  } else {
+    ss.toast("Attempting to send client order confirmation for invalid trip")
+    logError("Invalid client order confirmation", trip)
+    return
   }
   try {
     const response = postResource(endPoint, params, JSON.stringify(telegram))
