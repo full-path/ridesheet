@@ -1,44 +1,43 @@
-// TODO: Add more error handling and resilience. Add ability for addressName and other details
-// check components[i].types to make sure each is the correct component
-// This code is just for testing purposes!!!
-// Make errors do something a little more useful--return a partial address or similar? Try to parse the address manually?
+// Breaks a raw address down into the required TDS attributes.
+// If the source address includes a plus code, then the plus code will
+// be the source of lat/long data.
+// If only a plus code is provided, then the function will return
+// as much information as can supplied from Google Maps based on that
+// lat/long (usually just city, state and country)
 function buildAddressToSpec(address) {
   try {
-    const geocoder = Maps.newGeocoder()
-    const result = geocoder.geocode(address)
-    if (result["status"] === "OK") {
-      const components = result.results[0].address_components
-      const addressObj = {
-        addressName: "",
-        street2: "",
-        notes: "",
-        formattedAddress: address,
-        lat: null,
-        long: null,
-      }
-      if (components.length >= 8) {
-        addressObj.street = components[0].short_name + " " + components[1].short_name
-        addressObj.city = components[3].long_name
-        addressObj.state = components[5].short_name
-        addressObj.postalCode = components[7].short_name
-        addressObj.country = components[6].short_name
-      }
-      if (components.length === 6 || components.length === 7 ) {
-        addressObj.street = components[0].short_name + " " + components[1].short_name
-        addressObj.city = components[2].long_name
-        addressObj.state = components[4].short_name
-        addressObj.postalCode = components[6].short_name
-        addressObj.country = components[5].short_name
-      }
-      if (components.length === 5) {
-        addressObj.street = components[0].long_name
-        addressObj.city = components[1].long_name
-        addressObj.state = components[3].short_name
-        addressObj.country = components[4].short_name
-        addressObj.postalCode = ""
-      }
-      return addressObj
+    const rawAddressParts = parseAddress(address)
+    let result = {
+      addressName: "",
+      street: "",
+      street2: "",
+      city: "",
+      state: "",
+      zip_code: "",
+      country: "",
+      notes: "",
+      lat: "",
+      long: "",
     }
+    if (rawAddressParts.addressToFormat) {
+      const addressObj = getGeocode(rawAddressParts.addressToFormat,"object")
+      if (addressObj.status === "OK") {
+        Object.keys(result).forEach(key => result[key] = addressObj[key] || "")
+      }
+      if (rawAddressParts.globalPlusCode) {
+        const plusCodeObj = getGeocode(rawAddressParts.globalPlusCode,"object")
+        if (plusCodeObj.status === "OK") {
+          result.lat = plusCodeObj.lat
+          result.long = plusCodeObj.long
+        }
+      }
+    } else if (rawAddressParts.globalPlusCode) {
+      const plusCodeObj = getGeocode(rawAddressParts.globalPlusCode,"object")
+      if (plusCodeObj.status === "OK") {
+        Object.keys(result).forEach(key => result[key] = plusCodeObj[key] || "")
+      }
+    }
+    return result
   } catch(e) { logError(e) }
 }
 
