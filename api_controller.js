@@ -1,91 +1,115 @@
 function doGet(e) {
   try {
-    const timeNow = new Date()
     const params = e.parameter
-    const hmacParamKeys = ["nonce","timestamp","signature"]
-    let baseParams = {}
-    let validatedApiAccount
-    if (params.apiKey) {
-      const apiAccounts = getDocProp("apiGiveAccess")
-      const statedApiAccount = apiAccounts[params.apiKey]
-      Object.keys(params).forEach(key => {
-        if (hmacParamKeys.indexOf(key) === -1) baseParams[key] = params[key]
-      })
-      let receivedTimestamp = new Date(params.timestamp)
-      let timePassed = timeNow.getTime() - receivedTimestamp.getTime() // In milliseconds
-      if (params.signature === generateHmacHexString(statedApiAccount.secret, params.nonce, params.timestamp, baseParams) && 
-          timePassed < 300000) {
-        validatedApiAccount = statedApiAccount
-      }
+    const hmacHeader = params.authorization
+    const pathHeader = params.endpointPath || ''
+
+    // TODO: match error response with actual TDS spec
+    if (!hmacHeader) {
+      return createErrorResponse("MISSING_AUTHORIZATION_HEADER")
     }
-  
-    let response = ContentService.createTextOutput()
-    response.setMimeType(ContentService.MimeType.JSON)
-    let content = {}
-    if (validatedApiAccount) {
-      if (params.version === "v1") {
-        if (params.resource === "runs") {
-          content.status = "OK"
-          content.results = receiveRequestForRuns()
-        } else if (params.resource === "tripRequests") {
-          content.status = "OK"
-          content.results = receiveRequestForTripRequestsReturnTripRequests(validatedApiAccount)
-        } else {
-          content.status = "INVALID_REQUEST"
-        }
-      } else {
-        content.status = "INVALID_REQUEST"
-      }
-    } else {
-      content.status = "UNAUTHORIZED"
+
+    const [signature, senderId, receiverId, timestamp, nonce] = hmacHeader.split(':')
+
+    if (!(signature && senderId && receiverId && timestamp && nonce)) {
+      return createErrorResponse("INVALID_AUTHORIZATION_HEADER")
     }
-    response.setContent(JSON.stringify(content))
-    return response
-  } catch(e) { logError(e) }
-}
-  
-function doPost(e) {
-  try {
-    const timeNow = new Date()
-    const params = e.parameter
-    const hmacParamKeys = ["nonce","timestamp","signature"]
-    let baseParams = {}
-    let validatedApiAccount
-    if (params.apiKey) {
-      const apiAccounts = getDocProp("apiGiveAccess")
-      const statedApiAccount = apiAccounts[params.apiKey]
-      Object.keys(params).forEach(key => {
-        if (hmacParamKeys.indexOf(key) === -1) baseParams[key] = params[key]
-      })
-      let receivedTimestamp = new Date(params.timestamp)
-      let timePassed = timeNow.getTime() - receivedTimestamp.getTime() // In milliseconds
-      if (params.signature === generateHmacHexString(statedApiAccount.secret, params.nonce, params.timestamp, baseParams) && 
-          timePassed < 300000) {
-        validatedApiAccount = statedApiAccount
-      }
+
+    const apiAccounts = getDocProp("apiGiveAccess")
+    const apiAccount = apiAccounts[senderId]
+
+    if (!apiAccount) {
+      return createErrorResponse("INVALID_API_KEY")
+    }
+
+    const isValid = validateHmacSignature(signature, senderId, receiverId, timestamp, nonce, 'GET', '', pathHeader)
+
+    if (!isValid) {
+      return createErrorResponse("UNAUTHORIZED")
     }
 
     let response = ContentService.createTextOutput()
     response.setMimeType(ContentService.MimeType.JSON)
     let content = {}
-    if (validatedApiAccount) {
-      let payload = e.postData.contents
-      if (params.version === "v1") {
-        if (params.resource === "tripRequestResponses") {
-          const processedResponses = receiveTripRequestResponses(JSON.parse(payload))
-          content = returnClientOrderConfirmations(processedResponses, validatedApiAccount)
-        } else if (params.resource === "providerOrderConfirmations") {
-          content = receiveProviderOrderConfirmationsReturnCustomerInformation(payload, validatedApiAccount)
-        } else {
-          content.status = "INVALID_REQUEST"
-        }
+
+    if (params.resource === "runs") {
+      content.status = "OK"
+      content.results = receiveRequestForRuns()
+    } else if (params.resource === "tripRequests") {
+      content.status = "OK"
+      content.results = receiveRequestForTripRequestsReturnTripRequests(apiAccount)
+    } else {
+      return createErrorResponse("INVALID_REQUEST");
+    }
+
+    response.setContent(JSON.stringify(content))
+    return response
+  } catch(e) { 
+    logError(e) 
+  }
+}
+  
+function doPost(e) {
+  try {
+    const params = e.parameter
+    const hmacHeader = params.authorization
+    const pathHeader = params.endpointPath || ''
+
+    // TODO: match error response with actual TDS spec
+    if (!hmacHeader) {
+      return createErrorResponse("MISSING_AUTHORIZATION_HEADER")
+    }
+
+    const [signature, senderId, receiverId, timestamp, nonce] = hmacHeader.split(':')
+
+    if (!(signature && senderId && receiverId && timestamp && nonce)) {
+      return createErrorResponse("INVALID_AUTHORIZATION_HEADER")
+    }
+
+    const apiAccounts = getDocProp("apiGiveAccess")
+    const apiAccount = apiAccounts[senderId]
+
+    if (!apiAccount) {
+      return createErrorResponse("INVALID_API_KEY")
+    }
+
+    const body = e.postData.contents
+
+    const isValid = validateHmacSignature(signature, senderId, receiverId, timestamp, nonce, 'POST', body, pathHeader)
+
+    if (!isValid) {
+      return createErrorResponse("UNAUTHORIZED")
+    }
+
+    const payload = JSON.parse(body)
+
+    let response = ContentService.createTextOutput()
+    response.setMimeType(ContentService.MimeType.JSON)
+    let content = {}
+    if (params.endpointPath) {
+      if (params.endpointPath === "/v1/TripRequest") {
+        content = receiveTripRequest(payload, senderId)
+      } else if (params.endpointPath === "/v1/TripRequestResponse") {
+        content = receiveTripRequestResponse(payload, senderId)
+      } else if (params.endpointPath === "/v1/ClientOrderConfirmation") {
+        content = receiveClientOrderConfirmation(payload)
       } else {
-        content.status = "INVALID_REQUEST"
+        return createErrorResponse("INVALID_REQUEST")
       }
     } else {
-      content.status = "UNAUTHORIZED"
+      // Old ridesheet "resource"-based API
+      if (params.resource === "tripRequestResponses") {
+        const processedResponses = receiveTripRequestResponses(payload)
+        content = returnClientOrderConfirmations(processedResponses, apiAccount)
+      } else if (params.resource === "providerOrderConfirmations") {
+        content = receiveProviderOrderConfirmationsReturnCustomerInformation(payload, apiAccount)
+      } else {
+        return createErrorResponse("INVALID_REQUEST")
+      }
     }
     response.setContent(JSON.stringify(content))
     return response
   } catch(e) { logError(e) }
 }
+
+

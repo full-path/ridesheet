@@ -377,6 +377,10 @@ function tripActionButton(goCheckBoxRange) {
         goCheckBoxRange.setValue(null)
         actionCell.setValue(null)
         addStop()
+      } else if (actionText === "Approve pending claim") {
+        goCheckBoxRange.setValue(null)
+        actionCell.setValue(null)
+        sendClientOrderConfirmation(null)
       } else {
         goCheckBoxRange.setValue(null)
         actionCell.setValue(null)

@@ -1,16 +1,41 @@
+// Breaks a raw address down into the required TDS attributes.
+// If the source address includes a plus code, then the plus code will
+// be the source of lat/long data.
+// If only a plus code is provided, then the function will return
+// as much information as can supplied from Google Maps based on that
+// lat/long (usually just city, state and country)
 function buildAddressToSpec(address) {
   try {
-    let result = {}
-    const parsedAddress = parseAddress(address)
-    result["@addressName"] = parsedAddress.geocodeAddress
-    if (parsedAddress.parenText) {
-      let manualAddr = {}
-      manualAddr["@manualText"] = parsedAddress.parenText
-      manualAddr["@sendtoInvoice"] = true
-      manualAddr["@sendtoVehicle"] = true
-      manualAddr["@sendtoOperator"] = true
-      manualAddr["@vehicleConfirmation"] = false
-      result.manualDescriptionAddress = manualAddr
+    const rawAddressParts = parseAddress(address)
+    let result = {
+      addressName: "",
+      street: "",
+      street2: "",
+      city: "",
+      state: "",
+      zip_code: "",
+      country: "",
+      notes: "",
+      lat: "",
+      long: "",
+    }
+    if (rawAddressParts.addressToFormat) {
+      const addressObj = getGeocode(rawAddressParts.addressToFormat,"object")
+      if (addressObj.status === "OK") {
+        Object.keys(result).forEach(key => result[key] = addressObj[key] || "")
+      }
+      if (rawAddressParts.globalPlusCode) {
+        const plusCodeObj = getGeocode(rawAddressParts.globalPlusCode,"object")
+        if (plusCodeObj.status === "OK") {
+          result.lat = plusCodeObj.lat
+          result.long = plusCodeObj.long
+        }
+      }
+    } else if (rawAddressParts.globalPlusCode) {
+      const plusCodeObj = getGeocode(rawAddressParts.globalPlusCode,"object")
+      if (plusCodeObj.status === "OK") {
+        Object.keys(result).forEach(key => result[key] = plusCodeObj[key] || "")
+      }
     }
     return result
   } catch(e) { logError(e) }
@@ -18,14 +43,14 @@ function buildAddressToSpec(address) {
 
 function buildAddressFromSpec(address) {
   try {
-    let result = address["@addressName"]
-    if (address.manualDescriptionAddress) {
-      result = result + " (" + address.manualDescriptionAddress["@manualText"] + ")"
-    }
-    return result
+    if (address.formattedAddress) {
+      return address.formattedAddress
+    } 
+    return address.street + ", " + address.city + ", " + address.state + " " + address.postalCode + ", " + address.country
   } catch(e) { logError(e) }
 }
 
+// TODO: support other time fields than just "time"
 function buildTimeFromSpec(date, time) {
   try {
     return {"@time": combineDateAndTime(date, time)}
@@ -56,13 +81,9 @@ function buildPhoneNumberFromSpec(value) {
 function urlQueryString(params) {
   try {
     const keys = Object.keys(params)
-    result = keys.reduce((a, key, i) => {
-      if (i === 0) {
-        return key + "=" + params[key]
-      } else {
-        return a + "&" + key + "=" + params[key]
-      }
-    },"")
+    const result = keys.map((key) => {
+      return key + "=" + encodeURIComponent(params[key])
+    }).join("&")
     return result
   } catch(e) { logError(e) }
 }
@@ -75,48 +96,152 @@ function byteArrayToHexString(bytes) {
   } catch(e) { logError(e) }
 }
 
-function generateHmacHexString(secret, nonce, timestamp, params) {
+function generateHmacHexString(secret, senderId, receiverId, timestamp, nonce, method, body, url) {
   try {
-    let orderedParams = {}
-    Object.keys(params).sort().forEach(key => {
-      orderedParams[key] = params[key]
-    })
-    const value = [nonce, timestamp, JSON.stringify(orderedParams)].join(':')
+    const value = senderId + receiverId + timestamp + nonce + method + body + url;
     const sigAsByteArray = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_SHA_256, value, secret)
-    return byteArrayToHexString(sigAsByteArray)
-  } catch(e) { logError(e) }
+    return byteArrayToHexString(sigAsByteArray);
+  } catch (e) {
+    logError(e);
+  }
 }
 
+// Need to have a senderId -- right now the apiKey is both the sender/receiver ID
+// GET requests will not be used at all with the standard TDS any longer; this is Ridesheet only 
+// and likely soon to be deprecated
 function getResource(endPoint, params) {
   try {
-    params.version = endPoint.version
-    params.apiKey = endPoint.apiKey
-    let hmac = {}
-    hmac.nonce = Utilities.getUuid()
-    hmac.timestamp = JSON.parse(JSON.stringify(new Date()))
-    hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
+    const version = endPoint.version
+    const receiverId = endPoint.receiverId
+    const senderId = getDocProp("apiSenderId")
+    const nonce = Utilities.getUuid()
+    const timestamp = new Date().getTime().toString()
+    const endpointPath = params.endpointPath || ''
 
-    const options = {method: 'GET', contentType: 'application/json'}
-    const fetchUrl = endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac)
+    const signature = generateHmacHexString(
+      endPoint.secret,
+      senderId,
+      receiverId,
+      timestamp,
+      nonce,
+      'GET',
+      '', // For GET requests, the body will be empty
+      endpointPath
+    );
+
+    const authHeader = `${signature}:${senderId}:${receiverId}:${timestamp}:${nonce}`
+
+    const options = {
+      method: 'GET',
+      contentType: 'application/json',
+      headers: {
+        Authorization: authHeader,
+      }
+    }
+
+    params.authorization = authHeader
+    params.endpointPath = endpointPath
+
+    const fetchUrl = endPoint.url + "?" + urlQueryString(params)
     log(fetchUrl)
+
     const response = UrlFetchApp.fetch(fetchUrl, options)
     return response
-  } catch(e) { logError(e) }
+  } catch (e) {
+    logError(e)
+  }
 }
 
+// Need to have a senderId -- right now the apiKey is both the sender/receiver ID
+// TODO: format URL as just the /path not the full URL
 function postResource(endPoint, params, payload) {
   try {
-    params.version = endPoint.version
-    params.apiKey = endPoint.apiKey
-    let hmac = {}
-    hmac.nonce = Utilities.getUuid()
-    hmac.timestamp = JSON.parse(JSON.stringify(new Date()))
-    hmac.signature = generateHmacHexString(endPoint.secret, hmac.nonce, hmac.timestamp, params)
+    const version = endPoint.version
+    const receiverId = endPoint.receiverId
+    const senderId = getDocProp("apiSenderId")
+    const nonce = Utilities.getUuid()
+    const timestamp = new Date().getTime().toString()
+    const endpointPath = params.endpointPath || ''
 
-    const options = {method: 'POST', contentType: 'application/json', payload: payload}
-    const fetchUrl = endPoint.url + "?" + urlQueryString(params) + "&" + urlQueryString(hmac)
-    log(fetchUrl, JSON.stringify(payload))
+    const signature = generateHmacHexString(
+      endPoint.secret,
+      senderId,
+      receiverId,
+      timestamp,
+      nonce,
+      'POST',
+      payload,
+      endpointPath
+    )
+
+    const authHeader = `${signature}:${senderId}:${receiverId}:${timestamp}:${nonce}`
+
+    const options = {
+      method: 'POST',
+      contentType: 'application/json',
+      payload: payload,
+      headers: {
+        Authorization: authHeader
+      }
+    }
+
+    params.authorization = authHeader
+
+    const fetchUrl = buildUrl(endPoint.url, endpointPath, params)
+    log(fetchUrl)
+
     const response = UrlFetchApp.fetch(fetchUrl, options)
     return response
-  } catch(e) { logError(e) }
+  } catch (e) {
+    logError(e)
+  }
+}
+
+function buildUrl(baseURL, path, params) {
+  if (baseURL.includes("script.google.com")) {
+    return baseURL + "?" + urlQueryString(params)
+  } else {
+    return baseURL + path
+  }
+}
+
+// Function to validate HMAC signature
+function validateHmacSignature(signature, senderId, receiverId, timestamp, nonce, method, body, urlEndpoint) {
+  try {
+    // Fetch the secret associated with the receiverId (apiKey)
+    const apiAccounts = getDocProp("apiGiveAccess")
+    const statedApiAccount = apiAccounts[senderId]
+
+    let receivedTimestamp = new Date(timestamp)
+    let timeNow = new Date()
+    let timePassed = timeNow.getTime() - receivedTimestamp.getTime()
+
+    if (timePassed > 300000) return false
+
+    // Generate the expected HMAC signature based on the retrieved secret and other parameters
+    const expectedSignature = generateHmacHexString(
+      statedApiAccount.secret,
+      senderId,
+      receiverId,
+      timestamp,
+      nonce,
+      method,
+      body,
+      urlEndpoint
+    )
+
+    // Compare the expected signature with the received signature
+    return signature === expectedSignature
+  } catch (e) {
+    logError(e)
+    return false
+  }
+}
+
+function createErrorResponse(status) {
+  const response = ContentService.createTextOutput()
+  response.setMimeType(ContentService.MimeType.JSON)
+  const errorContent = { status: status }
+  response.setContent(JSON.stringify(errorContent))
+  return response
 }
