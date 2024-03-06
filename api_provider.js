@@ -123,6 +123,7 @@ function sendTripRequestResponses() {
             }
           }
       } catch (e) {
+        // TODO: Figure out logic to determine if "e" contains a 400-level error
         logError(e)
       }
     })
@@ -170,15 +171,20 @@ function receiveClientOrderConfirmation(confirmation) {
   // Move into trips
   const tripSheet = ss.getSheetByName("Trips")
   const tripColumnNames = getSheetHeaderNames(outsideTrips)
-  const ignoredFields = ["Scheduled PU Time", "Decline", "Claim", "Customer Info", "Pending", "Extra Fields"]
+  const ignoredFields = ["Scheduled PU Time", "Requested PU Time", "Requested DO Time", "Decline", "Claim", "Customer Info", "Pending", "Extra Fields"]
   const tripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
   const tripData = {}
   tripFields.forEach(key => {
    tripData[key] = trip[key]
   });
+  tripData['Customer Name and ID'] = customerSuccess.customerNameAndID
+  tripData['Customer ID'] = customerSuccess.customerId
+  tripData['PU Time'] = trip['Requested PU Time']
+  tripData['DO Time'] = trip['Requested DO Time']
   if (trip['Scheduled PU Time']) {
     tripData['PU Time'] = trip['Scheduled PU Time']
   }
+  // TODO: incorrect/incomplete data is moved over, correct trip is not deleted
   createRow(tripSheet, tripData)
   outsideTrips.deleteRow(trip._rowPosition)
   return {status: "OK", message: "OK", referenceId}
@@ -216,7 +222,7 @@ function addCustomer(customerInfo) {
   } else {
     log('Customer ID already exists', customerInfo)
   }
-  return {status: true}
+  return {status: true, customerId: referralId, customerNameAndID}
 }
 
 // TODO: Add support for all fields, in particular, add place in sheet to handle
