@@ -205,11 +205,11 @@ function getTripEstimate(origin, destination, returnType) {
 //     rural scenarios where Maps return lat/longs that can be off by a significant distance.
 function parseAddress(rawAddress) {
   let result = {}
-  let remainingAddress = rawAddress
-  const parenText = rawAddress.match(/\(([^)]*)\)/)
+  let remainingAddress = rawAddress.toString()
+  const parenText = remainingAddress.match(/\(([^)]*)\)/)
   if (parenText) {
     result.parenText  = parenText[1]
-    remainingAddress = rawAddress.replace(parenText[0],"").trim()
+    remainingAddress = remainingAddress.replace(parenText[0],"").trim()
   }
   const globalPlusCode = remainingAddress.match(/(^|\s)(([23456789C][23456789CFGHJMPQRV][23456789CFGHJMPQRVWX]{6}\+[23456789CFGHJMPQRVWX]{2,3})\s*;?)(\s|$)/)
   if (globalPlusCode) {
