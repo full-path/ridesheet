@@ -71,6 +71,21 @@ function formatTripRequest(trip) {
       estimatedTripDistanceInMiles: trip["Est Miles"]
     }
   }
+  if (trip["Earliest PU Time"]) {
+    formattedTrip.pickupWindowStartTime = {time: combineDateAndTime(trip["Trip Date"], trip["Earliest PU Time"])}
+  }
+  if (trip["Latest PU Time"]) {
+    formattedTrip.pickupWindowEndTime = {time: combineDateAndTime(trip["Trip Date"], trip["Latest PU Time"])}
+  }
+  if (trip["Transfer Trip"]) {
+    formattedTrip.tripTransfer = trip["Transfer Trip"]
+  }
+  if (trip["Pickup Location Notes"]) {
+    formattedTrip.detailedPickupLocationDescription = trip["Pickup Location Notes"]
+  }
+  if (trip["Dropoff Location Notes"]) {
+    formattedTrip.detailedDropoffLocationDescription = trip["Dropoff Location Notes"]
+  }
   return formattedTrip
 }
 
@@ -85,6 +100,15 @@ function getCustomerInfo(trip) {
     address: buildAddressToSpec(customer["Home Address"]),
     phone: buildPhoneNumberToSpec(customer["Phone Number"]),
     customerId: customer["Customer ID"].toString()
+  }
+  if (customer["Date of Birth"]) {
+    formattedCustomer.dateOfBirth = customer["Date of Birth"]
+  } 
+  if (customer["Customer Manifest Notes"]) {
+    formattedCustomer.notesForDriver = customer["Customer Manifest Notes"]
+  }
+  if (customer["Default Service ID"]) {
+    formattedCustomer.fundingEntityId = customer["Default Service ID"]
   }
   return formattedCustomer
 }
