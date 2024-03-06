@@ -1,3 +1,4 @@
+const localNamedRangesToRemove = []
 const localNamedRanges = {
  "localCodeReferralActionButton1": {
     "sheetName":"Call Log",
@@ -8,3 +9,10 @@ const localNamedRanges = {
     "headerName":"Call Date"
   }
 }
+
+const localSheetsToRemove = []
+const localSheets = []
+const localSheetsWithHeaders = []
+
+const localColumnsToRemove = {}
+const localColumns = {}
