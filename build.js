@@ -25,6 +25,7 @@ function buildMenus() {
     menuApi.addItem('Respond to pending claims', 'sendClientOrderConfirmations')
     menuApi.addItem('Confirm scheduled referral trips', 'sendProviderOrderConfirmations')
     menuApi.addItem('Send referral trip cancelations', 'sendTripCancelations')
+    menuApi.addItem('Send customer referral responses', 'sendCustomerReferralResponses')
     menuApi.addItem('Refresh outside runs', 'sendRequestForRuns')
     menuApi.addToUi()
   }

@@ -190,22 +190,24 @@ function receiveClientOrderConfirmation(confirmation) {
   return {status: "OK", message: "OK", referenceId}
 }
 
-function addCustomer(customerInfo) {
+function addCustomer(customerInfo, endPoint = null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const customers = ss.getSheetByName('Customers')
   const customerRange = customers.getDataRange()
   const allCustomers = getRangeValuesAsTable(customerRange)
   const { customerId, firstLegalName, lastName } = customerInfo
-  const referralId = `Ref:${customerId}`
-  let customer = allCustomers.find(row => row["Customer ID"] === referralId)
+  let customer = allCustomers.find(row => row["Customer ID"] === customerId)
   let customerNameAndID = lastName + ', ' + firstLegalName + ' (' + customerId + ')'
   if (!customer) {
     const newCustomer = {
-      'Customer ID': referralId,
+      'Customer ID': customerId,
       'Customer First Name': firstLegalName,
       'Customer Last Name': lastName,
       'Home Address': buildAddressFromSpec(customerInfo['address']),
-      'Customer Name and ID' : customerNameAndID
+      'Customer Name and ID' : customerNameAndID,
+      'Customer Referral ID' : customerInfo.customerReferralId,
+      'Referral Notes' : customerInfo.note,
+      'Customer Contact Date' : customerInfo.customerContactDate
     }
     // TODO: add all the fields!!
     if (customerInfo['mobilePhone'] && customerInfo['phone']) {
@@ -217,6 +219,9 @@ function addCustomer(customerInfo) {
       newCustomer['Phone Number'] = buildPhoneNumberFromSpec(customerInfo['phone'])
     } else {
       return {status: false, message: 'Missing phone number'}
+    }
+    if (endPoint) {
+      newCustomer['Source'] = endPoint.name
     }
     createRow(customers, newCustomer)
   } else {
@@ -288,13 +293,33 @@ function sendProviderOrderConfirmation(sourceTrip = null) {
 function receiveCustomerReferral(customerReferral, senderId) {
   log('Telegram #0A', customerReferral)
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
-  const {customerReferralId, customerContactDate, customerInfo} = customerReferral
-  const customerSuccess = addCustomer(customerInfo)
+  const { customerInfo } = customerReferral
+  const apiAccounts = getDocProp("apiGiveAccess")
+  const senderAccount = apiAccounts[senderId]
+  const customerSuccess = addCustomer(customerInfo, senderAccount)
   if (!customerSuccess.status) {
     logError('Error confirming trip. Customer Info invalid.', trip)
     return {status: "400", message: customerSuccess.message, referenceId}
   }
   return {status: "OK", message: "OK", referenceId} 
+}
+
+function sendCustomerReferralResponses() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const customerSheet = ss.getSheetByName("Customers")
+    const customers = getRangeValuesAsTable(customerSheet.getDataRange()).filter(row => {
+      return (
+        row["Referral Response"] ===  'Accept' || 
+        row["Referral Response"] === 'Reject'
+      )
+    })
+    customers.forEach((customer) => {
+      sendCustomerReferralResponse(customer)
+    })
+  } catch (e) {
+    logError(e)
+  }
 }
 
 // TODO: Talk over what we want to happen here. I assume we will
@@ -315,7 +340,7 @@ function sendCustomerReferralResponse(customerRow = null) {
   }
   const telegram = {
     customerReferralId: customer["Customer Referral Id"],
-    referralResponseType: "accept"
+    referralResponseType: customer["Referral Response"] === "Accept" ? "accept" : "reject"
   }
   try {
     const response = postResource(endPoint, params, JSON.stringify(telegram))
