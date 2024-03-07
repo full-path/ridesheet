@@ -13,7 +13,7 @@ function buildAddressToSpec(address) {
       street2: "",
       city: "",
       state: "",
-      zip_code: "",
+      postalCode: "",
       country: "",
       notes: "",
       lat: "",
