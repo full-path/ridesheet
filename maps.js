@@ -60,7 +60,7 @@ function getGeocode(address,returnType) {
             if (component.types.includes('administrative_area_level_1')) {
               addressObj.state = component.short_name
             }
-            if (component.types.includes('postal_code')) addressObj.zip_code = component.short_name
+            if (component.types.includes('postal_code')) addressObj.postalCode = component.short_name
             if (component.types.includes('country')) addressObj.country = component.short_name
           })
           if (!street_number && !route) {
