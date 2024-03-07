@@ -262,7 +262,7 @@ function sendProviderOrderConfirmation(sourceTrip = null) {
     scheduledDropoffTime: {time: combineDateAndTime(trip["Trip Date"], trip["DO Time"])},
     scheduledPickupPoint: buildAddressToSpec(trip["PU Address"]),
     scheduledDropoffPoint: buildAddressToSpec(trip["DO Address"]),
-    driverName: trip['Driver']
+    driverName: trip['Driver ID']
   }
   const allVehicles = getRangeValuesAsTable(ss.getSheetByName("Vehicles").getDataRange())
   const vehicle = allVehicles.find(row => row["Vehicle ID"] === trip["Vehicle ID"])
