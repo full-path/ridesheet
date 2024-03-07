@@ -302,7 +302,31 @@ function receiveCustomerReferral(customerReferral, senderId) {
 function sendCustomerReferralResponse(customerRow = null) {
   // Get response value
   // Get correct endpoint (original sender)
-  // 
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const customerSheet = ss.getSheetByName("Customers")
+  const customer = customerRow ? customerRow : getRangeValuesAsTable(getFullRow(customerSheet.getActiveCell()),{includeFormulaValues: false})[0]
+  const endPoints = getDocProp("apiGetAccess")
+  const endPoint = endPoints.find(endpoint => endpoint.name === customer["Source"])
+  const params = {endpointPath: "/v1/CustomerReferralResponse"}
+  if (!endPoint) {
+    ss.toast("Attempting to send response without valid source")
+    logError("Invalid provider order confirmation", trip)
+    return
+  }
+  const telegram = {
+    customerReferralId: customer["Customer Referral Id"],
+    referralResponseType: "accept"
+  }
+  try {
+    const response = postResource(endPoint, params, JSON.stringify(telegram))
+    const responseObject = JSON.parse(response.getContentText())
+    if (responseObject.status && responseObject.status !== "OK") {
+      logError(`Failure to send customer referral response to ${endPoint.name}`, responseObject)
+    }
+  } catch(e) {
+    // TODO: figure out how to get message from 400 response
+    logError(e)
+  }
 }
 
 function receiveTripStatusChange(tripStatusChange, senderId) {
