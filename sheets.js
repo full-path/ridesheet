@@ -310,7 +310,15 @@ function getRangeValuesAsTable(range, {headerRowPosition = 1, includeFormulaValu
       rowObject._rowPosition = rowIndex + topDataRowPosition
       rowObject._rowIndex = rowIndex
       rangeHeaderNames.forEach((headerName, columnIndex) => {
-        if (includeFormulaValues || (!includeFormulaValues && !formulas[rowIndex][columnIndex] && !rangeHeaderFormulas[columnIndex])) {
+        if (
+          includeFormulaValues ||
+          (
+            !includeFormulaValues &&
+            !formulas[rowIndex][columnIndex] &&
+            !rangeHeaderFormulas[columnIndex] &&
+            headerName[0] !== "|"
+          )
+        ) {
           rowObject[headerName] = row[columnIndex]
         }
       })
@@ -373,6 +381,8 @@ function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1, overwr
     let narrowedRange
     let narrowedRangeHeaderNames
     let narrowedRangeValues
+    let narrowedRangeFormulas
+    let narrowedHeaderFormulas
     let narrowedNewValuesToApply
     if (overwriteAll) {
       narrowedRange = range.getSheet().getRange(topDataRowPosition,range.getColumn(), initialNumRows, range.getNumColumns())
@@ -412,8 +422,35 @@ function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1, overwr
       // PREP RANGE AND DATA
       // Create the narrowed range, based on narrowed row and column data
       narrowedRange = range.getSheet().getRange(firstRowPosition, firstColumnPosition, numRows, numColumns)
-      narrowedRangeHeaderNames = getRangeHeaderNames(narrowedRange)
+      narrowedRangeHeaderNames = getRangeHeaderNames(narrowedRange, {headerRowPosition: headerRowPosition})
       narrowedRangeValues = narrowedRange.getValues()
+      narrowedRangeFormulas = narrowedRange.getFormulas()
+
+      // Remove values derived from in-cell formulas or array formulas placed in the header row.
+      // Otherwise, they'll get put in as literal values that will break the array formula.
+      // There's no way to easily discern when a two-dimensional array formula is being used for
+      // columns not directly under the source formula, so as a workaround, the function will
+      // also check to see if the "|" (pipe) character is the first character of a header value.
+      narrowedHeaderFormulas = getRangeHeaderFormulas(narrowedRange, {headerRowPosition: headerRowPosition})
+      if (narrowedHeaderFormulas.some((formula) => formula !== "")) {
+        const narrowedRangeValuesWithoutFormulaValues = narrowedRangeValues.map((row, rowIndex) => {
+          return row.map((value, columnIndex) => {
+            if (
+              narrowedRangeFormulas[rowIndex][columnIndex]
+            ) {
+              return narrowedRangeFormulas[rowIndex][columnIndex]
+            } else if (
+              narrowedHeaderFormulas[columnIndex] ||
+              narrowedRangeHeaderNames[columnIndex][0] === "|"
+            ) {
+              return ""
+            } else {
+              return value
+            }
+          })
+        })
+        narrowedRangeValues = narrowedRangeValuesWithoutFormulaValues
+      }
       narrowedNewValuesToApply = newValuesToApply.slice(startDataRowIndex, endDataRowIndex)
     }
 

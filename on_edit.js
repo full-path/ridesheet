@@ -57,7 +57,10 @@ function onEdit(e) {
   try {
     const startTime = new Date()
     const sheetName = e.range.getSheet().getName()
-    if (sheetsWithHeaders.includes(sheetName) && e.range.getRow() === 1) fixHeaderNames(e.range)
+    if (e.range.getRow() === 1) {
+      const hasHeader = e.range.getSheet().createDeveloperMetadataFinder().withKey("hasHeader").find()?.[0]?.getValue()
+      if (hasHeader  === "true") fixHeaderNames(e.range)
+    }
     callLocalSheetTriggers(e, sheetName, initialLocalSheetTriggers)
     callSheetTriggers(e, sheetName, initialSheetTriggers)
     callLocalCellTriggers(e)
@@ -149,7 +152,7 @@ function callCellTriggers(e) {
 
 function formatAddressOnEdit(range) {
   try {
-    if (range.getValue() && range.getValue().trim()) {
+    if (range.getValue() && range.getValue().toString().trim()) {
       const app = SpreadsheetApp
       if (!setAddressByShortName(app, range)) {
         setAddressByApi(app, range)
