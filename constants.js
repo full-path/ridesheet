@@ -47,7 +47,7 @@ const sheetsWithHeaders = [
   "Vehicles",
   "Drivers",
   "Services",
-  "Outside Trips"
+  "Outside Trips",
   "Lookups"
 ]
 
