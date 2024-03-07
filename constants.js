@@ -284,7 +284,7 @@ const defaultColumns = {
     },
     "Action": {},
     "Go": {},
-    "Share": {},
+    "Share With": {},
     "Declined By": {},
     "Trip Result": {
       dataValidation: {
@@ -603,11 +603,7 @@ const defaultColumns = {
         helpText: "Value must be a valid trip result.",
       },
     },
-    "Share": {
-        criteriaType: "CHECKBOX",
-        checkedValue: "TRUE",
-        allowInvalid: false,
-    },
+    "Share With": {},
     "Actual PU Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -1109,7 +1105,7 @@ const defaultNamedRanges = {
   },
   "codeCheckSourceOnShare": {
     "sheetName":"Trips",
-    "headerName": "Share"
+    "headerName": "Share With"
   },
   "codeVerifySourceOnEdit": {
     "sheetName":"Trips",

@@ -15,7 +15,10 @@ function sendTripRequests() {
               return false
             }
           }
-        return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true && tripRow["Source"] === "" && tripRow["Shared"] === ""
+        return tripRow["Trip Date"] >= dateToday() && 
+               tripRow["Source"] === "" && 
+               tripRow["Shared"] === "" &&
+               (tripRow["Share With"] === endPoint.name || tripRow["Share With"] === 'All')
       })
       // set necessary params: HMAC headers, resource (endpoint), ??
       trips.forEach(trip => {
@@ -146,9 +149,9 @@ function receiveTripRequestResponse(response, senderId) {
     }
     const rowPosition = trip._rowPosition
     const currentRow = tripSheet.getRange("A" + rowPosition + ":" + rowPosition)
-    const shared = trip["Share"]
+    const shared = trip["Share With"]
     const claimed = trip["Claim Pending"]
-    if (claimed || (!shared)) {
+    if (claimed || (!shared === senderAccount.name)) {
       log(`${senderAccount.name} attempted to claim unavailable trip`, JSON.stringify(response))
       return {status: "400", message: "Trip no longer available", referenceId}
     }
@@ -212,7 +215,7 @@ function sendClientOrderConfirmation(sourceTrip = null) {
       const sentTripSheet = ss.getSheetByName("Sent Trips")
       const claimTime = new Date()
       const tripColumnNames = getSheetHeaderNames(tripSheet)
-      const ignoredFields = ["Action", "Go", "Share", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By", "Shared"]
+      const ignoredFields = ["Action", "Go", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By"]
       const sentTripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
       const sentTripData = {
         "Claimed By" : endPoint.name,

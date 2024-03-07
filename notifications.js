@@ -8,7 +8,7 @@ function sendSharedTripNotifications() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sharedTrips = getRangeValuesAsTable(ss.getSheetByName("Trips")
     .getDataRange())
-    .filter(tripRow =>( tripRow['Share'] === true) && (!tripRow['Shared']))
+    .filter(tripRow =>( tripRow['Share With'] === true) && (!tripRow['Shared']))
   const numShared = sharedTrips.length
   if (numShared > 0) {
     let agencyName = getDocProp('providerName')
