@@ -267,8 +267,8 @@ function sendProviderOrderConfirmation(sourceTrip = null) {
   const allVehicles = getRangeValuesAsTable(ss.getSheetByName("Vehicles").getDataRange())
   const vehicle = allVehicles.find(row => row["Vehicle ID"] === trip["Vehicle ID"])
   telegram.vehicleInformation = vehicle['Vehicle Name']
-  telegram.hasRamp = vehicle['Has Ramp']
-  telegram.hasLift = vehicle['Has Lift']
+  telegram.hasRamp = vehicle['Has Ramp'] ? true : false
+  telegram.hasLift = vehicle['Has Lift'] ? true : false
   try {
     const response = postResource(endPoint, params, JSON.stringify(telegram))
     const responseObject = JSON.parse(response.getContentText())
