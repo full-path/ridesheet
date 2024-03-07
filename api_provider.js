@@ -227,7 +227,7 @@ function addCustomer(customerInfo, endPoint = null) {
   } else {
     log('Customer ID already exists', customerInfo)
   }
-  return {status: true, customerId: referralId, customerNameAndID}
+  return {status: true, customerId: customerId, customerNameAndID}
 }
 
 // Handle sending all confirmations from menu trigger
@@ -298,7 +298,7 @@ function receiveCustomerReferral(customerReferral, senderId) {
   const senderAccount = apiAccounts[senderId]
   const customerSuccess = addCustomer(customerInfo, senderAccount)
   if (!customerSuccess.status) {
-    logError('Error confirming trip. Customer Info invalid.', trip)
+    logError('Error with customer referral', customerSuccess)
     return {status: "400", message: customerSuccess.message, referenceId}
   }
   return {status: "OK", message: "OK", referenceId} 
