@@ -342,6 +342,58 @@ function findAndCancelTrip(tripStatusChange, sheetName) {
   return true
 }
 
+function sendTripTaskCompletions() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet = ss.getSheetByName("Trip Review")
+    const trips = getRangeValuesAsTable(tripSheet.getDataRange()).filter(tripRow => tripRow["Share Result (Referrer)"] ===  true)
+    trips.forEach((trip) => {
+      sendTripTaskCompletion(trip)
+    })
+  } catch (e) {
+    logError(e)
+  }
+} 
+
+function sendTripTaskCompletion(sourceTrip = null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const tripSheet = ss.getSheetByName("Trips")
+  const trip = sourceTrip ? sourceTrip : getRangeValuesAsTable(getFullRow(tripSheet.getActiveCell()),{includeFormulaValues: false})[0]
+  const endPoints = getDocProp("apiGetAccess")
+  const endPoint = endPoints.find(endpoint => endpoint.name === trip["Source"])
+
+  // if Trip Result is not completed, we want to send a cancelation message instead
+  if (trip["Trip Result"] && trip["Trip Result"] !== "Completed") {
+    sendTripStatusChange(trip, trip["Trip Result"])
+    return
+  }
+  if (!trip["Trip Result"]) {
+    ss.toast("Attempting to send incomplete trip")
+    return
+  }
+  const params = {endpointPath: "/v1/TripTaskCompletion"}
+  if (!endPoint) {
+    ss.toast("Attempting to send confirmation without valid source")
+    logError("Invalid provider order confirmation", trip)
+    return
+  }
+  const telegram = {
+    tripTicketId: trip["Trip ID"],
+    performedDistance: trip["Est Miles"],
+    performedDistanceUnit: "Miles"
+  }
+  try {
+    const response = postResource(endPoint, params, JSON.stringify(telegram))
+    const responseObject = JSON.parse(response.getContentText())
+    if (responseObject.status && responseObject.status !== "OK") {
+      logError(`Failure to send trip completion to ${endPoint.name}`, responseObject)
+    }
+  } catch(e) {
+    // TODO: figure out how to get message from 400 response
+    logError(e)
+  }
+}
+
 
 function removeDeclinedTrips() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()

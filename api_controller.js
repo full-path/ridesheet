@@ -99,8 +99,10 @@ function doPost(e) {
         content = receiveTripStatusChange(payload, senderId)
       } else if (params.endpointPath === "/v1/ProviderOrderConfirmation") {
         content = receiveProviderOrderConfirmation(payload, senderId)
-      }else if (params.endpointPath === "/v1/CustomerReferralResponse") {
+      } else if (params.endpointPath === "/v1/CustomerReferralResponse") {
         content = receiveCustomerReferralResponse(payload, senderId)
+      } else if (params.endpointPath === "/v1/TripTaskCompletion") {
+        content = receiveTripTaskCompletion(payload)
       } else {
         return createErrorResponse("400", "Invalid request")
       }

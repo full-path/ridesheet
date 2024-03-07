@@ -248,7 +248,7 @@ function sendTripCancelations() {
   }
 }
 
-function sendTripStatusChange(sourceTrip = null) {
+function sendTripStatusChange(sourceTrip = null, tripResult = null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const tripSheet = ss.getSheetByName("Trips")
   const trip = sourceTrip ? sourceTrip : getRangeValuesAsTable(getFullRow(tripSheet.getActiveCell()),{includeFormulaValues: false})[0]
@@ -267,8 +267,15 @@ function sendTripStatusChange(sourceTrip = null) {
   const params = {endpointPath: "/v1/TripStatusChange"}
   const telegram = {
     tripTicketId: trip["Trip ID"],
-    status: "Cancel",
-    canceledBy: trip["Claim Pending"] ? 'Ordering Client' : 'Provider'
+    status: "Cancel"
+  }
+  if (tripResult) {
+    telegram.canceledBy = "Rider"
+    telegram.reasonDescription = tripResult
+  } else if (trip["Claim Pending"]) {
+    telegram.canceledBy = "Ordering Client"
+  } else {
+    telegram.canceledBy = "Provider"
   }
   try {
     const response = postResource(endPoint, params, JSON.stringify(telegram))
@@ -327,6 +334,22 @@ function sendCustomerReferral(sourceRow = null) {
 function receiveCustomerReferralResponse(response, senderId) {
   log('Telegram #0B', response)
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
+  return {status: "OK", message: "OK", referenceId} 
+}
+
+function receiveTripTaskCompletion(tripTaskCompletion) {
+  log('Telegram #4A', response)
+  const referenceId = (Math.floor(Math.random() * 10000000)).toString()
+  const { tripTicketId } = response
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const sentTrips = ss.getSheetByName("Sent Trips")
+  const trips = getRangeValuesAsTable(sentTrips.getDataRange())
+  const trip = trips.find(row => row["Trip ID"] === tripTicketId)
+  const rowPosition = trip._rowPosition
+  const currentRow = sentTrips.getRange("A" + rowPosition + ":" + rowPosition)
+  const headers = getSheetHeaderNames(sentTrips)
+  const statusIndex = headers.indexOf("Status") + 1
+  currentRow.getCell(1, statusIndex).setValue("Completed")
   return {status: "OK", message: "OK", referenceId} 
 }
 
