@@ -299,13 +299,13 @@ function sendCustomerReferral(sourceRow = null) {
   const currentCustomer = sourceRow ? sourceRow : getFullRow(customerSheet.getActiveCell())
   const customer = getRangeValuesAsTable(currentCustomer,{includeFormulaValues: false})[0]
   const customerId = customer["Customer ID"]
-  const dateTime = new Date().toISOString();
+  const dateTime = new Date().toISOString()
   const referralId = customerId + ":" + dateTime
   const params = {endpointPath: "/v1/CustomerReferral"}
   const telegram = {
     customerReferralId: referralId,
-    customerContactDate: dateTime,
-    note: "This is just a test",
+    customerContactDate: customer["Customer Contact Date"],
+    note: customer["Referral Notes"],
     customerInfo: {
       firstLegalName: customer["Customer First Name"],
       lastName: customer["Customer Last Name"],
