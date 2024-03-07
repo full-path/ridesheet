@@ -225,6 +225,62 @@ function addCustomer(customerInfo) {
   return {status: true, customerId: referralId, customerNameAndID}
 }
 
+// Handle sending all confirmations from menu trigger
+function sendProviderOrderConfirmations() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet = ss.getSheetByName("Trips")
+    const trips = getRangeValuesAsTable(tripSheet.getDataRange()).filter(tripRow => {
+      return (
+        tripRow["TDS Actions"] ===  'Confirm scheduled trip'
+      )
+    })
+    trips.forEach((trip) => {
+      sendProviderOrderConfirmation(trip)
+    })
+  } catch (e) {
+    logError(e)
+  }
+}
+
+// Telegram #2B
+function sendProviderOrderConfirmation(sourceTrip = null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const tripSheet = ss.getSheetByName("Trips")
+  const trip = sourceTrip ? sourceTrip : getRangeValuesAsTable(getFullRow(tripSheet.getActiveCell()),{includeFormulaValues: false})[0]
+  const endPoints = getDocProp("apiGetAccess")
+  const endPoint = endPoints.find(endpoint => endpoint.name === trip["Source"])
+  const params = {endpointPath: "/v1/ProviderOrderConfirmation"}
+  if (!endpoint) {
+    ss.toast("Attempting to send confirmation without valid source")
+    logError("Invalid provider order confirmation", trip)
+    return
+  }
+  const telegram = {
+    tripTicketId: trip["Trip ID"],
+    scheduledPickupTime: {time: combineDateAndTime(trip["Trip Date"], trip["PU Time"])},
+    scheduledDropoffTime: {time: combineDateAndTime(trip["Trip Date"], trip["DO Time"])},
+    scheduledPickupPoint: buildAddressToSpec(trip["PU Address"]),
+    scheduledDropoffPoint: buildAddressToSpec(trip["DO Address"]),
+    driverName: trip['Driver']
+  }
+  const allVehicles = getRangeValuesAsTable(ss.getSheetByName("Vehicles").getDataRange())
+  const vehicle = allVehicles.find(row => row["Vehicle ID"] === trip["Vehicle ID"])
+  telegram.vehicleInformation = vehicle['Vehicle Name']
+  telegram.hasRamp = vehicle['Has Ramp']
+  telegram.hasLift = vehicle['Has Lift']
+  try {
+    const response = postResource(endPoint, params, JSON.stringify(telegram))
+    const responseObject = JSON.parse(response.getContentText())
+    if (responseObject.status && responseObject.status !== "OK") {
+      logError(`Failure to send trip confirmation to ${endPoint.name}`, responseObject)
+    }
+  } catch(e) {
+    // TODO: figure out how to get message from 400 response
+    logError(e)
+  }
+}
+
 // TODO: Add support for all fields, in particular, add place in sheet to handle
 // customerReferralId, customerContactDate, and customerInfo
 // Question: Are referrals going to their own tab, rather than into the main customers sheet

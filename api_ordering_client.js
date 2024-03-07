@@ -276,6 +276,23 @@ function receiveCustomerReferralResponse(response, senderId) {
   return {status: "OK", message: "OK", referenceId} 
 }
 
+// Do we have any reason to track the other possible returned values (driver and vehicle info?)
+function receiveProviderOrderConfirmation(response, senderId) {
+  log('Telegram #2B', response)
+  const referenceId = (Math.floor(Math.random() * 10000000)).toString()
+  const { tripTicketId } = response
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const sentTrips = ss.getSheetByName("Sent Trips")
+  const trips = getRangeValuesAsTable(sentTrips.getDataRange())
+  const trip = trips.find(row => row["Trip ID"] === tripTicketId)
+  const rowPosition = trip._rowPosition
+  const currentRow = sentTrips.getRange("A" + rowPosition + ":" + rowPosition)
+  const headers = getSheetHeaderNames(sentTrips)
+  const statusIndex = headers.indexOf("Status") + 1
+  currentRow.getCell(1, statusIndex).setValue("Scheduled")
+  return {status: "OK", message: "OK", referenceId}
+}
+
 function getAllTrips() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const tripSheet = ss.getSheetByName("Trips")
