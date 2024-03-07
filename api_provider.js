@@ -359,7 +359,7 @@ function findAndCancelTrip(tripStatusChange, sheetName) {
   if (tripStatusChange.reasonDescription) {
     message += ` Reason: ${tripStatusChange.reasonDescription}`
   }
-  const rowPosition = tripRow._rowPosition
+  const rowPosition = trip._rowPosition
   const currentRow = sheet.getRange("A" + rowPosition + ":" + rowPosition)
   currentRow.setBackgroundRGB(255,102,102)
   currentRow.getCell(1,1).setNote(message)
