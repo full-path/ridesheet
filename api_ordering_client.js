@@ -230,6 +230,60 @@ function sendClientOrderConfirmation(sourceTrip = null) {
   }
 }
 
+// Handle sending all confirmations from menu trigger
+function sendTripCancelations() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet = ss.getSheetByName("Trips")
+    const trips = getRangeValuesAsTable(tripSheet.getDataRange()).filter(tripRow => {
+      return (
+        tripRow["TDS Actions"] ===  'Cancel Trip'
+      )
+    })
+    trips.forEach((trip) => {
+      sendTripStatusChange(trip)
+    })
+  } catch (e) {
+    logError(e)
+  }
+}
+
+function sendTripStatusChange(sourceTrip = null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const tripSheet = ss.getSheetByName("Trips")
+  const trip = sourceTrip ? sourceTrip : getRangeValuesAsTable(getFullRow(tripSheet.getActiveCell()),{includeFormulaValues: false})[0]
+  const endPoints = getDocProp("apiGetAccess")
+  // We can send either as ordering client or provider
+  const endPoint = endPoints.find(endpoint =>
+     endpoint.name === trip["Claim Pending"] ||
+     endpoint.name === trip["Source"]
+     )
+  if (!endPoint) {
+    ss.toast('Canceled trip is not a referral')
+    log('Attempted to send a trip status change for invalid trip', trip)
+    return
+  }
+  // TODO: find a way in the UI to indicate who is canceling. Need the option of "Rider"
+  const params = {endpointPath: "/v1/TripStatusChange"}
+  const telegram = {
+    tripTicketId: trip["Trip ID"],
+    status: "Cancel",
+    canceledBy: trip["Claim Pending"] ? 'Ordering Client' : 'Provider'
+  }
+  try {
+    const response = postResource(endPoint, params, JSON.stringify(telegram))
+    const responseObject = JSON.parse(response.getContentText())
+    if (responseObject.status && responseObject.status !== "OK") {
+      logError(`Failure to cancel trip with ${endPoint.name}`, responseObject)
+    }
+    else {
+      log(`Trip canceled with ${endPoint.name}`, telegram)
+    } 
+  } catch(e) {
+    logError(e)
+  }
+}
+
 // TODO: actually make this work with callsheet fields, ensure it uses the correct sheet
 // and gets real data for contact date and note
 function sendCustomerReferral(sourceRow = null) {

@@ -251,7 +251,7 @@ function sendProviderOrderConfirmation(sourceTrip = null) {
   const endPoints = getDocProp("apiGetAccess")
   const endPoint = endPoints.find(endpoint => endpoint.name === trip["Source"])
   const params = {endpointPath: "/v1/ProviderOrderConfirmation"}
-  if (!endpoint) {
+  if (!endPoint) {
     ss.toast("Attempting to send confirmation without valid source")
     logError("Invalid provider order confirmation", trip)
     return
@@ -305,12 +305,43 @@ function sendCustomerReferralResponse(customerRow = null) {
   // 
 }
 
-// TODO: Finish function
 function receiveTripStatusChange(tripStatusChange, senderId) {
   log('Telegram #1C', tripStatusChange)
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
-  return {status: "OK", message: "OK", referenceId} 
+  // Trip could be in trips, outside trips, or sent trips
+  // Could be canceled by OrderingClient, Rider, or Provider --> Think about how to handle
+  if (findAndCancelTrip(tripStatusChange, "Trips")) {
+    return {status: "OK", message: "OK", referenceId}
+  } else if (findAndCancelTrip(tripStatusChange, "Outside Trips")) {
+    return {status: "OK", message: "OK", referenceId}
+  } else if (findAndCancelTrip(tripStatusChange, "Sent Trips")) {
+    return {status: "OK", message: "OK", referenceId}
+  } else {
+    logError("Trip Status Change: trip not found", tripStatusChange)
+    return {status: "400", message: `tripTicketId ${tripStatusChange.tripTicketId} not found`, referenceId}
+  }
 }
+
+function findAndCancelTrip(tripStatusChange, sheetName) {
+  const { tripTicketId, status, canceledBy } = tripStatusChange
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const tripSheet = ss.getSheetByName(sheetName)
+  const trips = getRangeValuesAsTable(tripSheet.getDataRange())
+  const trip = trips.find(row => row["Trip ID"] === tripTicketId)
+  if (!trip) {
+    return false
+  }
+  let message = `Trip canceled by ${canceledBy}.`
+  if (tripStatusChange.reasonDescription) {
+    message += ` Reason: ${tripStatusChange.reasonDescription}`
+  }
+  const rowPosition = tripRow._rowPosition
+  const currentRow = sheet.getRange("A" + rowPosition + ":" + rowPosition)
+  currentRow.setBackgroundRGB(255,102,102)
+  currentRow.getCell(1,1).setNote(message)
+  return true
+}
+
 
 function removeDeclinedTrips() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
