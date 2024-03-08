@@ -8,7 +8,9 @@ function getProperties(showPrivateProperties) {
   let filteredDocPropKeys = showPrivateProperties ? docPropKeys : docPropKeys.filter(key => !key.endsWith("_"))
   propsArray = []
   filteredDocPropKeys.forEach(propName => {
-    let thisRow = {name: propName, value: getPropParts(docProps[propName]).value}
+    const propParts = getPropParts(docProps[propName])
+    const value = propParts.type === "object" || propParts.type === "array" ? JSON.stringify(JSON.parse(propParts.value),null,2) : propParts.value
+    let thisRow = {name: propName, value: value}
     if (propName.indexOf(propDescSuffix) === -1) {
       if (docPropKeys.indexOf(propName + propDescSuffix) === -1) {
         thisRow.description = ""
