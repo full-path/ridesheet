@@ -20,6 +20,11 @@ function buildMenus() {
     menuApi.addItem('Get trip requests (Deprecated)', 'sendRequestForTripRequests')
     menuApi.addItem('Send trip requests', 'sendTripRequests')
     menuApi.addItem('Send responses to trip requests', 'sendTripRequestResponses')
+    menuApi.addItem('Respond to pending claims', 'sendClientOrderConfirmations')
+    menuApi.addItem('Confirm scheduled referral trips', 'sendProviderOrderConfirmations')
+    menuApi.addItem('Send referral trip cancelations', 'sendTripCancelations')
+    menuApi.addItem('Send customer referral responses', 'sendCustomerReferralResponses')
+    menuApi.addItem('Send trip task completions', 'sendTripTaskCompletions')
     menuApi.addItem('Refresh outside runs', 'sendRequestForRuns')
     menuApi.addToUi()
   }

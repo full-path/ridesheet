@@ -15,7 +15,10 @@ function sendTripRequests() {
               return false
             }
           }
-        return tripRow["Trip Date"] >= dateToday() && tripRow["Share"] === true && tripRow["Source"] === "" && tripRow["Shared"] === ""
+        return tripRow["Trip Date"] >= dateToday() && 
+               tripRow["Source"] === "" && 
+               tripRow["Shared"] === "" &&
+               (tripRow["Share With"] === endPoint.name || tripRow["Share With"] === 'All')
       })
       // set necessary params: HMAC headers, resource (endpoint), ??
       trips.forEach(trip => {
@@ -71,6 +74,21 @@ function formatTripRequest(trip) {
       estimatedTripDistanceInMiles: trip["Est Miles"]
     }
   }
+  if (trip["Earliest PU Time"]) {
+    formattedTrip.pickupWindowStartTime = {time: combineDateAndTime(trip["Trip Date"], trip["Earliest PU Time"])}
+  }
+  if (trip["Latest PU Time"]) {
+    formattedTrip.pickupWindowEndTime = {time: combineDateAndTime(trip["Trip Date"], trip["Latest PU Time"])}
+  }
+  if (trip["Transfer Trip"]) {
+    formattedTrip.tripTransfer = trip["Transfer Trip"]
+  }
+  if (trip["Pickup Location Notes"]) {
+    formattedTrip.detailedPickupLocationDescription = trip["Pickup Location Notes"]
+  }
+  if (trip["Dropoff Location Notes"]) {
+    formattedTrip.detailedDropoffLocationDescription = trip["Dropoff Location Notes"]
+  }
   return formattedTrip
 }
 
@@ -85,6 +103,15 @@ function getCustomerInfo(trip) {
     address: buildAddressToSpec(customer["Home Address"]),
     phone: buildPhoneNumberToSpec(customer["Phone Number"]),
     customerId: customer["Customer ID"].toString()
+  }
+  if (customer["Date of Birth"]) {
+    formattedCustomer.dateOfBirth = customer["Date of Birth"]
+  } 
+  if (customer["Customer Manifest Notes"]) {
+    formattedCustomer.notesForDriver = customer["Customer Manifest Notes"]
+  }
+  if (customer["Default Service ID"]) {
+    formattedCustomer.fundingEntityId = customer["Default Service ID"]
   }
   return formattedCustomer
 }
@@ -122,9 +149,9 @@ function receiveTripRequestResponse(response, senderId) {
     }
     const rowPosition = trip._rowPosition
     const currentRow = tripSheet.getRange("A" + rowPosition + ":" + rowPosition)
-    const shared = trip["Share"]
+    const shared = trip["Share With"]
     const claimed = trip["Claim Pending"]
-    if (claimed || (!shared)) {
+    if (claimed || !(shared === senderAccount.name)) {
       log(`${senderAccount.name} attempted to claim unavailable trip`, JSON.stringify(response))
       return {status: "400", message: "Trip no longer available", referenceId}
     }
@@ -137,17 +164,44 @@ function receiveTripRequestResponse(response, senderId) {
   }
 }
 
-function sendClientOrderConfirmation(sourceTripRange = null) {
+// Handle sending all confirmations from menu trigger
+function sendClientOrderConfirmations() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet = ss.getSheetByName("Trips")
+    const trips = getRangeValuesAsTable(tripSheet.getDataRange()).filter(tripRow => {
+      return (
+        tripRow["TDS Actions"] ===  'Confirm pending claim' ||
+        tripRow["TDS Actions"] === 'Deny pending claim'
+      )
+    })
+    trips.forEach((trip) => {
+      sendClientOrderConfirmation(trip)
+    })
+  } catch (e) {
+    logError(e)
+  }
+}
+
+// Telegram #2A
+function sendClientOrderConfirmation(sourceTrip = null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const tripSheet = ss.getSheetByName("Trips")
-  const currentTrip = sourceTripRange ? sourceTripRange : getFullRow(tripSheet.getActiveCell())
-  const trip = getRangeValuesAsTable(currentTrip,{includeFormulaValues: false})[0]
+  const trip = sourceTrip ? sourceTrip : getRangeValuesAsTable(getFullRow(tripSheet.getActiveCell()),{includeFormulaValues: false})[0]
   const endPoints = getDocProp("apiGetAccess")
   const endPoint = endPoints.find(endpoint => endpoint.name === trip["Claim Pending"])
   const params = {endpointPath: "/v1/ClientOrderConfirmation"}
   const telegram = {
     tripTicketId: trip["Trip ID"],
-    tripConfirmed: true
+  }
+  if (trip["TDS Actions"] === "Confirm pending claim") {
+    telegram.tripConfirmed = true
+  } else if (trip["TDS Actions" === "Deny pending claim"]) {
+    telegram.tripConfirmed = false
+  } else {
+    ss.toast("Attempting to send client order confirmation for invalid trip")
+    logError("Invalid client order confirmation", trip)
+    return
   }
   try {
     const response = postResource(endPoint, params, JSON.stringify(telegram))
@@ -161,7 +215,7 @@ function sendClientOrderConfirmation(sourceTripRange = null) {
       const sentTripSheet = ss.getSheetByName("Sent Trips")
       const claimTime = new Date()
       const tripColumnNames = getSheetHeaderNames(tripSheet)
-      const ignoredFields = ["Action", "Go", "Share", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By", "Shared"]
+      const ignoredFields = ["Action", "Go", "Trip Result", "Driver ID", "Vehicle ID", "Driver Calendar ID", "Trip Event ID", "Declined By"]
       const sentTripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
       const sentTripData = {
         "Claimed By" : endPoint.name,
@@ -173,6 +227,67 @@ function sendClientOrderConfirmation(sourceTripRange = null) {
       });
       createRow(sentTripSheet, sentTripData)
       tripSheet.deleteRow(trip._rowPosition)
+    } 
+  } catch(e) {
+    logError(e)
+  }
+}
+
+// Handle sending all confirmations from menu trigger
+function sendTripCancelations() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet = ss.getSheetByName("Trips")
+    const trips = getRangeValuesAsTable(tripSheet.getDataRange()).filter(tripRow => {
+      return (
+        tripRow["TDS Actions"] ===  'Cancel Trip'
+      )
+    })
+    trips.forEach((trip) => {
+      sendTripStatusChange(trip)
+    })
+  } catch (e) {
+    logError(e)
+  }
+}
+
+function sendTripStatusChange(sourceTrip = null, tripResult = null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const tripSheet = ss.getSheetByName("Trips")
+  const trip = sourceTrip ? sourceTrip : getRangeValuesAsTable(getFullRow(tripSheet.getActiveCell()),{includeFormulaValues: false})[0]
+  const endPoints = getDocProp("apiGetAccess")
+  // We can send either as ordering client or provider
+  const endPoint = endPoints.find(endpoint =>
+     endpoint.name === trip["Claim Pending"] ||
+     endpoint.name === trip["Source"]
+     )
+  if (!endPoint) {
+    ss.toast('Canceled trip is not a referral')
+    log('Attempted to send a trip status change for invalid trip', trip)
+    return
+  }
+  // TODO: find a way in the UI to indicate who is canceling. Need the option of "Rider"
+  const params = {endpointPath: "/v1/TripStatusChange"}
+  const telegram = {
+    tripTicketId: trip["Trip ID"],
+    status: "Cancel"
+  }
+  if (tripResult) {
+    telegram.canceledBy = "Rider"
+    telegram.reasonDescription = tripResult
+  } else if (trip["Claim Pending"]) {
+    telegram.canceledBy = "Ordering Client"
+  } else {
+    telegram.canceledBy = "Provider"
+  }
+  try {
+    const response = postResource(endPoint, params, JSON.stringify(telegram))
+    const responseObject = JSON.parse(response.getContentText())
+    if (responseObject.status && responseObject.status !== "OK") {
+      logError(`Failure to cancel trip with ${endPoint.name}`, responseObject)
+    }
+    else {
+      log(`Trip canceled with ${endPoint.name}`, telegram)
     } 
   } catch(e) {
     logError(e)
@@ -271,6 +386,39 @@ function receiveCustomerReferralResponse(response, senderId) {
   currentRow.getCell(1, statusIndex).setValue(referralResponseType)
   currentRow.getCell(1, referralIndex).setValue(note)
   return {status: "OK", message: "OK", referenceId} 
+}
+
+function receiveTripTaskCompletion(tripTaskCompletion) {
+  log('Telegram #4A', tripTaskCompletion)
+  const referenceId = (Math.floor(Math.random() * 10000000)).toString()
+  const { tripTicketId } = tripTaskCompletion
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const sentTrips = ss.getSheetByName("Sent Trips")
+  const trips = getRangeValuesAsTable(sentTrips.getDataRange())
+  const trip = trips.find(row => row["Trip ID"] === tripTicketId)
+  const rowPosition = trip._rowPosition
+  const currentRow = sentTrips.getRange("A" + rowPosition + ":" + rowPosition)
+  const headers = getSheetHeaderNames(sentTrips)
+  const statusIndex = headers.indexOf("Status") + 1
+  currentRow.getCell(1, statusIndex).setValue("Completed")
+  return {status: "OK", message: "OK", referenceId} 
+}
+
+// Do we have any reason to track the other possible returned values (driver and vehicle info?)
+function receiveProviderOrderConfirmation(response, senderId) {
+  log('Telegram #2B', response)
+  const referenceId = (Math.floor(Math.random() * 10000000)).toString()
+  const { tripTicketId } = response
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const sentTrips = ss.getSheetByName("Sent Trips")
+  const trips = getRangeValuesAsTable(sentTrips.getDataRange())
+  const trip = trips.find(row => row["Trip ID"] === tripTicketId)
+  const rowPosition = trip._rowPosition
+  const currentRow = sentTrips.getRange("A" + rowPosition + ":" + rowPosition)
+  const headers = getSheetHeaderNames(sentTrips)
+  const statusIndex = headers.indexOf("Status") + 1
+  currentRow.getCell(1, statusIndex).setValue("Scheduled")
+  return {status: "OK", message: "OK", referenceId}
 }
 
 function getAllTrips() {

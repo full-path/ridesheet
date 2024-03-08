@@ -123,6 +123,7 @@ function sendTripRequestResponses() {
             }
           }
       } catch (e) {
+        // TODO: Figure out logic to determine if "e" contains a 400-level error
         logError(e)
       }
     })
@@ -170,15 +171,20 @@ function receiveClientOrderConfirmation(confirmation) {
   // Move into trips
   const tripSheet = ss.getSheetByName("Trips")
   const tripColumnNames = getSheetHeaderNames(outsideTrips)
-  const ignoredFields = ["Scheduled PU Time", "Decline", "Claim", "Customer Info", "Pending", "Extra Fields"]
+  const ignoredFields = ["Scheduled PU Time", "Requested PU Time", "Requested DO Time", "Decline", "Claim", "Customer Info", "Pending", "Extra Fields"]
   const tripFields = tripColumnNames.filter(col => !(ignoredFields.includes(col)))
   const tripData = {}
   tripFields.forEach(key => {
    tripData[key] = trip[key]
   });
+  tripData['Customer Name and ID'] = customerSuccess.customerNameAndID
+  tripData['Customer ID'] = customerSuccess.customerId
+  tripData['PU Time'] = trip['Requested PU Time']
+  tripData['DO Time'] = trip['Requested DO Time']
   if (trip['Scheduled PU Time']) {
     tripData['PU Time'] = trip['Scheduled PU Time']
   }
+  // TODO: incorrect/incomplete data is moved over, correct trip is not deleted
   createRow(tripSheet, tripData)
   outsideTrips.deleteRow(trip._rowPosition)
   return {status: "OK", message: "OK", referenceId}
@@ -190,16 +196,15 @@ function addCustomer(customerInfo) {
   const customerRange = customers.getDataRange()
   const allCustomers = getRangeValuesAsTable(customerRange)
   const { customerId, firstLegalName, lastName } = customerInfo
-  const referralId = `Ref:${customerId}`
-  let customer = allCustomers.find(row => row["Customer ID"] === referralId)
+  let customer = allCustomers.find(row => row["Customer ID"] === customerId)
   let customerNameAndID = lastName + ', ' + firstLegalName + ' (' + customerId + ')'
   if (!customer) {
     const newCustomer = {
-      'Customer ID': referralId,
+      'Customer ID': customerId,
       'Customer First Name': firstLegalName,
       'Customer Last Name': lastName,
       'Home Address': buildAddressFromSpec(customerInfo['address']),
-      'Customer Name and ID' : customerNameAndID
+      'Customer Name and ID' : customerNameAndID,
     }
     // TODO: add all the fields!!
     if (customerInfo['mobilePhone'] && customerInfo['phone']) {
@@ -216,7 +221,63 @@ function addCustomer(customerInfo) {
   } else {
     log('Customer ID already exists', customerInfo)
   }
-  return {status: true}
+  return {status: true, customerId: customerId, customerNameAndID}
+}
+
+// Handle sending all confirmations from menu trigger
+function sendProviderOrderConfirmations() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet = ss.getSheetByName("Trips")
+    const trips = getRangeValuesAsTable(tripSheet.getDataRange()).filter(tripRow => {
+      return (
+        tripRow["TDS Actions"] ===  'Confirm scheduled trip'
+      )
+    })
+    trips.forEach((trip) => {
+      sendProviderOrderConfirmation(trip)
+    })
+  } catch (e) {
+    logError(e)
+  }
+}
+
+// Telegram #2B
+function sendProviderOrderConfirmation(sourceTrip = null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const tripSheet = ss.getSheetByName("Trips")
+  const trip = sourceTrip ? sourceTrip : getRangeValuesAsTable(getFullRow(tripSheet.getActiveCell()),{includeFormulaValues: false})[0]
+  const endPoints = getDocProp("apiGetAccess")
+  const endPoint = endPoints.find(endpoint => endpoint.name === trip["Source"])
+  const params = {endpointPath: "/v1/ProviderOrderConfirmation"}
+  if (!endPoint) {
+    ss.toast("Attempting to send confirmation without valid source")
+    logError("Invalid provider order confirmation", trip)
+    return
+  }
+  const telegram = {
+    tripTicketId: trip["Trip ID"],
+    scheduledPickupTime: {time: combineDateAndTime(trip["Trip Date"], trip["PU Time"])},
+    scheduledDropoffTime: {time: combineDateAndTime(trip["Trip Date"], trip["DO Time"])},
+    scheduledPickupPoint: buildAddressToSpec(trip["PU Address"]),
+    scheduledDropoffPoint: buildAddressToSpec(trip["DO Address"]),
+    driverName: trip['Driver ID']
+  }
+  const allVehicles = getRangeValuesAsTable(ss.getSheetByName("Vehicles").getDataRange())
+  const vehicle = allVehicles.find(row => row["Vehicle ID"] === trip["Vehicle ID"])
+  telegram.vehicleInformation = vehicle['Vehicle Name']
+  telegram.hasRamp = vehicle['Has Ramp'] ? true : false
+  telegram.hasLift = vehicle['Has Lift'] ? true : false
+  try {
+    const response = postResource(endPoint, params, JSON.stringify(telegram))
+    const responseObject = JSON.parse(response.getContentText())
+    if (responseObject.status && responseObject.status !== "OK") {
+      logError(`Failure to send trip confirmation to ${endPoint.name}`, responseObject)
+    }
+  } catch(e) {
+    // TODO: figure out how to get message from 400 response
+    logError(e)
+  }
 }
 
 // TODO: Add support for all fields, in particular, add place in sheet to handle
@@ -226,29 +287,194 @@ function addCustomer(customerInfo) {
 function receiveCustomerReferral(customerReferral, senderId) {
   log('Telegram #0A', customerReferral)
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
-  const {customerReferralId, customerContactDate, customerInfo} = customerReferral
-  const customerSuccess = addCustomer(customerInfo)
+  const apiAccounts = getDocProp("apiGiveAccess")
+  const senderAccount = apiAccounts[senderId]
+  const customerSuccess = addReferral(customerReferral, senderAccount)
   if (!customerSuccess.status) {
-    logError('Error confirming trip. Customer Info invalid.', trip)
+    logError('Error with customer referral', customerSuccess)
     return {status: "400", message: customerSuccess.message, referenceId}
   }
   return {status: "OK", message: "OK", referenceId} 
 }
 
-// TODO: Talk over what we want to happen here. I assume we will
-// be adding a referrals sheet, which can have options
-function sendCustomerReferralResponse(customerRow = null) {
-  // Get response value
-  // Get correct endpoint (original sender)
-  // 
+function addReferral(customerReferral, senderAccount) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const customers = ss.getSheetByName('Referrals Received')
+  const { customerInfo, customerReferralId, customerContactDate, note } = customerReferral
+  const newCustomer = {
+    'Source': senderAccount.name,
+    'Referral Date': customerContactDate,
+    'Referral ID': customerReferralId,
+    'Referral Notes': note,
+    'Customer ID': customerInfo.customerId,
+    'Customer First Name': customerInfo.firstLegalName,
+    'Customer Last Name': customerInfo.lastName,
+    'Home Address': buildAddressFromSpec(customerInfo.address),
+    'Customer First Name': customerInfo.firstLegalName,
+    'Customer Middle Name': customerInfo.middleName,
+    'Customer Last Name': customerInfo.lastName,
+    'Customer Nickname': customerInfo.nickName,
+    'Mailing Address': buildAddressFromSpec(customerInfo.mailingBillingAddress),
+    'Home Phone Number': buildPhoneNumberFromSpec(customerInfo.phone),
+    'Cell Phone Number': buildPhoneNumberFromSpec(customerInfo.mobilePhone),
+    'Date of Birth': customerInfo.dateOfBirth,
+    'Gender': customerInfo.gender,
+    'Billing Information': customerInfo.fundingEntityBillingInformation,
+    'Funding Type?': customerInfo.fundingType,
+    'Funding Entity': customerInfo.fundingEntityId,
+    'Low Income?': customerInfo.lowIncome,
+    'Disability?': customerInfo.disability,
+    'Language': customerInfo.language,
+    'Race': customerInfo.race,
+    'Ethnicity': customerInfo.ethnicity,
+    'Email': customerInfo.emailAddress,
+    'Veteran?': customerInfo.veteran,
+    'Caregiver Contact Information': customerInfo.caregiverContactInformation,
+    'Emergency Phone Number': customerInfo.emergencyPhoneNumber,
+    'Emergency Contact Name': customerInfo.emergencyContactName,
+    'Emergency Contact Relationship': customerInfo.emergencyContactRelationship,
+    'Comments About Care Requires': customerInfo.requiredCareComments
+  }
+  createRow(customers, newCustomer)
+  return {status: true}
 }
 
-// TODO: Finish function
+function sendCustomerReferralResponses() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const customerSheet = ss.getSheetByName("Referrals Received")
+    const customers = getRangeValuesAsTable(customerSheet.getDataRange()).filter(row => {
+      return (
+        row["Referral Response"] ===  'Accept' || 
+        row["Referral Response"] === 'Reject'
+      )
+    })
+    customers.forEach((customer) => {
+      sendCustomerReferralResponse(customer)
+    })
+  } catch (e) {
+    logError(e)
+  }
+}
+
+function sendCustomerReferralResponse(customerRow = null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const customerSheet = ss.getSheetByName("Referrals Received")
+  const customer = customerRow ? customerRow : getRangeValuesAsTable(getFullRow(customerSheet.getActiveCell()),{includeFormulaValues: false})[0]
+  const endPoints = getDocProp("apiGetAccess")
+  const endPoint = endPoints.find(endpoint => endpoint.name === customer["Source"])
+  const params = {endpointPath: "/v1/CustomerReferralResponse"}
+  if (!endPoint) {
+    ss.toast("Attempting to send response without valid source")
+    logError("Invalid customer referral", customer)
+    return
+  }
+  const telegram = {
+    customerReferralId: customer["Referral ID"],
+    referralResponseType: customer["Referral Response"] === "Accept" ? "accept" : "reject",
+    note: customer["Response Notes"]
+  }
+  try {
+    const response = postResource(endPoint, params, JSON.stringify(telegram))
+    const responseObject = JSON.parse(response.getContentText())
+    if (responseObject.status && responseObject.status !== "OK") {
+      logError(`Failure to send customer referral response to ${endPoint.name}`, responseObject)
+    }
+  } catch(e) {
+    // TODO: figure out how to get message from 400 response
+    logError(e)
+  }
+}
+
 function receiveTripStatusChange(tripStatusChange, senderId) {
   log('Telegram #1C', tripStatusChange)
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
-  return {status: "OK", message: "OK", referenceId} 
+  // Trip could be in trips, outside trips, or sent trips
+  // Could be canceled by OrderingClient, Rider, or Provider --> Think about how to handle
+  if (findAndCancelTrip(tripStatusChange, "Trips")) {
+    return {status: "OK", message: "OK", referenceId}
+  } else if (findAndCancelTrip(tripStatusChange, "Outside Trips")) {
+    return {status: "OK", message: "OK", referenceId}
+  } else if (findAndCancelTrip(tripStatusChange, "Sent Trips")) {
+    return {status: "OK", message: "OK", referenceId}
+  } else {
+    logError("Trip Status Change: trip not found", tripStatusChange)
+    return {status: "400", message: `tripTicketId ${tripStatusChange.tripTicketId} not found`, referenceId}
+  }
 }
+
+function findAndCancelTrip(tripStatusChange, sheetName) {
+  const { tripTicketId, status, canceledBy } = tripStatusChange
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const tripSheet = ss.getSheetByName(sheetName)
+  const trips = getRangeValuesAsTable(tripSheet.getDataRange())
+  const trip = trips.find(row => row["Trip ID"] === tripTicketId)
+  if (!trip) {
+    return false
+  }
+  let message = `Trip canceled by ${canceledBy}.`
+  if (tripStatusChange.reasonDescription) {
+    message += ` Reason: ${tripStatusChange.reasonDescription}`
+  }
+  const rowPosition = trip._rowPosition
+  const currentRow = sheet.getRange("A" + rowPosition + ":" + rowPosition)
+  currentRow.setBackgroundRGB(255,102,102)
+  currentRow.getCell(1,1).setNote(message)
+  return true
+}
+
+function sendTripTaskCompletions() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const tripSheet = ss.getSheetByName("Trip Review")
+    const trips = getRangeValuesAsTable(tripSheet.getDataRange()).filter(tripRow => tripRow["Share Result (Referrer)"] ===  true)
+    trips.forEach((trip) => {
+      sendTripTaskCompletion(trip)
+    })
+  } catch (e) {
+    logError(e)
+  }
+} 
+
+function sendTripTaskCompletion(sourceTrip = null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const tripSheet = ss.getSheetByName("Trips")
+  const trip = sourceTrip ? sourceTrip : getRangeValuesAsTable(getFullRow(tripSheet.getActiveCell()),{includeFormulaValues: false})[0]
+  const endPoints = getDocProp("apiGetAccess")
+  const endPoint = endPoints.find(endpoint => endpoint.name === trip["Source"])
+
+  // if Trip Result is not completed, we want to send a cancelation message instead
+  if (trip["Trip Result"] && trip["Trip Result"] !== "Completed") {
+    sendTripStatusChange(trip, trip["Trip Result"])
+    return
+  }
+  if (!trip["Trip Result"]) {
+    ss.toast("Attempting to send incomplete trip")
+    return
+  }
+  const params = {endpointPath: "/v1/TripTaskCompletion"}
+  if (!endPoint) {
+    ss.toast("Attempting to send confirmation without valid source")
+    logError("Invalid provider order confirmation", trip)
+    return
+  }
+  const telegram = {
+    tripTicketId: trip["Trip ID"],
+    performedDistance: trip["Est Miles"],
+    performedDistanceUnit: "Miles"
+  }
+  try {
+    const response = postResource(endPoint, params, JSON.stringify(telegram))
+    const responseObject = JSON.parse(response.getContentText())
+    if (responseObject.status && responseObject.status !== "OK") {
+      logError(`Failure to send trip completion to ${endPoint.name}`, responseObject)
+    }
+  } catch(e) {
+    // TODO: figure out how to get message from 400 response
+    logError(e)
+  }
+}
+
 
 function removeDeclinedTrips() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()

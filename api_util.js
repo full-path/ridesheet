@@ -5,6 +5,9 @@
 // as much information as can supplied from Google Maps based on that
 // lat/long (usually just city, state and country)
 function buildAddressToSpec(address) {
+  if (!address) {
+    return null
+  }
   try {
     const rawAddressParts = parseAddress(address)
     let result = {
@@ -42,6 +45,9 @@ function buildAddressToSpec(address) {
 }
 
 function buildAddressFromSpec(address) {
+  if (!address) {
+    return null
+  }
   try {
     if (address.formattedAddress) {
       return address.formattedAddress
@@ -60,6 +66,9 @@ function buildTimeFromSpec(date, time) {
 //TODO: This is not very robust since the country code can be two digits
 function buildPhoneNumberToSpec(phoneNumber, countryCode = "+1") {
   // Remove all non-digit characters from the input
+  if (!phoneNumber) {
+    return null
+  }
   const cleaned = phoneNumber.replace(/\D/g, '')
   if (cleaned.length === 10) {
     return `${countryCode}${cleaned}`
@@ -72,6 +81,9 @@ function buildPhoneNumberToSpec(phoneNumber, countryCode = "+1") {
 }
 
 function buildPhoneNumberFromSpec(e164Number) {
+  if (!e164Number) {
+    return null
+  }
   if (!e164Number.startsWith('+')) {
     logError('Invalid E.164 phone number format - missing plus sign');
     return e164Number
@@ -84,20 +96,6 @@ function buildPhoneNumberFromSpec(e164Number) {
     logError('Invalid E.164 phone number format - incorrect number of digits');
     return e164Number
   }
-}
-
-function buildPhoneNumberFromSpec(value) {
-  try {
-    if (!value) return ""
-    const v = value.toString()
-
-    if (v.length === 7) return `${v.slice(0,3)}-${v.slice(-4)}`
-    if (v.length === 10) return `(${v.slice(0,3)})${v.slice(3,6)}-${v.slice(-4)}`
-    if (v.length === 11 && v.slice(0,1) === '1') return `1(${v.slice(1,4)})${v.slice(4,7)}-${v.slice(-4)}`
-    if (v.length > 11 && v.slice(0,1) === '1') return `1(${v.slice(1,4)})${v.slice(4,7)}-${v.slice(7,11)} x${v.slice(11)}`
-    if (v.length > 10) return `(${v.slice(0,3)})${v.slice(3,6)}-${v.slice(6,10)} x${v.slice(10)}`
-    return v
-  } catch(e) { logError(e) }
 }
 
 function urlQueryString(params) {

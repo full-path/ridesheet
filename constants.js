@@ -47,8 +47,8 @@ const sheetsWithHeaders = [
   "Vehicles",
   "Drivers",
   "Services",
-  "Outside Trips",
-  "Lookups"
+  "Lookups",
+  "Outside Trips"
 ]
 
 const defaultDocumentProperties = {
@@ -528,12 +528,10 @@ const defaultColumns = {
   "Outside Trips": {
     "Decline": {dataValidation: {
       criteriaType: "CHECKBOX",
-      checkedValue: "TRUE",
       allowInvalid: true,
     }},
     "Claim": {dataValidation: {
       criteriaType: "CHECKBOX",
-      checkedValue: "TRUE",
       allowInvalid: true,
     }},
     "Trip Date": {
@@ -618,13 +616,7 @@ const defaultColumns = {
         helpText: "Value must be a valid trip result.",
       },
     },
-    "Share": {
-      dataValidation: {
-        criteriaType: "CHECKBOX",
-        checkedValue: "TRUE",
-        allowInvalid: true,
-      }
-    },
+    "Share With": {},
     "Actual PU Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -1163,7 +1155,7 @@ const defaultNamedRanges = {
   },
   "codeCheckSourceOnShare": {
     "sheetName":"Trips",
-    "headerName": "Share"
+    "headerName": "Share With"
   },
   "codeVerifySourceOnEdit": {
     "sheetName":"Trips",
