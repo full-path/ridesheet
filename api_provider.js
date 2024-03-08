@@ -190,7 +190,7 @@ function receiveClientOrderConfirmation(confirmation) {
   return {status: "OK", message: "OK", referenceId}
 }
 
-function addCustomer(customerInfo, endPoint = null) {
+function addCustomer(customerInfo) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const customers = ss.getSheetByName('Customers')
   const customerRange = customers.getDataRange()
@@ -205,9 +205,6 @@ function addCustomer(customerInfo, endPoint = null) {
       'Customer Last Name': lastName,
       'Home Address': buildAddressFromSpec(customerInfo['address']),
       'Customer Name and ID' : customerNameAndID,
-      'Customer Referral ID' : customerInfo.customerReferralId,
-      'Referral Notes' : customerInfo.note,
-      'Customer Contact Date' : customerInfo.customerContactDate
     }
     // TODO: add all the fields!!
     if (customerInfo['mobilePhone'] && customerInfo['phone']) {
@@ -219,9 +216,6 @@ function addCustomer(customerInfo, endPoint = null) {
       newCustomer['Phone Number'] = buildPhoneNumberFromSpec(customerInfo['phone'])
     } else {
       return {status: false, message: 'Missing phone number'}
-    }
-    if (endPoint) {
-      newCustomer['Source'] = endPoint.name
     }
     createRow(customers, newCustomer)
   } else {
@@ -293,10 +287,9 @@ function sendProviderOrderConfirmation(sourceTrip = null) {
 function receiveCustomerReferral(customerReferral, senderId) {
   log('Telegram #0A', customerReferral)
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
-  const { customerInfo } = customerReferral
   const apiAccounts = getDocProp("apiGiveAccess")
   const senderAccount = apiAccounts[senderId]
-  const customerSuccess = addCustomer(customerInfo, senderAccount)
+  const customerSuccess = addReferral(customerReferral, senderAccount)
   if (!customerSuccess.status) {
     logError('Error with customer referral', customerSuccess)
     return {status: "400", message: customerSuccess.message, referenceId}
@@ -304,10 +297,52 @@ function receiveCustomerReferral(customerReferral, senderId) {
   return {status: "OK", message: "OK", referenceId} 
 }
 
+function addReferral(customerReferral, senderAccount) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const customers = ss.getSheetByName('Referrals Received')
+  const { customerInfo, customerReferralId, customerContactDate, note } = customerReferral
+  const newCustomer = {
+    'Source': senderAccount.name,
+    'Referral Date': customerContactDate,
+    'Referral ID': customerReferralId,
+    'Referral Notes': note,
+    'Customer ID': customerInfo.customerId,
+    'Customer First Name': customerInfo.firstLegalName,
+    'Customer Last Name': customerInfo.lastName,
+    'Home Address': buildAddressFromSpec(customerInfo.address),
+    'Customer First Name': customerInfo.firstLegalName,
+    'Customer Middle Name': customerInfo.middleName,
+    'Customer Last Name': customerInfo.lastName,
+    'Customer Nickname': customerInfo.nickName,
+    'Mailing Address': buildAddressFromSpec(customerInfo.mailingBillingAddress),
+    'Home Phone Number': buildPhoneNumberFromSpec(customerInfo.phone),
+    'Cell Phone Number': buildPhoneNumberFromSpec(customerInfo.mobilePhone),
+    'Date of Birth': customerInfo.dateOfBirth,
+    'Gender': customerInfo.gender,
+    'Billing Information': customerInfo.fundingEntityBillingInformation,
+    'Funding Type?': customerInfo.fundingType,
+    'Funding Entity': customerInfo.fundingEntityId,
+    'Low Income?': customerInfo.lowIncome,
+    'Disability?': customerInfo.disability,
+    'Language': customerInfo.language,
+    'Race': customerInfo.race,
+    'Ethnicity': customerInfo.ethnicity,
+    'Email': customerInfo.emailAddress,
+    'Veteran?': customerInfo.veteran,
+    'Caregiver Contact Information': customerInfo.caregiverContactInformation,
+    'Emergency Phone Number': customerInfo.emergencyPhoneNumber,
+    'Emergency Contact Name': customerInfo.emergencyContactName,
+    'Emergency Contact Relationship': customerInfo.emergencyContactRelationship,
+    'Comments About Care Requires': customerInfo.requiredCareComments
+  }
+  createRow(customers, newCustomer)
+  return {status: true}
+}
+
 function sendCustomerReferralResponses() {
   try { 
     const ss = SpreadsheetApp.getActiveSpreadsheet()
-    const customerSheet = ss.getSheetByName("Customers")
+    const customerSheet = ss.getSheetByName("Referrals Received")
     const customers = getRangeValuesAsTable(customerSheet.getDataRange()).filter(row => {
       return (
         row["Referral Response"] ===  'Accept' || 
@@ -322,25 +357,22 @@ function sendCustomerReferralResponses() {
   }
 }
 
-// TODO: Talk over what we want to happen here. I assume we will
-// be adding a referrals sheet, which can have options
 function sendCustomerReferralResponse(customerRow = null) {
-  // Get response value
-  // Get correct endpoint (original sender)
   const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const customerSheet = ss.getSheetByName("Customers")
+  const customerSheet = ss.getSheetByName("Referrals Received")
   const customer = customerRow ? customerRow : getRangeValuesAsTable(getFullRow(customerSheet.getActiveCell()),{includeFormulaValues: false})[0]
   const endPoints = getDocProp("apiGetAccess")
   const endPoint = endPoints.find(endpoint => endpoint.name === customer["Source"])
   const params = {endpointPath: "/v1/CustomerReferralResponse"}
   if (!endPoint) {
     ss.toast("Attempting to send response without valid source")
-    logError("Invalid provider order confirmation", trip)
+    logError("Invalid customer referral", customer)
     return
   }
   const telegram = {
     customerReferralId: customer["Customer Referral Id"],
-    referralResponseType: customer["Referral Response"] === "Accept" ? "accept" : "reject"
+    referralResponseType: customer["Referral Response"] === "Accept" ? "accept" : "reject",
+    note: customer["Response Notes"]
   }
   try {
     const response = postResource(endPoint, params, JSON.stringify(telegram))

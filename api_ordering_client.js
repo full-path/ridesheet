@@ -151,7 +151,7 @@ function receiveTripRequestResponse(response, senderId) {
     const currentRow = tripSheet.getRange("A" + rowPosition + ":" + rowPosition)
     const shared = trip["Share With"]
     const claimed = trip["Claim Pending"]
-    if (claimed || (!shared === senderAccount.name)) {
+    if (claimed || !(shared === senderAccount.name)) {
       log(`${senderAccount.name} attempted to claim unavailable trip`, JSON.stringify(response))
       return {status: "400", message: "Trip no longer available", referenceId}
     }
@@ -341,9 +341,9 @@ function receiveCustomerReferralResponse(response, senderId) {
 }
 
 function receiveTripTaskCompletion(tripTaskCompletion) {
-  log('Telegram #4A', response)
+  log('Telegram #4A', tripTaskCompletion)
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
-  const { tripTicketId } = response
+  const { tripTicketId } = tripTaskCompletion
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sentTrips = ss.getSheetByName("Sent Trips")
   const trips = getRangeValuesAsTable(sentTrips.getDataRange())
