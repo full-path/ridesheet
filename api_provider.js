@@ -370,7 +370,7 @@ function sendCustomerReferralResponse(customerRow = null) {
     return
   }
   const telegram = {
-    customerReferralId: customer["Customer Referral Id"],
+    customerReferralId: customer["Referral ID"],
     referralResponseType: customer["Referral Response"] === "Accept" ? "accept" : "reject",
     note: customer["Response Notes"]
   }
