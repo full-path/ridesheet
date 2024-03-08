@@ -5,6 +5,9 @@
 // as much information as can supplied from Google Maps based on that
 // lat/long (usually just city, state and country)
 function buildAddressToSpec(address) {
+  if (!address) {
+    return null
+  }
   try {
     const rawAddressParts = parseAddress(address)
     let result = {
@@ -42,6 +45,9 @@ function buildAddressToSpec(address) {
 }
 
 function buildAddressFromSpec(address) {
+  if (!address) {
+    return null
+  }
   try {
     if (address.formattedAddress) {
       return address.formattedAddress
@@ -60,6 +66,9 @@ function buildTimeFromSpec(date, time) {
 //TODO: This is not very robust since the country code can be two digits
 function buildPhoneNumberToSpec(phoneNumber, countryCode = "+1") {
   // Remove all non-digit characters from the input
+  if (!phoneNumber) {
+    return null
+  }
   const cleaned = phoneNumber.replace(/\D/g, '')
   if (cleaned.length === 10) {
     return `${countryCode}${cleaned}`
@@ -72,6 +81,9 @@ function buildPhoneNumberToSpec(phoneNumber, countryCode = "+1") {
 }
 
 function buildPhoneNumberFromSpec(e164Number) {
+  if (!e164Number) {
+    return null
+  }
   if (!e164Number.startsWith('+')) {
     logError('Invalid E.164 phone number format - missing plus sign');
     return e164Number
