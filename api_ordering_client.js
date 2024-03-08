@@ -179,11 +179,27 @@ function sendClientOrderConfirmation(sourceTripRange = null) {
   }
 }
 
+function sendCustomerReferrals() {
+  try { 
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const refSheet = ss.getSheetByName("TDS Referrals")
+    const referrals = getRangeValuesAsTable(refSheet.getDataRange()).filter(row => {
+      return (
+        !!row["Agency"]
+      )
+    })
+    referrals.forEach((trip) => {
+      sendCustomerReferral(referral)
+    })
+  } catch (e) {
+    logError(e)
+  }
+}
+
 function sendCustomerReferral(sourceRow = null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const referralSheet = ss.getSheetByName("TDS Referrals")
-  const currentReferral = sourceRow ? sourceRow : getFullRow(referralSheet.getActiveCell())
-  const referral = getRangeValuesAsTable(currentReferral,{includeFormulaValues: false})[0]
+  const referral = sourceRow ? sourceRow : getRangeValuesAsTable(getFullRow(referralSheet.getActiveCell()),{includeFormulaValues: false})[0]
   const customerId = referral["Customer ID"]
   const referralDateString = referral["Referral Date"].toISOString();
   const agencyCode = referral["Agency"].replace(/[^A-Za-z]/g, '').toLowerCase()
@@ -224,7 +240,7 @@ function sendCustomerReferral(sourceRow = null) {
   }
   // Get the endpoint (referral provider) from the sheet
   const endPoints = getDocProp("apiGetAccess")
-  const endPoint = endPoints[0]
+  const endPoint = endPoints.find(endpoint => endpoint.name === referral["Agency"])
   try {
     const response = postResource(endPoint, params, JSON.stringify(telegram))
     const responseObject = JSON.parse(response.getContentText())
@@ -242,6 +258,18 @@ function sendCustomerReferral(sourceRow = null) {
 function receiveCustomerReferralResponse(response, senderId) {
   log('Telegram #0B', response)
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
+  const { customerReferralId, referralResponseType, note } = response
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const referralSheet = ss.getSheetByName("TDS Referrals")
+  const referrals = getRangeValuesAsTable(referralSheet.getDataRange())
+  const referral = referrals.find(row => row["Customer Referral ID"] === customerReferralId)
+  const rowPosition = referral._rowPosition
+  const currentRow = referralSheet.getRange("A" + rowPosition + ":" + rowPosition)
+  const headers = getSheetHeaderNames(referralSheet)
+  const statusIndex = headers.indexOf("Referral Response") + 1
+  const referralIndex = headers.indexOf("Response Notes") + 1
+  currentRow.getCell(1, statusIndex).setValue(referralResponseType)
+  currentRow.getCell(1, referralIndex).setValue(note)
   return {status: "OK", message: "OK", referenceId} 
 }
 
