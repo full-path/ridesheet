@@ -188,7 +188,7 @@ function sendCustomerReferrals() {
         !!row["Agency"]
       )
     })
-    referrals.forEach((trip) => {
+    referrals.forEach((referral) => {
       sendCustomerReferral(referral)
     })
   } catch (e) {
