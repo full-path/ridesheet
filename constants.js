@@ -390,7 +390,14 @@ const defaultColumns = {
         helpText: "Value must be a valid service ID.",
       },
     },
-    "Guests": {},
+    "Guests": {
+      dataValidation: {
+        criteriaType: "NUMBER_GREATER_THAN_OR_EQUAL_TO",
+        args: [0],
+        allowInvalid: false,
+        helpText: "Value must be the number of guests (0 or more).",
+      },
+    },
     "Mobility Factors": {},
     "Notes": {},
     "Est Hours": {
@@ -693,7 +700,14 @@ const defaultColumns = {
         helpText: "Value must be a valid service ID.",
       },
     },
-    "Guests": {},
+    "Guests": {
+      dataValidation: {
+        criteriaType: "NUMBER_GREATER_THAN_OR_EQUAL_TO",
+        args: [0],
+        allowInvalid: false,
+        helpText: "Value must be the number of guests (0 or more).",
+      },
+    },
     "Mobility Factors": {},
     "Notes": {},
     "Est Hours": {
@@ -874,7 +888,14 @@ const defaultColumns = {
         helpText: "Value must be a valid service ID.",
       },
     },
-    "Guests": {},
+    "Guests": {
+      dataValidation: {
+        criteriaType: "NUMBER_GREATER_THAN_OR_EQUAL_TO",
+        args: [0],
+        allowInvalid: false,
+        helpText: "Value must be the number of guests (0 or more).",
+      },
+    },
     "Mobility Factors": {},
     "Notes": {},
     "Est Hours": {
