@@ -300,7 +300,7 @@ function sendCustomerReferrals() {
     const refSheet = ss.getSheetByName("TDS Referrals")
     const referrals = getRangeValuesAsTable(refSheet.getDataRange()).filter(row => {
       return (
-        !!row["Agency"]
+        (!!row["Agency"]) && !row["Referral ID"]
       )
     })
     referrals.forEach((referral) => {
@@ -353,6 +353,11 @@ function sendCustomerReferral(sourceRow = null) {
       customerId: referral["Customer ID"].toString()
     }
   }
+  const rowPosition = referral._rowPosition
+  const currentRow = referralSheet.getRange("A" + rowPosition + ":" + rowPosition)
+  const headers = getSheetHeaderNames(referralSheet)
+  const colIndex = headers.indexOf("Referral ID") + 1
+  currentRow.getCell(1, colIndex).setValue(referralId)
   // Get the endpoint (referral provider) from the sheet
   const endPoints = getDocProp("apiGetAccess")
   const endPoint = endPoints.find(endpoint => endpoint.name === referral["Agency"])
