@@ -378,19 +378,23 @@ function sendCustomerReferral(sourceRow = null) {
 function receiveCustomerReferralResponse(response, senderId) {
   log('Telegram #0B', response)
   const referenceId = (Math.floor(Math.random() * 10000000)).toString()
-  const { customerReferralId, referralResponseType, note } = response
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const referralSheet = ss.getSheetByName("TDS Referrals")
-  const referrals = getRangeValuesAsTable(referralSheet.getDataRange())
-  const referral = referrals.find(row => row["Customer Referral ID"] === customerReferralId)
-  const rowPosition = referral._rowPosition
-  const currentRow = referralSheet.getRange("A" + rowPosition + ":" + rowPosition)
-  const headers = getSheetHeaderNames(referralSheet)
-  const statusIndex = headers.indexOf("Referral Response") + 1
-  const referralIndex = headers.indexOf("Response Notes") + 1
-  currentRow.getCell(1, statusIndex).setValue(referralResponseType)
-  currentRow.getCell(1, referralIndex).setValue(note)
-  return {status: "OK", message: "OK", referenceId} 
+  try {
+    const { customerReferralId, referralResponseType, note } = response
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const referralSheet = ss.getSheetByName("TDS Referrals")
+    const referrals = getRangeValuesAsTable(referralSheet.getDataRange())
+    const referral = referrals.find(row => row["Referral ID"] === customerReferralId)
+    const rowPosition = referral._rowPosition
+    const currentRow = referralSheet.getRange("A" + rowPosition + ":" + rowPosition)
+    const headers = getSheetHeaderNames(referralSheet)
+    const statusIndex = headers.indexOf("Referral Response") + 1
+    const referralIndex = headers.indexOf("Response Notes") + 1
+    currentRow.getCell(1, statusIndex).setValue(referralResponseType)
+    currentRow.getCell(1, referralIndex).setValue(note)
+    return {status: "OK", message: "OK", referenceId} 
+  } catch(e) {
+    return {status: "400", message: "Unknown error", referenceId}
+  }
 }
 
 function receiveTripTaskCompletion(tripTaskCompletion) {
