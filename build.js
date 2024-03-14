@@ -297,8 +297,8 @@ function getValidationRule(ruleAttributes) {
       args = [values, dropdown]
       builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     } else if (criteriaName === "CHECKBOX") {
-      if (ruleAttributes.hasOwnProperty("checkedValue")) {
-        if (ruleAttributes.hasOwnProperty("uncheckedValue")) {
+      if (Object.hasOwn(ruleAttributes,"checkedValue")) {
+        if (Object.hasOwn(ruleAttributes,"uncheckedValue")) {
           builder = SpreadsheetApp.newDataValidation().requireCheckbox(ruleAttributes.checkedValue, ruleAttributes.uncheckedValue).setAllowInvalid(allowInvalid)
         } else {
           builder = SpreadsheetApp.newDataValidation().requireCheckbox(ruleAttributes.checkedValue).setAllowInvalid(allowInvalid)
@@ -306,13 +306,12 @@ function getValidationRule(ruleAttributes) {
       } else {
         builder = SpreadsheetApp.newDataValidation().requireCheckbox().setAllowInvalid(allowInvalid)
       }
-    } else if (criteriaName === "TEXT_IS_VALID_EMAIL") {
-      builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
-    } else if (criteriaName === "DATE_IS_VALID_DATE") {
+    } else {
+      args = ruleAttributes.args || args
       builder = SpreadsheetApp.newDataValidation().withCriteria(criteria, args).setAllowInvalid(allowInvalid)
     }
     if (builder) {
-      if (ruleAttributes.hasOwnProperty("helpText")) {
+      if (Object.hasOwn(ruleAttributes,"helpText")) {
         builder = builder.setHelpText(ruleAttributes.helpText)
       }
       let rule = builder.build()
