@@ -469,6 +469,13 @@ function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1, overwr
   } catch(e) { logError(e) }
 }
 
+function setValuesForRow(newValues, rowNumber, sheet, {headerRowPosition = 1, overwriteAll = false} = {}) {
+  try {
+    const range = sheet.getRange(rowNumber + ":" + rowNumber)
+    return setValuesByHeaderNames([newValues], range, {headerRowPosition: headerRowPosition, overwriteAll: overwriteAll})
+  } catch(e) { logError(e) }
+}
+
 function appendValuesByHeaderNames(values, sheet) {
   try {
     const sheetHeaderColumnNames = getSheetHeaderNames(sheet)
