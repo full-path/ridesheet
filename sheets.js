@@ -469,10 +469,28 @@ function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1, overwr
   } catch(e) { logError(e) }
 }
 
+// New values are in a hash column-name/value pairs
+// {"Customer Last Name": "Nguyen", "Customer First Name": "Nicholas"}
+// returns the range for the full row, for chaining
 function setValuesForRow(newValues, rowNumber, sheet, {headerRowPosition = 1, overwriteAll = false} = {}) {
   try {
     const range = sheet.getRange(rowNumber + ":" + rowNumber)
     return setValuesByHeaderNames([newValues], range, {headerRowPosition: headerRowPosition, overwriteAll: overwriteAll})
+  } catch(e) { logError(e) }
+}
+
+// New values are in a nested hash with the row number as the key of the outer hash:
+// {2: {"Customer Last Name": "Nguyen"}, 5: {"Customer First Name": "Nicholas"}}
+// returns the range for all columns from the first row passed in to the last, for chaining
+function setValuesForRows(newValues, sheet, {headerRowPosition = 1, overwriteAll = false} = {}) {
+  try {
+    const rowNumbers = Object.keys(newValues)
+    const firstRowNum = Math.min(...rowNumbers)
+    const lastRowNum = Math.max(...rowNumbers)
+    const range = sheet.getRange(firstRowNum + ":" + lastRowNum)
+    const valuesArray = Array(lastRowNum - firstRowNum + 1).fill({})
+    rowNumbers.forEach((rowNumber) => valuesArray[rowNumber - firstRowNum] = newValues[rowNumber])
+    return setValuesByHeaderNames(valuesArray, range, {headerRowPosition: headerRowPosition, overwriteAll: overwriteAll})
   } catch(e) { logError(e) }
 }
 
