@@ -13,7 +13,7 @@ function buildMenus() {
   settingsMenu.addItem('Refresh document properties sheet', 'presentProperties')
   settingsMenu.addItem('Scheduled calendar updates', 'presentCalendarTrigger')
   settingsMenu.addItem('Repair sheets', 'repairSheets')
-  settingsMenu.addItem('Rebuild Metadata', 'rebuildAllMetadata')
+  settingsMenu.addItem('Rebuild metadata', 'rebuildAllMetadata')
   menu.addSubMenu(settingsMenu)
   if (getDocProp("apiShowMenuItems")) {
     const menuApi = ui.createMenu('Ride Sharing')
