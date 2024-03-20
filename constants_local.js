@@ -50,6 +50,17 @@ const localNamedRanges = {
     "sheetName":"Runs",
     "headerName":"Run ID"
   },
+  "formulaTripReviewCoreHeaders": {
+    "sheetName":"Trip Review",
+    "startHeaderName":"Trip Date",
+    "endHeaderName":"Run ID",
+    "headerOnly": true
+  },
+  "formulaTripReviewCoreData": {
+    "sheetName":"Trip Review",
+    "startHeaderName":"Trip Date",
+    "endHeaderName":"Run ID",
+  },
   "formulaRunsCoreHeaders": {
     "sheetName":"Runs",
     "startHeaderName":"Run Date",
@@ -111,6 +122,58 @@ const localNamedRanges = {
   },
   "formulaRunReviewTotalDeadheadMiles": {
     "sheetName":"Run Review",
+    "headerName":"Total Deadhead Miles"
+  },
+    "formulaRunArchiveRunDate": {
+    "sheetName":"Run Archive",
+    "headerName":"Run Date"
+  },
+  "formulaRunArchiveDriverId": {
+    "sheetName":"Run Archive",
+    "headerName":"Driver ID"
+  },
+  "formulaRunArchiveVehicleId": {
+    "sheetName":"Run Archive",
+    "headerName":"Vehicle ID"
+  },
+  "formulaRunArchiveRunId": {
+    "sheetName":"Run Archive",
+    "headerName":"Run ID"
+  },
+  "formulaRunArchiveFareRevenue": {
+    "sheetName":"Run Archive",
+    "headerName":"Fare Revenue"
+  },
+  "formulaRunArchiveDonationRevenue": {
+    "sheetName":"Run Archive",
+    "headerName":"Donation Revenue"
+  },
+  "formulaRunArchiveTicketRevenue": {
+    "sheetName":"Run Archive",
+    "headerName":"Ticket Revenue"
+  },
+  "formulaRunArchiveOdoStart": {
+    "sheetName":"Run Archive",
+    "headerName":"Odometer Start"
+  },
+  "formulaRunArchiveOdoEnd": {
+    "sheetName":"Run Archive",
+    "headerName":"Odometer End"
+  },
+  "formulaRunArchiveStartingDeadheadMiles": {
+    "sheetName":"Run Archive",
+    "headerName":"Starting Deadhead Miles"
+  },
+  "formulaRunArchiveEndingDeadheadMiles": {
+    "sheetName":"Run Archive",
+    "headerName":"Ending Deadhead Miles"
+  },
+  "formulaRunArchiveTotalVehicleMiles": {
+    "sheetName":"Run Archive",
+    "headerName":"Total Vehicle Miles"
+  },
+  "formulaRunArchiveTotalDeadheadMiles": {
+    "sheetName":"Run Archive",
     "headerName":"Total Deadhead Miles"
   },
   "codeFormatAddress9": {
@@ -201,7 +264,7 @@ const localColumns = {
     "SDR": {
       dataValidation: {
         criteriaType: "CHECKBOX",
-        checkedValue: "TRUE",
+        checkedValue: "SDR",
         allowInvalid: false,
       },
     },
@@ -273,7 +336,7 @@ const localColumns = {
     "SDR": {
       dataValidation: {
         criteriaType: "CHECKBOX",
-        checkedValue: "TRUE",
+        checkedValue: "SDR",
         allowInvalid: true,
       },
     },
@@ -327,8 +390,8 @@ const localColumns = {
     "Ticket Revenue": {
       numberFormat: "$0.00"
     },
-    "Total Trip Fares": {
-      headerFormula: `={"Total Trip Fares";MAP(formulaRunReviewRunDate,formulaRunReviewDriverId,formulaRunReviewVehicleId,formulaRunReviewRunId,LAMBDA(tripDate,driverId,vehicleId,runId,QUERY_TRIP_FARE_SUM(tripDate,driverId,vehicleID,runId,'Trip Review'!A2:S,'Trip Review'!A1:S1)))}`
+    "Total Completed Trip Fares": {
+      headerFormula: `={"Total Completed Trip Fares";MAP(formulaRunReviewRunDate,formulaRunReviewDriverId,formulaRunReviewVehicleId,formulaRunReviewRunId,LAMBDA(tripDate,driverId,vehicleId,runId,QUERY_TRIP_FARE_SUM(tripDate,driverId,vehicleID,runId,formulaTripReviewCoreData,formulaTripReviewCoreHeaders)))}`
     },
     "Total Revenue": {
       headerFormula: `={"Total Revenue";MAP(formulaRunReviewFareRevenue,formulaRunReviewDonationRevenue,formulaRunReviewTicketRevenue,LAMBDA(source1,source2,source3,IF(COUNTA(source1,source2,source3) < 3,"",SUM(source1,source2,source3))))}`
@@ -337,7 +400,7 @@ const localColumns = {
       headerFormula: `={"Total Vehicle Miles";MAP(formulaRunReviewOdoStart,formulaRunReviewOdoEnd,LAMBDA(startOdo,endOdo,IF(COUNTA(startOdo,endOdo) < 2,"",endOdo-startOdo)))}`
     },
     "Total Deadhead Miles": {
-      headerFormula: `={"Total Vehicle Miles";MAP(formulaRunReviewOdoStart,formulaRunReviewOdoEnd,LAMBDA(startOdo,endOdo,IF(COUNTA(startOdo,endOdo) < 2,"",endOdo-startOdo)))}`
+      headerFormula: `={"Total Deadhead Miles";MAP(formulaRunReviewStartingDeadheadMiles,formulaRunReviewEndingDeadheadMiles,LAMBDA(start,end,IF(COUNTA(start,end) < 2,"",start+end)))}`
     },
     "Revenue Miles": {
       headerFormula: `={"Revenue Miles";MAP(formulaRunReviewTotalVehicleMiles,formulaRunReviewTotalDeadheadMiles,LAMBDA(vehicleMiles,deadheadMiles,IF(COUNTBLANK(vehicleMiles,deadheadMiles) > 0,"",vehicleMiles-deadheadMiles)))}`
@@ -363,7 +426,7 @@ const localColumns = {
     "SDR": {
       dataValidation: {
         criteriaType: "CHECKBOX",
-        checkedValue: "TRUE",
+        checkedValue: "SDR",
         allowInvalid: false,
       },
     },
@@ -416,6 +479,18 @@ const localColumns = {
     },
     "Ticket Revenue": {
       numberFormat: "$0.00"
+    },
+    "Total Revenue": {
+      headerFormula: `={"Total Revenue";MAP(formulaRunArchiveFareRevenue,formulaRunArchiveDonationRevenue,formulaRunArchiveTicketRevenue,LAMBDA(source1,source2,source3,IF(COUNTA(source1,source2,source3) < 3,"",SUM(source1,source2,source3))))}`
+    },
+    "Total Vehicle Miles": {
+      headerFormula: `={"Total Vehicle Miles";MAP(formulaRunArchiveOdoStart,formulaRunArchiveOdoEnd,LAMBDA(startOdo,endOdo,IF(COUNTA(startOdo,endOdo) < 2,"",endOdo-startOdo)))}`
+    },
+    "Total Deadhead Miles": {
+      headerFormula: `={"Total Deadhead Miles";MAP(formulaRunArchiveStartingDeadheadMiles,formulaRunArchiveEndingDeadheadMiles,LAMBDA(start,end,IF(COUNTA(start,end) < 2,"",start+end)))}`
+    },
+    "Revenue Miles": {
+      headerFormula: `={"Revenue Miles";MAP(formulaRunArchiveTotalVehicleMiles,formulaRunArchiveTotalDeadheadMiles,LAMBDA(vehicleMiles,deadheadMiles,IF(COUNTBLANK(vehicleMiles,deadheadMiles) > 0,"",vehicleMiles-deadheadMiles)))}`
     },
     "Starting Deadhead Miles": {
       numberFormat: "0.0"
