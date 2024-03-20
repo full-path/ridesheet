@@ -13,7 +13,7 @@ function buildMenus() {
   settingsMenu.addItem('Refresh document properties sheet', 'presentProperties')
   settingsMenu.addItem('Scheduled calendar updates', 'presentCalendarTrigger')
   settingsMenu.addItem('Repair sheets', 'repairSheets')
-  settingsMenu.addItem('Build Metadata', 'buildMetadata')
+  settingsMenu.addItem('Rebuild Metadata', 'rebuildAllMetadata')
   menu.addSubMenu(settingsMenu)
   if (getDocProp("apiShowMenuItems")) {
     const menuApi = ui.createMenu('Ride Sharing')
@@ -419,6 +419,20 @@ function fixHeaderNames(rangeIn) {
       newRange.setValues(values)
     }
   } catch(e) { logError(e) }
+}
+
+function fixAllHeaderNames() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const mds = ss.createDeveloperMetadataFinder()
+      .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.SHEET)
+      .withKey("hasHeader")
+      .withValue(JSON.stringify(true))
+      .find()
+  mds.forEach((md) => {
+    const sheet = md.getLocation().getSheet()
+    const range = getFullRow(sheet.getRange("A1"))
+    fixHeaderNames(range)
+  })
 }
 
 function logMetadata() {
