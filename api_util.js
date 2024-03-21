@@ -266,3 +266,27 @@ function createErrorResponse(status, message) {
   response.setContent(JSON.stringify(errorContent))
   return response
 }
+
+function valueToBoolean(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    value.toString().toLowerCase().slice(0, 3) === "unk"
+  ) {
+    return null
+  } else if (
+    !value ||
+    value.toString().toLowerCase() === "false" ||
+    value.toString().toLowerCase() === "no"
+  ) {
+    return false
+  } else {
+    return true
+  }
+}
+
+function getCustomerId(referral) {
+  const theDate = referral["Date of Birth"] || new Date()
+  return `${referral["Customer First Name"][0]}-${referral["Customer Last Name"]}-${formatDate(theDate,null,"yyyy-MM-dd")}`
+}
