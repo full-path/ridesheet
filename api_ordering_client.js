@@ -295,7 +295,7 @@ function sendTripStatusChange(sourceTrip = null, tripResult = null) {
 }
 
 function sendCustomerReferrals() {
-  try { 
+  try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const refSheet = ss.getSheetByName("TDS Referrals")
     const referrals = getRangeValuesAsTable(refSheet.getDataRange()).filter(row => {
@@ -315,8 +315,8 @@ function sendCustomerReferral(sourceRow = null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const referralSheet = ss.getSheetByName("TDS Referrals")
   const referral = sourceRow ? sourceRow : getRangeValuesAsTable(getFullRow(referralSheet.getActiveCell()),{includeFormulaValues: false})[0]
-  const customerId = referral["Customer ID"]
-  const referralDateString = referral["Referral Date"].toISOString();
+  const customerId = referral["Customer ID"] || getCustomerId(referral)
+  const referralDateString = formatDate(referral["Referral Date"],null,"yyyy-MM-dd")
   const agencyCode = referral["Agency"].replace(/[^A-Za-z]/g, '').toLowerCase()
   const referralId = `${customerId}:${agencyCode}:${referralDateString}`
   const params = {endpointPath: "/v1/CustomerReferral"}
@@ -350,14 +350,10 @@ function sendCustomerReferral(sourceRow = null) {
       emergencyContactRelationship: referral["Emergency Contact Relationship"]  ,
       requiredCareComments: referral["Comments About Care Required"],
       dateOfBirth: referral["Date of Birth"],
-      customerId: referral["Customer ID"].toString()
+      customerId: customerId
     }
   }
-  const rowPosition = referral._rowPosition
-  const currentRow = referralSheet.getRange("A" + rowPosition + ":" + rowPosition)
-  const headers = getSheetHeaderNames(referralSheet)
-  const colIndex = headers.indexOf("Referral ID") + 1
-  currentRow.getCell(1, colIndex).setValue(referralId)
+
   // Get the endpoint (referral provider) from the sheet
   const endPoints = getDocProp("apiGetAccess")
   const endPoint = endPoints.find(endpoint => endpoint.name === referral["Agency"])
@@ -365,13 +361,22 @@ function sendCustomerReferral(sourceRow = null) {
     const response = postResource(endPoint, params, JSON.stringify(telegram))
     const responseObject = JSON.parse(response.getContentText())
     if (responseObject.status && responseObject.status !== "OK") {
+      ss.toast(`Failure to send referral to ${endPoint.name}`, "Failure")
       logError(`Failure to send referral to ${endPoint.name}`, responseObject)
-    }
-    else {
+      return false
+    } else {
+      setValuesForRow({
+        "Customer ID": customerId,
+        "Referral ID": referralId,
+        "Referral Sent Timestamp": new Date()
+      }, referral._rowPosition, referralSheet)
+      ss.toast(`Referral sent to ${endPoint.name}`, "Success")
       log('Referral success', telegram)
+      return true
     } 
   } catch(e) {
     logError(e)
+    return false
   }
 }
 
@@ -384,14 +389,12 @@ function receiveCustomerReferralResponse(response, senderId) {
     const referralSheet = ss.getSheetByName("TDS Referrals")
     const referrals = getRangeValuesAsTable(referralSheet.getDataRange())
     const referral = referrals.find(row => row["Referral ID"] === customerReferralId)
-    const rowPosition = referral._rowPosition
-    const currentRow = referralSheet.getRange("A" + rowPosition + ":" + rowPosition)
-    const headers = getSheetHeaderNames(referralSheet)
-    const statusIndex = headers.indexOf("Referral Response") + 1
-    const referralIndex = headers.indexOf("Response Notes") + 1
-    currentRow.getCell(1, statusIndex).setValue(referralResponseType)
-    currentRow.getCell(1, referralIndex).setValue(note)
-    return {status: "OK", message: "OK", referenceId} 
+    setValuesForRow({
+      "Referral Response Timestamp": new Date(),
+      "Referral Response": referralResponseType,
+      "Response Notes": note
+    }, referral._rowPosition, referralSheet)
+    return {status: "OK", message: "OK", referenceId}
   } catch(e) {
     return {status: "400", message: "Unknown error", referenceId}
   }
