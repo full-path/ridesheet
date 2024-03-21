@@ -25,6 +25,7 @@ function buildMenus() {
     menuApi.addToUi()
   }
   menu.addToUi()
+  buildLocalMenus()
 }
 
 function buildNamedRanges() {
