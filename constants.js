@@ -303,7 +303,6 @@ const defaultColumns = {
     "|Go|": {
       dataValidation: {
         criteriaType: "CHECKBOX",
-        checkedValue: "TRUE",
         allowInvalid: true,
       }
     },
@@ -1000,14 +999,14 @@ const defaultColumns = {
     "Has Ramp": {
       dataValidation: {
         criteriaType: "CHECKBOX",
-        checkedValue: "TRUE",
+        checkedValue: "HAS RAMP",
         allowInvalid: true,
       },
     },
     "Has Lift": {
       dataValidation: {
         criteriaType: "CHECKBOX",
-        checkedValue: "TRUE",
+        checkedValue: "HAS LIFT",
         allowInvalid: true,
       },
     },
