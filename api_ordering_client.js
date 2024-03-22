@@ -316,13 +316,11 @@ function sendCustomerReferral(sourceRow = null) {
   const referralSheet = ss.getSheetByName("TDS Referrals")
   const referral = sourceRow ? sourceRow : getRangeValuesAsTable(getFullRow(referralSheet.getActiveCell()),{includeFormulaValues: false})[0]
   const customerId = referral["Customer ID"] || getCustomerId(referral)
-  const referralDateString = formatDate(referral["Referral Date"],null,"yyyy-MM-dd")
-  const agencyCode = referral["Agency"].replace(/[^A-Za-z]/g, '').toLowerCase()
-  const referralId = `${customerId}:${agencyCode}:${referralDateString}`
+  const referralId = Utilities.getUuid()
   const params = {endpointPath: "/v1/CustomerReferral"}
   const telegram = {
     customerReferralId: referralId,
-    customerContactDate: referral["Referral Date"],
+    customerContactDate: formatDate(referral["Referral Date"],null,"yyyy-MM-dd"),
     note: referral["Referral Notes"],
     customerInfo: {
       firstLegalName: referral["Customer First Name"],
@@ -349,7 +347,7 @@ function sendCustomerReferral(sourceRow = null) {
       emergencyContactName: referral["Emergency Contact Name"],
       emergencyContactRelationship: referral["Emergency Contact Relationship"]  ,
       requiredCareComments: referral["Comments About Care Required"],
-      dateOfBirth: referral["Date of Birth"],
+      dateOfBirth: formatDate(referral["Date of Birth"],null,"yyyy-MM-dd"),
       customerId: customerId
     }
   }
