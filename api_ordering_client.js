@@ -341,7 +341,7 @@ function sendCustomerReferral(sourceRow = null) {
       disability: valueToBoolean(referral["Disability?"]),
       language: referral["Language"],
       race: referral["Race"],
-      ethnicity: referral["Ethnicity"],
+      ethnicity: referral["Ethnicity"] || null,
       emailAddress: referral["Email"],
       veteran: valueToBoolean(referral["Veteran?"]),
       caregiverContactInformation: referral["Caregiver Contact Information"],
