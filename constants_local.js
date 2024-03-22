@@ -61,16 +61,11 @@ const localNamedRanges = {
     "startHeaderName":"Trip Date",
     "endHeaderName":"Run ID",
   },
-  "formulaRunsCoreHeaders": {
+  "formulaRunsSheet": {
     "sheetName":"Runs",
     "startHeaderName":"Run Date",
     "endHeaderName":"Scheduled End Time",
-    "headerOnly": true
-  },
-  "formulaRunsCoreData": {
-    "sheetName":"Runs",
-    "startHeaderName":"Run Date",
-    "endHeaderName":"Scheduled End Time",
+    "allRows": true
   },
   "formulaRunReviewRunDate": {
     "sheetName":"Run Review",
