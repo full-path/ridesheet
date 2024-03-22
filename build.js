@@ -88,7 +88,7 @@ function buildNamedRange(ss, rangeName, rangeConfigObj) {
       if (startColumnPosition && endColumnPosition) {
         const startColumnLetter = getColumnLettersFromPosition(startColumnPosition)
         const endColumnLetter = getColumnLettersFromPosition(endColumnPosition)
-        const firstRow = rangeConfigObj.headerOnly ? 1 : 2
+        const firstRow = rangeConfigObj.headerOnly || rangeConfigObj.allRows ? 1 : 2
         const lastRow = rangeConfigObj.headerOnly ? 1 : sheet.getMaxRows() + 1000
         const range = sheet.getRange(`${startColumnLetter}${firstRow}:${endColumnLetter}${lastRow}`)
         ss.setNamedRange(rangeName, range)
