@@ -11,9 +11,32 @@ const localNamedRanges = {
     "sheetName":"Lookups",
     "headerName":"Fare Types"
   },
-  "codeFormatAddress9": {
-    "sheetName":"Addresses",
-    "headerName":"Address"
+  "formulaTripReviewCoreData": {
+    "sheetName":"Trip Review",
+    "startHeaderName":"Trip Date",
+    "endHeaderName":"Run ID",
+  },
+  "formulaRunsSheet": {
+    "sheetName":"Runs",
+    "startHeaderName":"Run Date",
+    "endHeaderName":"Scheduled End Time",
+    "allRows": true
+  },
+  "formulaRunReviewRunDate": {
+    "sheetName":"Run Review",
+    "headerName":"Run Date"
+  },
+  "formulaRunReviewDriverId": {
+    "sheetName":"Run Review",
+    "headerName":"Driver ID"
+  },
+  "formulaRunReviewVehicleId": {
+    "sheetName":"Run Review",
+    "headerName":"Vehicle ID"
+  },
+  "formulaRunReviewRunId": {
+    "sheetName":"Run Review",
+    "headerName":"Run ID"
   },
   "formulaRunReviewFareRevenue": {
     "sheetName":"Run Review",
