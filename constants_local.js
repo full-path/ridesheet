@@ -264,7 +264,7 @@ const localColumns = {
       },
     },
     "|Run OK?|": {
-      headerFormula: `={"|Run OK?|";MAP(formulaTripsTripDate, formulaTripsPuTime, formulaTripsDoTime, formulaTripsTripDriverId, formulaTripsTripVehicleId, formulaTripsTripRunId, LAMBDA(TripDate,TripPuTime,TripDoTime,TripDriverId,TripVehicleID,TripRunId, QUERY_RUN_MATCH_COUNT(TripDate,TripPuTime,TripDoTime,TripDriverId,TripVehicleID,TripRunId,formulaRunsCoreData,formulaRunsCoreHeaders)))}`
+      headerFormula: `={"|Run OK?|";MAP(formulaTripsTripDate, formulaTripsPuTime, formulaTripsDoTime, formulaTripsTripDriverId, formulaTripsTripVehicleId, formulaTripsTripRunId, LAMBDA(TripDate,TripPuTime,TripDoTime,TripDriverId,TripVehicleID,TripRunId, QUERY_RUN_MATCH_COUNT(TripDate,TripPuTime,TripDoTime,TripDriverId,TripVehicleID,TripRunId,formulaRunsSheet)))}`
     },
     "Rider Type": {
       dataValidation: {
