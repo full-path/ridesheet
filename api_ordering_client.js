@@ -353,6 +353,23 @@ function sendCustomerReferral(sourceRow = null) {
       customerId: customerId
     }
   }
+  // Add validation
+  if (!telegram.firstLegalName) {
+    ss.toast('Cannot send referral, missing first name')
+    return false
+  }
+  if (!telegram.lastName) {
+    ss.toast('Cannot send referral, missing last name')
+    return false
+  }
+  if (!telegram.address) {
+    ss.toast('Cannot send referral, missing address')
+    return false
+  }
+  if (!telegram.phone && !telegram.mobilePhone && !telegram.emailAddress) {
+    ss.toast('Cannot send referral, please add a contact method')
+    return false
+  }
 
   // Get the endpoint (referral provider) from the sheet
   const endPoints = getDocProp("apiGetAccess")
@@ -389,6 +406,10 @@ function receiveCustomerReferralResponse(response, senderId) {
     const referralSheet = ss.getSheetByName("TDS Referrals")
     const referrals = getRangeValuesAsTable(referralSheet.getDataRange())
     const referral = referrals.find(row => row["Referral ID"] === customerReferralId)
+    if (!referralResponseType || !customerReferralId) {
+      logError('Received invalid referral response', response)
+      return {status: "400", message: "Validation failed, missing required field", referenceId}
+    }
     setValuesForRow({
       "Referral Response Timestamp": new Date(),
       "Referral Response": referralResponseType,
