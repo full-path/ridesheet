@@ -339,7 +339,7 @@ function sendCustomerReferral(sourceRow = null) {
       disability: valueToBoolean(referral["Disability?"]),
       language: referral["Language"],
       race: referral["Race"],
-      ethnicity: referral["Ethnicity"],
+      ethnicity: referral["Ethnicity"] || null,
       emailAddress: referral["Email"],
       veteran: valueToBoolean(referral["Veteran?"]),
       caregiverContactInformation: referral["Caregiver Contact Information"],
@@ -350,6 +350,23 @@ function sendCustomerReferral(sourceRow = null) {
       dateOfBirth: formatDate(referral["Date of Birth"],null,"yyyy-MM-dd"),
       customerId: customerId
     }
+  }
+  // Add validation
+  if (!telegram.customerInfo.firstLegalName) {
+    ss.toast('Cannot send referral, missing first name')
+    return false
+  }
+  if (!telegram.customerInfo.lastName) {
+    ss.toast('Cannot send referral, missing last name')
+    return false
+  }
+  if (!telegram.customerInfo.address) {
+    ss.toast('Cannot send referral, missing address')
+    return false
+  }
+  if (!telegram.customerInfo.phone && !telegram.customerInfo.mobilePhone && !telegram.customerInfo.emailAddress) {
+    ss.toast('Cannot send referral, please add a contact method')
+    return false
   }
 
   // Get the endpoint (referral provider) from the sheet
@@ -387,6 +404,10 @@ function receiveCustomerReferralResponse(response, senderId) {
     const referralSheet = ss.getSheetByName("TDS Referrals")
     const referrals = getRangeValuesAsTable(referralSheet.getDataRange())
     const referral = referrals.find(row => row["Referral ID"] === customerReferralId)
+    if (!referralResponseType || !customerReferralId) {
+      logError('Received invalid referral response', response)
+      return {status: "400", message: "Validation failed, missing required field", referenceId}
+    }
     setValuesForRow({
       "Referral Response Timestamp": new Date(),
       "Referral Response": referralResponseType,
