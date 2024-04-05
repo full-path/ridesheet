@@ -105,7 +105,7 @@ function getCustomerInfo(trip) {
     customerId: customer["Customer ID"].toString()
   }
   if (customer["Date of Birth"]) {
-    formattedCustomer.dateOfBirth = customer["Date of Birth"]
+    formattedCustomer.dateOfBirth = formatDate(customer["Date of Birth"],null,"yyyy-MM-dd")
   } 
   if (customer["Customer Manifest Notes"]) {
     formattedCustomer.notesForDriver = customer["Customer Manifest Notes"]
@@ -340,10 +340,10 @@ function sendCustomerReferral(sourceRow = null) {
       language: referral["Language"],
       race: referral["Race"],
       ethnicity: referral["Ethnicity"] || null,
-      emailAddress: referral["Email"],
+      emailAddress: referral["Email"] || null,
       veteran: valueToBoolean(referral["Veteran?"]),
       caregiverContactInformation: referral["Caregiver Contact Information"],
-      emergencyPhoneNumber: referral["Emergency Phone Number"],
+      emergencyPhoneNumber: buildPhoneNumberToSpec(referral["Emergency Phone Number"]),
       emergencyContactName: referral["Emergency Contact Name"],
       emergencyContactRelationship: referral["Emergency Contact Relationship"]  ,
       requiredCareComments: referral["Comments About Care Required"],
