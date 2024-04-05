@@ -354,19 +354,19 @@ function sendCustomerReferral(sourceRow = null) {
     }
   }
   // Add validation
-  if (!telegram.firstLegalName) {
+  if (!telegram.customerInfo.firstLegalName) {
     ss.toast('Cannot send referral, missing first name')
     return false
   }
-  if (!telegram.lastName) {
+  if (!telegram.customerInfo.lastName) {
     ss.toast('Cannot send referral, missing last name')
     return false
   }
-  if (!telegram.address) {
+  if (!telegram.customerInfo.address) {
     ss.toast('Cannot send referral, missing address')
     return false
   }
-  if (!telegram.phone && !telegram.mobilePhone && !telegram.emailAddress) {
+  if (!telegram.customerInfo.phone && !telegram.customerInfo.mobilePhone && !telegram.customerInfo.emailAddress) {
     ss.toast('Cannot send referral, please add a contact method')
     return false
   }
