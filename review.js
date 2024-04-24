@@ -88,10 +88,14 @@ function getDeadheadDataForRun(run, tripsThisDay, vehicles) {
   result["First PU Address"] = parseAddress(firstTrip["PU Address"]).geocodeAddress
   result["Last DO Address"] = parseAddress(lastTrip["DO Address"]).geocodeAddress
   result["Vehicle Garage Address"] = parseAddress(vehicle["Garage Address"]).geocodeAddress
-  result["Starting Deadhead Miles"] =
-      getTripEstimate(result["Vehicle Garage Address"], result["First PU Address"], "miles").toFixed(1)
-  result["Ending Deadhead Miles"] =
-      getTripEstimate(result["Last DO Address"], result["Vehicle Garage Address"], "miles").toFixed(1)
+  const startingDeadheadData = getTripEstimate(result["Vehicle Garage Address"],
+        result["First PU Address"], "milesAndDays")
+  const endingDeadheadData = getTripEstimate(result["Last DO Address"],
+        result["Vehicle Garage Address"], "milesAndDays")
+  result["Starting Deadhead Miles"] = startingDeadheadData.miles
+  result["Starting Deadhead Hours"] = startingDeadheadData.days
+  result["Ending Deadhead Miles"] = endingDeadheadData.miles
+  result["Ending Deadhead Hours"] = endingDeadheadData.days
   return result
 }
 
