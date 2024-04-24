@@ -791,6 +791,14 @@ const defaultColumns = {
     },
     "Odometer Start": {},
     "Odometer End": {},
+    "Break Time in Minutes": {
+      numberFormat: "0",
+      dataValidation: {
+        criteriaType: "NUMBER_BETWEEN",
+        args: [0,500],
+        helpText: "Value must be the duration of all breaks in the run, up to 500 minutes"
+      },
+    },
     "Review TS": {
       numberFormat: "m/d/yyyy h:mm:ss"
     },
@@ -982,6 +990,14 @@ const defaultColumns = {
     },
     "Odometer Start": {},
     "Odometer End": {},
+    "Break Time in Minutes": {
+      numberFormat: "0",
+      dataValidation: {
+        criteriaType: "NUMBER_BETWEEN",
+        args: [0,500],
+        helpText: "Value must be the duration of all breaks in the run, up to 500 minutes"
+      },
+    },
     "Review TS": {
       numberFormat: "m/d/yyyy h:mm:ss"
     },
