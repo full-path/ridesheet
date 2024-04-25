@@ -93,9 +93,9 @@ function getDeadheadDataForRun(run, tripsThisDay, vehicles) {
   const endingDeadheadData = getTripEstimate(result["Last DO Address"],
         result["Vehicle Garage Address"], "milesAndDays")
   result["Starting Deadhead Miles"] = startingDeadheadData.miles
-  result["Starting Deadhead Hours"] = startingDeadheadData.days
+  result["Starting Deadhead Hours"] = Math.round(startingDeadheadData.days * 1440) / 1440
   result["Ending Deadhead Miles"] = endingDeadheadData.miles
-  result["Ending Deadhead Hours"] = endingDeadheadData.days
+  result["Ending Deadhead Hours"] = Math.round(endingDeadheadData.days * 1440) / 1440
   return result
 }
 
