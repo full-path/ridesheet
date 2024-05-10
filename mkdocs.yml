@@ -1,1 +1,31 @@
-site_name: My Docs
+site_name: RideSheet
+repo_url: https://github.com/full-path/ridesheet
+site_url: https://full-path.github.io/ridesheet/
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.path
+    - navigation.indexes
+nav:
+  - Home: index.md
+  - What is RideSheet?: what-is-ridesheet.md
+  - Getting Started: getting-started.md
+  - User Guide:
+    - user-guide/index.md
+  - Technical Guide: 
+    - technical-guide/index.md
+  - About:
+    - about/index.md 
+markdown_extensions:
+  - toc:
+      permalink: "#"
+  - tables
+  - def_list
+  - attr_list
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+docs_dir: src
+edit_uri: edit/gh-pages/src/
+site_dir: docs
