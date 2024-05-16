@@ -29,3 +29,5 @@ markdown_extensions:
 docs_dir: src
 edit_uri: edit/gh-pages/src/
 site_dir: docs
+extra_css:
+  - stylesheets/ridesheet-custom.css

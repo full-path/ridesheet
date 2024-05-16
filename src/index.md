@@ -13,7 +13,7 @@ Welcome to RideSheet! RideSheet is a simple and affordable tool for operating an
 - **Spreadsheet-Based** Anyone with experience in Excel, Google Sheets, or other spreadsheet applications will find it easy to learn RideSheet. Plus, it’s flexible and easy to customize.
 - **Manages Tracking, Manifests, and Reports** RideSheet handles tracking customers, trips, runs and more, and makes it easy to generate manifests and reports. It is customizable to handle thorny problems such as splitting trips between multiple funding sources.
 
-!!! tip ""
+!!! note ""
 
     [Learn more about RideSheet](what-is-ridesheet.md) and if it is right for your organization.
 
