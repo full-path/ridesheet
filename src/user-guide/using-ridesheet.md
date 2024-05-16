@@ -9,13 +9,17 @@ RideSheet is a spreadsheet-based application consisting of multiple sheets or ta
 
 This screenshot comes from the [RideSheet Public Sample](https://docs.google.com/spreadsheets/d/1U_rmR08qW63hEK_5IWblzVXK4ZqQElaD1ymAQNGpNiU/edit#gid=0). If you are interested in trying out RideSheet, you can simply make a copy of this sheet and test out anything you would like, or use it to follow along with this guide.
 
+The first row of the spreadsheet, in yellow, is the header. Most of these fields are covered in detail in [Data Fields](data-fields.md)
+
 Along the bottom, you can see the various tabs, such as Customers, Trips, and Runs. You will probably need to scroll to see all of the different sheets.
 
-In the main menu, you can see a tab for **RideSheet**. This where you will run many of the workflows mentioned in this guide. 
+In the main menu, you can see a dropdown menu item for **RideSheet**. This where you will run many of the workflows mentioned in this guide. 
 
 ![Ridesheet menu](../images/ridesheet-menu.png)
 
 ### Common Workflows
+
+
 
 
 ### Tips for Working with Spreadsheets
