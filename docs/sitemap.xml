@@ -30,4 +30,39 @@
          <lastmod>2024-05-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
+    <url>
+         <loc>https://full-path.github.io/ridesheet/user-guide/customization/</loc>
+         <lastmod>2024-05-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://full-path.github.io/ridesheet/user-guide/data-fields/</loc>
+         <lastmod>2024-05-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://full-path.github.io/ridesheet/user-guide/getting-help/</loc>
+         <lastmod>2024-05-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://full-path.github.io/ridesheet/user-guide/reports-and-manifests/</loc>
+         <lastmod>2024-05-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://full-path.github.io/ridesheet/user-guide/trip-sharing-and-tds/</loc>
+         <lastmod>2024-05-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://full-path.github.io/ridesheet/user-guide/troubleshooting/</loc>
+         <lastmod>2024-05-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://full-path.github.io/ridesheet/user-guide/using-ridesheet/</loc>
+         <lastmod>2024-05-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
 </urlset>

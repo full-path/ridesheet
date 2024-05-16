@@ -13,6 +13,13 @@ nav:
   - Getting Started: getting-started.md
   - User Guide:
     - user-guide/index.md
+    - Using RideSheet: user-guide/using-ridesheet.md
+    - Reports and Manifests: user-guide/reports-and-manifests.md
+    - Data Fields: user-guide/data-fields.md
+    - Customization: user-guide/customization.md
+    - Trip Sharing and TDS: user-guide/trip-sharing-and-tds.md
+    - Troubleshooting: user-guide/troubleshooting.md
+    - Getting Help: user-guide/getting-help.md
   - Technical Guide: 
     - technical-guide/index.md
   - About:
@@ -24,6 +31,7 @@ markdown_extensions:
   - def_list
   - attr_list
   - admonition
+  - md_in_html
   - pymdownx.details
   - pymdownx.superfences
 docs_dir: src

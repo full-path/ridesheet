@@ -10,6 +10,9 @@ Before diving into RideSheet, make sure you have the following:
 - **A reliable internet connection**: Since RideSheet operates online, a stable internet connection is necessary for accessing and updating your data.
 - **Basic spreadsheet skills**: While RideSheet simplifies many tasks, familiarity with spreadsheet software, particularly Google Sheets, will be helpful.
 
+!!! tip "Google for Nonprofits"
+    For many nonprofit organizations, Google provides free or discounted access to its services through the [Google for Nonprofits](https://www.google.com/nonprofits/) program. Learn more about [eligibility requirements](https://www.google.com/nonprofits/eligibility/).ß
+
 ## What You Need to Set Up RideSheet
 
 ### Technical Skills
@@ -30,9 +33,6 @@ If you're not confident in setting up RideSheet on your own, don't worry. Most s
 
 - Hire a technical consultant: Consider hiring a consultant with experience in setting up Google Workspace and spreadsheet-based solutions.
 - Seek help from Full Path: Contact us for guidance on installation and setup. In some cases, there may be grant-based assistance available to help you get started.
-
-!!! tip "Google for Nonprofits"
-    For many nonprofit organizations, Google provides free or discounted access to its services through the [Google for Nonprofits](https://www.google.com/nonprofits/) program. Learn more about [eligibility requirements](https://www.google.com/nonprofits/eligibility/).
 
 ## Creating a Plan for Migrating to RideSheet
 
