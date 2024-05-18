@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://full-path.github.io/ridesheet/user-guide/data-fields/">
       
       
-        <link rel="prev" href="../reports-and-manifests/">
+        <link rel="prev" href="../reports/">
       
       
         <link rel="next" href="../customization/">
@@ -64,6 +64,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#data-fields" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -367,11 +372,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../reports-and-manifests/" class="md-nav__link">
+      <a href="../reports/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Reports and Manifests
+    Reports
   </span>
   
 
@@ -394,6 +399,19 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Data Fields
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -404,6 +422,250 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#data-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Types
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#address-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Address Fields
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Address Fields">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#street-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Street Addresses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plus-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plus Codes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#address-descriptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Address Descriptions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combining-address-elements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Combining Address Elements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Addresses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dates-and-times" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dates and Times
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fields-by-sheet" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fields by Sheet
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Fields by Sheet">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trips
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Customers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Runs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trip-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trip Review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trip-archive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trip Archive
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run Review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-archive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run Archive
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Addresses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vehicles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Vehicles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drivers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#services" class="md-nav__link">
+    <span class="md-ellipsis">
+      Services
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lookups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lookups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#document-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Document Properties
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -634,6 +896,241 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#data-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Types
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#address-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Address Fields
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Address Fields">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#street-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Street Addresses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plus-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plus Codes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#address-descriptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Address Descriptions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combining-address-elements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Combining Address Elements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Addresses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dates-and-times" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dates and Times
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fields-by-sheet" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fields by Sheet
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Fields by Sheet">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trips
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Customers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Runs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trip-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trip Review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trip-archive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trip Archive
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run Review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-archive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run Archive
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Addresses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vehicles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Vehicles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drivers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drivers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#services" class="md-nav__link">
+    <span class="md-ellipsis">
+      Services
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lookups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lookups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#document-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Document Properties
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -651,9 +1148,166 @@
   
 
 
-  <h1>Data Fields</h1>
-
-
+<h1 id="data-fields">Data Fields<a class="headerlink" href="#data-fields" title="Permanent link">#</a></h1>
+<h2 id="data-types">Data Types<a class="headerlink" href="#data-types" title="Permanent link">#</a></h2>
+<h3 id="address-fields">Address Fields<a class="headerlink" href="#address-fields" title="Permanent link">#</a></h3>
+<p>RideSheet uses different types of address fields to manage locations effectively:</p>
+<h4 id="street-addresses">Street Addresses<a class="headerlink" href="#street-addresses" title="Permanent link">#</a></h4>
+<p>Street addresses are used to specify physical locations. They should be entered in a standard format (e.g., "1600 Pennsylvania Avenue NW, Washington, DC 20500, USA").</p>
+<h4 id="plus-codes">Plus Codes<a class="headerlink" href="#plus-codes" title="Permanent link">#</a></h4>
+<p>Plus Codes are short codes derived from latitude and longitude coordinates. They provide precise locations, especially in rural or less accessible areas. An example of a Plus Code format is "VXX7+3FV, Washington, DC, USA".</p>
+<h4 id="address-descriptions">Address Descriptions<a class="headerlink" href="#address-descriptions" title="Permanent link">#</a></h4>
+<p>Address descriptions are optional and used to provide additional information about a location, such as specific instructions for drivers. They are enclosed in parentheses and do not affect geolocation.</p>
+<h4 id="combining-address-elements">Combining Address Elements<a class="headerlink" href="#combining-address-elements" title="Permanent link">#</a></h4>
+<p>RideSheet supports combining address elements. For example:
+- Street Address: "1600 Pennsylvania Avenue NW, Washington, DC 20500, USA"
+- Plus Code: "VXX7+3FV"
+- Combined: "VXX7+3FV; 1600 Pennsylvania Avenue NW, Washington, DC 20500, USA"</p>
+<h4 id="common-addresses">Common Addresses<a class="headerlink" href="#common-addresses" title="Permanent link">#</a></h4>
+<p>Common addresses can be stored with short names for easy reference. When a short name is entered, RideSheet replaces it with the corresponding full address.</p>
+<h4 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">#</a></h4>
+<p>Upon entering a new address, RideSheet verifies its accuracy using Google Maps. If successful, it formats the address according to Google's standards.</p>
+<h3 id="dates-and-times">Dates and Times<a class="headerlink" href="#dates-and-times" title="Permanent link">#</a></h3>
+<p>[Blank]</p>
+<h2 id="fields-by-sheet">Fields by Sheet<a class="headerlink" href="#fields-by-sheet" title="Permanent link">#</a></h2>
+<h3 id="trips">Trips<a class="headerlink" href="#trips" title="Permanent link">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trip Date</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Customer Name and ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Action</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Go</td>
+<td>description</td>
+</tr>
+<tr>
+<td>PU Time</td>
+<td>description</td>
+</tr>
+<tr>
+<td>DO Time</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Appt Time</td>
+<td>description</td>
+</tr>
+<tr>
+<td>PU Address</td>
+<td>description</td>
+</tr>
+<tr>
+<td>DO Address</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Driver ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Vehicle ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Service ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Guests</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Mobility Factors</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Est Hours</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Est Miles</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Trip ID</td>
+<td>description</td>
+</tr>
+</tbody>
+</table>
+<h3 id="customers">Customers<a class="headerlink" href="#customers" title="Permanent link">#</a></h3>
+<p>[Blank]</p>
+<h3 id="runs">Runs<a class="headerlink" href="#runs" title="Permanent link">#</a></h3>
+<p>[Blank]</p>
+<h3 id="trip-review">Trip Review<a class="headerlink" href="#trip-review" title="Permanent link">#</a></h3>
+<p>Trip Review has most of the same fields as <a href="#trips">Trips</a>.</p>
+<p>The following fields are unique to Trip Review:</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trip Result</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Actual PU Time</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Actual DO Time</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Start ODO</td>
+<td>description</td>
+</tr>
+<tr>
+<td>End ODO</td>
+<td>description</td>
+</tr>
+</tbody>
+</table>
+<h3 id="trip-archive">Trip Archive<a class="headerlink" href="#trip-archive" title="Permanent link">#</a></h3>
+<p>Trip Archive has all the fields from <a href="#trip-review">Trip Review</a>. Trip Archive is used to keep track of all past trips, and is used in reporting. Trips should not be edited or removed once in the archive.</p>
+<h3 id="run-review">Run Review<a class="headerlink" href="#run-review" title="Permanent link">#</a></h3>
+<p>[Blank]</p>
+<h3 id="run-archive">Run Archive<a class="headerlink" href="#run-archive" title="Permanent link">#</a></h3>
+<p>[Blank]</p>
+<h3 id="addresses">Addresses<a class="headerlink" href="#addresses" title="Permanent link">#</a></h3>
+<p>[Blank]</p>
+<h3 id="vehicles">Vehicles<a class="headerlink" href="#vehicles" title="Permanent link">#</a></h3>
+<p>[Blank]</p>
+<h3 id="drivers">Drivers<a class="headerlink" href="#drivers" title="Permanent link">#</a></h3>
+<p>[Blank]</p>
+<h3 id="services">Services<a class="headerlink" href="#services" title="Permanent link">#</a></h3>
+<p>[Blank]</p>
+<h3 id="lookups">Lookups<a class="headerlink" href="#lookups" title="Permanent link">#</a></h3>
+<p>[Blank]</p>
+<h3 id="document-properties">Document Properties<a class="headerlink" href="#document-properties" title="Permanent link">#</a></h3>
+<p>[Blank]</p>
 
 
 

@@ -2,3 +2,11 @@
 .md-typeset .details {
     font-size: .8rem;
 }
+
+.md-typeset__table {
+    width: 100%;
+  }
+  
+  .md-typeset__table table:not([class]) {
+    display: table
+  }
