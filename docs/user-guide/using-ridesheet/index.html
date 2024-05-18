@@ -445,6 +445,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Entering New Trip Requests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autofill-for-addresses-and-times" class="md-nav__link">
+    <span class="md-ellipsis">
+      Autofill for Addresses and Times
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -460,6 +475,15 @@
   <a href="#assigning-trip-requests-to-runs" class="md-nav__link">
     <span class="md-ellipsis">
       Assigning Trip Requests to Runs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-manifests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating Manifests
     </span>
   </a>
   
@@ -825,6 +849,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Entering New Trip Requests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autofill-for-addresses-and-times" class="md-nav__link">
+    <span class="md-ellipsis">
+      Autofill for Addresses and Times
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -840,6 +879,15 @@
   <a href="#assigning-trip-requests-to-runs" class="md-nav__link">
     <span class="md-ellipsis">
       Assigning Trip Requests to Runs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-manifests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating Manifests
     </span>
   </a>
   
@@ -901,6 +949,17 @@
 <p>In the main menu, you can see a dropdown menu item for <strong>RideSheet</strong>. This where you will run many of the workflows mentioned in this guide. </p>
 <p><img alt="Ridesheet menu" src="../../images/ridesheet-menu.png" /></p>
 <h3 id="common-workflows">Common Workflows<a class="headerlink" href="#common-workflows" title="Permanent link">#</a></h3>
+<p><strong>Handling Trip Requests</strong></p>
+<ol>
+<li>Customer calls in to request a ride</li>
+<li>If they are a <a href="#entering-new-customers">new customer</a>, information is entered in the Customers sheet</li>
+<li>Staff <a href="#entering-new-trip-requests">enters trip information</a> in the Trips sheet</li>
+</ol>
+<p><strong>Daily Operations</strong></p>
+<ol>
+<li>Every morning, <a href="#creating-manifests">driver manifests</a> are generated</li>
+<li>At the beginning or end of each day, all past trips and runs are <a href="#entering-trip-results">moved to review</a></li>
+</ol>
 <h3 id="tips-for-working-with-spreadsheets">Tips for Working with Spreadsheets<a class="headerlink" href="#tips-for-working-with-spreadsheets" title="Permanent link">#</a></h3>
 <p>When working with RideSheet, it's helpful to be familiar with basic spreadsheet operations. For more information on using Google Sheets, refer to <a href="https://support.google.com/a/users/answer/9282959?hl=en">Google's official documentation</a>.</p>
 <div class="admonition warning">
@@ -910,21 +969,36 @@
 <h2 id="entering-new-customers">Entering New Customers<a class="headerlink" href="#entering-new-customers" title="Permanent link">#</a></h2>
 <p>To enter new customers into RideSheet, follow these steps:</p>
 <ol>
-<li>Navigate to the [Customers] sheet/tab.</li>
-<li>[Link to relevant field in Data Fields] Enter the customer's first and last name.</li>
+<li>Navigate to the Customers sheet/tab.</li>
+<li>Enter the customer's first and last name.</li>
 <li>RideSheet will automatically assign a customer ID and generate the "Customer Name and ID" field, which is used to select the customer for trip requests.</li>
-<li>Additional information about customers can be found in [Data Fields].</li>
+<li>Fill in remaining fields as needed.</li>
 </ol>
+<div class="admonition tip">
+<p class="admonition-title">Default Information</p>
+<p>Although only the First and Last name are required, any field that begins with "Default" will be used later to autofill the relevant fields when creating a new trip for this customer. </p>
+</div>
 <h2 id="entering-new-trip-requests">Entering New Trip Requests<a class="headerlink" href="#entering-new-trip-requests" title="Permanent link">#</a></h2>
-<p>To enter new trip requests into RideSheet, follow these steps:</p>
+<p>Within RideSheet, a <strong>Trip</strong> is a one-way segment between two locations. A round-trip journey requires two entries, and a multi-leg journey will requires a separate trip for each leg.</p>
 <ol>
-<li>Navigate to the [Trips] sheet/tab.</li>
-<li>[Link to relevant field in Data Fields] Enter the required trip details, including rider's name, pickup address and time, drop-off address and time, appointment time (if applicable), count of guests or attendants, and any additional notes.</li>
-<li>Optionally, associate the trip with specific resources such as the assigned driver and vehicle.</li>
-<li>Refer to [Data Fields] for more information on trip-related fields.</li>
+<li>Navigate to the Trips sheet/tab.</li>
+<li>Enter the required trip details, including the customer name, pickup address and time, drop-off address and time, appointment time (if applicable), count of guests or attendants, and any additional notes. <a href="../data-fields/#trips">Learn more about Trip fields</a>.</li>
+<li>Optionally, associate the trip with specific resources such as the assigned driver and vehicle. This will be used for creating manifests and assigning trips to runs.</li>
 </ol>
+<p>To add a return trip:</p>
+<ol>
+<li>In the <strong>Action</strong> column, select "Add return trip"</li>
+<li>In the next column over, click the checkbox under <strong>Go</strong></li>
+<li>RideSheet will create a new trip with many details from the original.</li>
+<li>Fill in pick-up time for the return trip, and double check that additional information is correct</li>
+</ol>
+<p><img alt="Ridesheet action" src="../../images/ridesheet-action.png" /></p>
+<h3 id="autofill-for-addresses-and-times">Autofill for Addresses and Times<a class="headerlink" href="#autofill-for-addresses-and-times" title="Permanent link">#</a></h3>
+<p>When you fill in a PU and DO location, RideSheet will use Google Maps to automatically estimate the mileage and duration of the trip. If you fill in a PU time, DO time, <strong>or</strong> appointment time, RideSheet will automatically fill in the other time fields based on the estimate. For example, if the estimated duration of the trip is 20 minutes and you set an appointment time at 2:00pm, RideSheet will automatically fill in the DO time at 1:50pm and the PU time at 1:30pm. The amount of padding is customizable in the configuration.</p>
+<p>RideSheet also offers many utilities for managing addresses, and can autocomplete based on place names. <a href="../data-fields/#addresses">Learn more about addresses</a>.</p>
 <h2 id="creating-runs">Creating Runs<a class="headerlink" href="#creating-runs" title="Permanent link">#</a></h2>
 <h2 id="assigning-trip-requests-to-runs">Assigning Trip Requests to Runs<a class="headerlink" href="#assigning-trip-requests-to-runs" title="Permanent link">#</a></h2>
+<h2 id="creating-manifests">Creating Manifests<a class="headerlink" href="#creating-manifests" title="Permanent link">#</a></h2>
 <h2 id="entering-trip-results">Entering Trip Results<a class="headerlink" href="#entering-trip-results" title="Permanent link">#</a></h2>
 <h2 id="validating-and-archiving-data">Validating and Archiving Data<a class="headerlink" href="#validating-and-archiving-data" title="Permanent link">#</a></h2>
 <h2 id="creating-backups">Creating Backups<a class="headerlink" href="#creating-backups" title="Permanent link">#</a></h2>
