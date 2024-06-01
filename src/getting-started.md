@@ -6,12 +6,12 @@ This documentation will guide you through the process of getting started with Ri
 
 Before diving into RideSheet, make sure you have the following:
 
-- **A Google Workspace account**: RideSheet is based on Google Sheets and requires a Google Workspace account for hosting.
+- **A Google Workspace account**: RideSheet is based on Google Sheets and requires a [Google Workspace](https://workspace.google.com/pricing.html) account for hosting.
 - **A reliable internet connection**: Since RideSheet operates online, a stable internet connection is necessary for accessing and updating your data.
 - **Basic spreadsheet skills**: While RideSheet simplifies many tasks, familiarity with spreadsheet software, particularly Google Sheets, will be helpful.
 
 !!! tip "Google for Nonprofits"
-    For many nonprofit organizations, Google provides free or discounted access to its services through the [Google for Nonprofits](https://www.google.com/nonprofits/) program. Learn more about [eligibility requirements](https://www.google.com/nonprofits/eligibility/).ß
+    For many nonprofit organizations, Google provides free or discounted access to its services through the [Google for Nonprofits](https://www.google.com/nonprofits/) program. Learn more about [eligibility requirements](https://www.google.com/nonprofits/eligibility/).
 
 ## What You Need to Set Up RideSheet
 

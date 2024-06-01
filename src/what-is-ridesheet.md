@@ -43,7 +43,7 @@ Printable driver manifests for the day can be quickly generated. The driver mani
 
 If RideSheet sounds right for your organization, there are a few things you can do to make sure that the switch is a success. 
 
-RideSheet is affordable. The base costs for hosting it are just a [Google Workspace](https://workspace.google.com/pricing) account. However, most organizations will need help installing RideSheet, and will benefit from a support plan to help with any issues that arise, and to ensure software updates are installed regularly. Any plan to get RideSheet should account for ongoing support & maintenance. 
+RideSheet is affordable. The base costs for hosting it are just a [Google Workspace](https://workspace.google.com/pricing) account. However, most organizations will need help installing RideSheet, and will benefit from **a support plan** to help with any issues that arise, and to ensure software updates are installed regularly. Any plan to get RideSheet should account for ongoing support & maintenance. 
 
 Your organization should also have a **plan for security**. Google Workspace has many security features, but especially if you are moving from paper, it's important to have a plan in place for [cybersecurity basics](https://www.ftc.gov/business-guidance/small-businesses/cybersecurity/basics), such as staff training in password management and how to use [multi-factor authentication](https://consumer.ftc.gov/articles/use-two-factor-authentication-protect-your-accounts).
 
