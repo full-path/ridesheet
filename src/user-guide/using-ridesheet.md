@@ -71,18 +71,45 @@ RideSheet also offers many utilities for managing addresses, and can autocomplet
 
 ## Creating Runs
 
+A run in RideSheet is simply defined as a specific combination of driver and vehicle during a specified time. RideSheet will automatically create a new run for a trip once a driver and vehicle are set for it in the `Trips` sheet.
 
-## Assigning Trip Requests to Runs
-
+You can also set up runs ahead of time in the `Runs` sheet, setting a scheduled start and end time for each vehicle/driver combination for that day. Any trips that are added for that day will automatically be assigned to the correct run. 
 
 ## Creating Manifests
+
+Before creating manifests, ensure that a driver and vehicle has been assigned to each of the day's trips. 
+
+Select `Create manifests for day` from the RideSheet menu. A pop-up will appear, and you can choose to select a specific day or create manifests for the following day by default.
+
+Once the job has finished running, you will be able to find the driver manifests in the `Manifests` folder within your Google Workspace directory. Manifests are created based on a [customizable manifest template](./customization.md).
 
 
 ## Entering Trip Results
 
+Daily, or at least weekly, you will want to move trips over to `Trip Review` in order to fill in trip details such as whether the trip was completed or canceled, actual time and odometer information, and any fares/donations.
+
+In the RideSheet menu, select `Move past data to review`. This will move any trips and runs with a Trip Date in the past over to the respective `Trip Review` and `Run Review` sheets.
+
+![Moving past trips to review](../images/move-to-review.png){ width="300" }
 
 ## Validating and Archiving Data
 
+To move reviewed trips and runs to the archive, select `Move reviewed data to archive` in the RideSheet menu. This will move any trips from `Trip Review` that have the `Trip Result` field completed.
+
+In addition, RideSheet can be [customized](./customization.md) to require other fields in `Trip Review` and `Run Review` to be completed before an entry can be moved to archive. 
+
+Only trips and runs in archive are used for generating [reports](./reports.md). Any incomplete trips or runs left in review will not be included in report data.
 
 ## Creating Backups
+
+To make a backup of RideSheet, simply navigate to `File` > `Make a copy`.
+
+![Ridesheet menu: make a copy](../images/ridesheet-backups.png)
+
+**Backup Tips**
+
+- Create a copy every month or at least every quarter. 
+- Store backup copies in a different folder in Google Workspace from your main copy
+- Name backup copies after their date
+- Annually, create a fresh copy of RideSheet, and delete information in Trip Archive and Run Archive. Name the previous copy for the year.
 

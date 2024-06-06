@@ -503,15 +503,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Validation
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -556,6 +547,21 @@
       Customers
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Customers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default Fields
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -970,15 +976,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Validation
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1023,6 +1020,21 @@
       Customers
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Customers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default Fields
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1151,24 +1163,29 @@
 <h1 id="data-fields">Data Fields<a class="headerlink" href="#data-fields" title="Permanent link">#</a></h1>
 <h2 id="data-types">Data Types<a class="headerlink" href="#data-types" title="Permanent link">#</a></h2>
 <h3 id="address-fields">Address Fields<a class="headerlink" href="#address-fields" title="Permanent link">#</a></h3>
-<p>RideSheet uses different types of address fields to manage locations effectively:</p>
+<p>RideSheet uses different types of address formats to manage locations effectively. RideSheet uses Google Maps services to verify and autocomplete address information. Anytime a user enters a new address in a RideSheet address cell, RideSheet will send it to Google Maps to ensure that it can be correctly associated with one and only one physical location on a map. If this is successful, RideSheet will replace the submitted address with one that follows Google’s standard formatting, which generally includes ZIP code and country, as in, “1600 Pennsylvania Avenue NW, Washington, DC 20500, USA.” If the address cannot be associated with a single location, it will be formatted with a red background and the error message from Google Maps will appear as a note for the cell.</p>
 <h4 id="street-addresses">Street Addresses<a class="headerlink" href="#street-addresses" title="Permanent link">#</a></h4>
-<p>Street addresses are used to specify physical locations. They should be entered in a standard format (e.g., "1600 Pennsylvania Avenue NW, Washington, DC 20500, USA").</p>
+<p>Street addresses are used to specify physical locations. RideSheet should be able to extrapolate from a street/city address, such as "1600 Pennsylvania Ave NW, Washington DC". </p>
 <h4 id="plus-codes">Plus Codes<a class="headerlink" href="#plus-codes" title="Permanent link">#</a></h4>
-<p>Plus Codes are short codes derived from latitude and longitude coordinates. They provide precise locations, especially in rural or less accessible areas. An example of a Plus Code format is "VXX7+3FV, Washington, DC, USA".</p>
+<p><a href="https://maps.google.com/pluscodes/">Plus Codes</a> are short codes derived from latitude and longitude coordinates. They provide precise locations, especially in rural or less accessible areas. An example of a Plus Code format is "VXX7+3FV, Washington, DC, USA".</p>
+<p>Plus Codes are useful because Google Maps does not always have accurate latitude and longitude coordinates for rural addresses. This could make it difficult for a driver to know which private road to turn onto from a highway when using Google Maps driving directions. It can also be useful for identifying a specific pickup point in a large complex such as a hospital or shopping center.</p>
+<p>Plus codes can be retrieved from most addresses in Google Maps’s description pane, as shown below.</p>
+<p><img alt="Google Maps description panel" src="../../images/plus-codes-1.png" /></p>
+<p>To get the Plus Code for a location not directly associated with an address (e.g. clicking on a specific spot on Google Maps), this can be achieved by clicking on the map so that a small grey pin icon appears along with a small window showing that locations latitude and longitude, and then clicking on the latitude and longitude, as demonstrated in the images below.</p>
+<p>Watch a <a href="https://www.youtube.com/watch?v=mywc0qhQh3E">tutorial video</a> on how to use plus codes with RideSheet.</p>
+<p><img alt="Google Maps plus code pop-up" src="../../images/google-maps-plus-codes.png" /></p>
 <h4 id="address-descriptions">Address Descriptions<a class="headerlink" href="#address-descriptions" title="Permanent link">#</a></h4>
 <p>Address descriptions are optional and used to provide additional information about a location, such as specific instructions for drivers. They are enclosed in parentheses and do not affect geolocation.</p>
 <h4 id="combining-address-elements">Combining Address Elements<a class="headerlink" href="#combining-address-elements" title="Permanent link">#</a></h4>
 <p>RideSheet supports combining address elements. For example:
 - Street Address: "1600 Pennsylvania Avenue NW, Washington, DC 20500, USA"
 - Plus Code: "VXX7+3FV"
-- Combined: "VXX7+3FV; 1600 Pennsylvania Avenue NW, Washington, DC 20500, USA"</p>
+- Address Description: "(The White House)"
+- Combined: "VXX7+3FV; 1600 Pennsylvania Avenue NW, Washington, DC 20500, USA (The White House)"</p>
 <h4 id="common-addresses">Common Addresses<a class="headerlink" href="#common-addresses" title="Permanent link">#</a></h4>
-<p>Common addresses can be stored with short names for easy reference. When a short name is entered, RideSheet replaces it with the corresponding full address.</p>
-<h4 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">#</a></h4>
-<p>Upon entering a new address, RideSheet verifies its accuracy using Google Maps. If successful, it formats the address according to Google's standards.</p>
+<p>Common addresses can be stored with short names for easy reference. When a short name is entered, RideSheet replaces it with the corresponding full address. These can be created in the <a href="#addresses">Addresses</a> sheet.</p>
 <h3 id="dates-and-times">Dates and Times<a class="headerlink" href="#dates-and-times" title="Permanent link">#</a></h3>
-<p>[Blank]</p>
+<p><strong>[Kevin]</strong> Does it seem useful to describe how dates/times are handled?</p>
 <h2 id="fields-by-sheet">Fields by Sheet<a class="headerlink" href="#fields-by-sheet" title="Permanent link">#</a></h2>
 <h3 id="trips">Trips<a class="headerlink" href="#trips" title="Permanent link">#</a></h3>
 <table>
@@ -1254,9 +1271,125 @@
 </tbody>
 </table>
 <h3 id="customers">Customers<a class="headerlink" href="#customers" title="Permanent link">#</a></h3>
-<p>[Blank]</p>
+<h4 id="default-fields">Default Fields<a class="headerlink" href="#default-fields" title="Permanent link">#</a></h4>
+<p>When a customer field starts with the word “Default,” its value will be automatically copied into a new trip record if there is a matching field without the word “Default” in the trips tab. For example, in the base version of RideSheet there is a “Default PU Address” field in the Customers sheet and a “PU Address” field in the Trips tab. If the “Default PU Address” field for a customer is filled in, then whenever a new trip for that customer is created, the “PU Address” field of the trips will be filled in with the “Default PU Address” value. If the default value for any particular trip is not appropriate, then the field can simply be cleared and replaced with the correct value.</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Customer Name and ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Customer ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Customer First Name</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Customer Last Name</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Phone Number</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Email</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Mailing Address</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Home Address</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Default PU Address</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Default DO Address</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Default Service ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Default Service Level</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Default Mobility Factors</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Customer Manifest Notes</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Customer Private Notes</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Customer Start Date</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Customer End Date</td>
+<td>description</td>
+</tr>
+</tbody>
+</table>
 <h3 id="runs">Runs<a class="headerlink" href="#runs" title="Permanent link">#</a></h3>
-<p>[Blank]</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Run Date</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Driver ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Vehicle ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Scheduled Start Time</td>
+<td>description</td>
+</tr>
+<tr>
+<td>First PU Time</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Last DO Time</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Scheduled End Time</td>
+<td>description</td>
+</tr>
+</tbody>
+</table>
 <h3 id="trip-review">Trip Review<a class="headerlink" href="#trip-review" title="Permanent link">#</a></h3>
 <p>Trip Review has most of the same fields as <a href="#trips">Trips</a>.</p>
 <p>The following fields are unique to Trip Review:</p>
@@ -1291,23 +1424,348 @@
 </tbody>
 </table>
 <h3 id="trip-archive">Trip Archive<a class="headerlink" href="#trip-archive" title="Permanent link">#</a></h3>
-<p>Trip Archive has all the fields from <a href="#trip-review">Trip Review</a>. Trip Archive is used to keep track of all past trips, and is used in reporting. Trips should not be edited or removed once in the archive.</p>
+<p>Trip Archive has all the fields from <a href="#trip-review">Trip Review</a>. Trip Archive is used to keep track of all past trips, and is used in reporting. <strong>Trips should not be edited or removed once in the archive</strong>.</p>
 <h3 id="run-review">Run Review<a class="headerlink" href="#run-review" title="Permanent link">#</a></h3>
-<p>[Blank]</p>
+<p>Run Review has most of the same fields as <a href="#runs">Runs</a></p>
+<p>The following fields are unique to Run Review:</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Actual Start Time</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Actual End Time</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Odometer Start</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Odometer End</td>
+<td>description</td>
+</tr>
+</tbody>
+</table>
 <h3 id="run-archive">Run Archive<a class="headerlink" href="#run-archive" title="Permanent link">#</a></h3>
-<p>[Blank]</p>
+<p>Run Archive has the all the fields from <a href="#run-review">Run Review</a>. Run Archive is used to keep track of all past runs, and is used in reporting. <strong>Runs should not be edited or removed once in the archive</strong>.</p>
 <h3 id="addresses">Addresses<a class="headerlink" href="#addresses" title="Permanent link">#</a></h3>
-<p>[Blank]</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Short Name</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Address</td>
+<td>description</td>
+</tr>
+</tbody>
+</table>
 <h3 id="vehicles">Vehicles<a class="headerlink" href="#vehicles" title="Permanent link">#</a></h3>
-<p>[Blank]</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vehicle ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Vehicle Name</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Garage Address</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Seating Capacity</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Wheelchair Capacity</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Scooter Capacity</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Has Ramp</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Has Lift</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Vehicle Start Date</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Vehicle End Date</td>
+<td>description</td>
+</tr>
+</tbody>
+</table>
 <h3 id="drivers">Drivers<a class="headerlink" href="#drivers" title="Permanent link">#</a></h3>
-<p>[Blank]</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Driver ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Driver Name</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Driver Email</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Default Vehicle ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Driver Calendar ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Driver Start Date</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Driver End Date</td>
+<td>description</td>
+</tr>
+</tbody>
+</table>
 <h3 id="services">Services<a class="headerlink" href="#services" title="Permanent link">#</a></h3>
-<p>[Blank]</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Service ID</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Service Name</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Service Funder</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Service Start Date</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Service End Date</td>
+<td>description</td>
+</tr>
+</tbody>
+</table>
 <h3 id="lookups">Lookups<a class="headerlink" href="#lookups" title="Permanent link">#</a></h3>
-<p>[Blank]</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Customer Names and IDs</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Driver IDs</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Vehicle IDs</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Service IDs</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Trip Purposes</td>
+<td>description</td>
+</tr>
+<tr>
+<td>Trip Results</td>
+<td>description</td>
+</tr>
+<tr>
+<td>ß</td>
+<td></td>
+</tr>
+</tbody>
+</table>
 <h3 id="document-properties">Document Properties<a class="headerlink" href="#document-properties" title="Permanent link">#</a></h3>
-<p>[Blank]</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>apiGetAccess</td>
+<td>description</td>
+</tr>
+<tr>
+<td>apiGiveAccess</td>
+<td>description</td>
+</tr>
+<tr>
+<td>apiShowMenuItems</td>
+<td>description</td>
+</tr>
+<tr>
+<td>calendarIdForUnassignedTrips</td>
+<td>description</td>
+</tr>
+<tr>
+<td>configFolderId</td>
+<td>description</td>
+</tr>
+<tr>
+<td>defaultStayDuration</td>
+<td>description</td>
+</tr>
+<tr>
+<td>driverManifestFolderId</td>
+<td>description</td>
+</tr>
+<tr>
+<td>driverManifestTemplateDocId</td>
+<td>description</td>
+</tr>
+<tr>
+<td>dropOffToAppointmentTimeInMinutes</td>
+<td>description</td>
+</tr>
+<tr>
+<td>dwellTimeInMinutes</td>
+<td>description</td>
+</tr>
+<tr>
+<td>extraHeaderNames</td>
+<td>description</td>
+</tr>
+<tr>
+<td>geocoderBoundNeLatitude</td>
+<td>description</td>
+</tr>
+<tr>
+<td>geocoderBoundNeLongitude</td>
+<td>description</td>
+</tr>
+<tr>
+<td>geocoderBoundSwLatitude</td>
+<td>description</td>
+</tr>
+<tr>
+<td>geocoderBoundSwLongitude</td>
+<td>description</td>
+</tr>
+<tr>
+<td>localTimeZone</td>
+<td>description</td>
+</tr>
+<tr>
+<td>logLevel</td>
+<td>description</td>
+</tr>
+<tr>
+<td>monthlyBackupFolderId</td>
+<td>description</td>
+</tr>
+<tr>
+<td>monthlyFileRetentionInDays</td>
+<td>description</td>
+</tr>
+<tr>
+<td>nightlyBackupFolderId</td>
+<td>description</td>
+</tr>
+<tr>
+<td>nightlyFileRetentionInDays</td>
+<td>description</td>
+</tr>
+<tr>
+<td>notificationEmail</td>
+<td>description</td>
+</tr>
+<tr>
+<td>providerName</td>
+<td>description</td>
+</tr>
+<tr>
+<td>runReviewRequiredFields</td>
+<td>description</td>
+</tr>
+<tr>
+<td>tripCalendarEntryTitleTemplate</td>
+<td>description</td>
+</tr>
+<tr>
+<td>tripPaddingPerHourInMinutes</td>
+<td>description</td>
+</tr>
+<tr>
+<td>tripReviewCompletedTripResults</td>
+<td>description</td>
+</tr>
+<tr>
+<td>tripReviewRequiredFields</td>
+<td>description</td>
+</tr>
+<tr>
+<td>weeklyBackupFolderId</td>
+<td>description</td>
+</tr>
+<tr>
+<td>weeklyFileRetentionInDays</td>
+<td>description</td>
+</tr>
+</tbody>
+</table>
 
 
 

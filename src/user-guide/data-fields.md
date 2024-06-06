@@ -64,6 +64,10 @@ Common addresses can be stored with short names for easy reference. When a short
 
 ### Customers
 
+#### Default Fields
+
+When a customer field starts with the word “Default,” its value will be automatically copied into a new trip record if there is a matching field without the word “Default” in the trips tab. For example, in the base version of RideSheet there is a “Default PU Address” field in the Customers sheet and a “PU Address” field in the Trips tab. If the “Default PU Address” field for a customer is filled in, then whenever a new trip for that customer is created, the “PU Address” field of the trips will be filled in with the “Default PU Address” value. If the default value for any particular trip is not appropriate, then the field can simply be cleared and replaced with the correct value.
+
 | Field Name                 | Description                  |
 |----------------------------|------------------------------|
 | Customer Name and ID       | description                  |

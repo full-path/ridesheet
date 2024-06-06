@@ -472,15 +472,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#assigning-trip-requests-to-runs" class="md-nav__link">
-    <span class="md-ellipsis">
-      Assigning Trip Requests to Runs
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#creating-manifests" class="md-nav__link">
     <span class="md-ellipsis">
       Creating Manifests
@@ -876,15 +867,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#assigning-trip-requests-to-runs" class="md-nav__link">
-    <span class="md-ellipsis">
-      Assigning Trip Requests to Runs
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#creating-manifests" class="md-nav__link">
     <span class="md-ellipsis">
       Creating Manifests
@@ -997,11 +979,30 @@
 <p>When you fill in a PU and DO location, RideSheet will use Google Maps to automatically estimate the mileage and duration of the trip. If you fill in a PU time, DO time, <strong>or</strong> appointment time, RideSheet will automatically fill in the other time fields based on the estimate. For example, if the estimated duration of the trip is 20 minutes and you set an appointment time at 2:00pm, RideSheet will automatically fill in the DO time at 1:50pm and the PU time at 1:30pm. The amount of padding is customizable in the configuration.</p>
 <p>RideSheet also offers many utilities for managing addresses, and can autocomplete based on place names. <a href="../data-fields/#address-fields">Learn more about addresses</a>.</p>
 <h2 id="creating-runs">Creating Runs<a class="headerlink" href="#creating-runs" title="Permanent link">#</a></h2>
-<h2 id="assigning-trip-requests-to-runs">Assigning Trip Requests to Runs<a class="headerlink" href="#assigning-trip-requests-to-runs" title="Permanent link">#</a></h2>
+<p>A run in RideSheet is simply defined as a specific combination of driver and vehicle during a specified time. RideSheet will automatically create a new run for a trip once a driver and vehicle are set for it in the <code>Trips</code> sheet.</p>
+<p>You can also set up runs ahead of time in the <code>Runs</code> sheet, setting a scheduled start and end time for each vehicle/driver combination for that day. Any trips that are added for that day will automatically be assigned to the correct run. </p>
 <h2 id="creating-manifests">Creating Manifests<a class="headerlink" href="#creating-manifests" title="Permanent link">#</a></h2>
+<p>Before creating manifests, ensure that a driver and vehicle has been assigned to each of the day's trips. </p>
+<p>Select <code>Create manifests for day</code> from the RideSheet menu. A pop-up will appear, and you can choose to select a specific day or create manifests for the following day by default.</p>
+<p>Once the job has finished running, you will be able to find the driver manifests in the <code>Manifests</code> folder within your Google Workspace directory. Manifests are created based on a <a href="../customization/">customizable manifest template</a>.</p>
 <h2 id="entering-trip-results">Entering Trip Results<a class="headerlink" href="#entering-trip-results" title="Permanent link">#</a></h2>
+<p>Daily, or at least weekly, you will want to move trips over to <code>Trip Review</code> in order to fill in trip details such as whether the trip was completed or canceled, actual time and odometer information, and any fares/donations.</p>
+<p>In the RideSheet menu, select <code>Move past data to review</code>. This will move any trips and runs with a Trip Date in the past over to the respective <code>Trip Review</code> and <code>Run Review</code> sheets.</p>
+<p><img alt="Moving past trips to review" src="../../images/move-to-review.png" width="300" /></p>
 <h2 id="validating-and-archiving-data">Validating and Archiving Data<a class="headerlink" href="#validating-and-archiving-data" title="Permanent link">#</a></h2>
+<p>To move reviewed trips and runs to the archive, select <code>Move reviewed data to archive</code> in the RideSheet menu. This will move any trips from <code>Trip Review</code> that have the <code>Trip Result</code> field completed.</p>
+<p>In addition, RideSheet can be <a href="../customization/">customized</a> to require other fields in <code>Trip Review</code> and <code>Run Review</code> to be completed before an entry can be moved to archive. </p>
+<p>Only trips and runs in archive are used for generating <a href="../reports/">reports</a>. Any incomplete trips or runs left in review will not be included in report data.</p>
 <h2 id="creating-backups">Creating Backups<a class="headerlink" href="#creating-backups" title="Permanent link">#</a></h2>
+<p>To make a backup of RideSheet, simply navigate to <code>File</code> &gt; <code>Make a copy</code>.</p>
+<p><img alt="Ridesheet menu: make a copy" src="../../images/ridesheet-backups.png" /></p>
+<p><strong>Backup Tips</strong></p>
+<ul>
+<li>Create a copy every month or at least every quarter. </li>
+<li>Store backup copies in a different folder in Google Workspace from your main copy</li>
+<li>Name backup copies after their date</li>
+<li>Annually, create a fresh copy of RideSheet, and delete information in Trip Archive and Run Archive. Name the previous copy for the year.</li>
+</ul>
 
 
 
