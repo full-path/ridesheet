@@ -376,7 +376,7 @@ function sendCustomerReferral(sourceRow = null) {
     const response = postResource(endPoint, params, JSON.stringify(telegram))
     const responseObject = JSON.parse(response.getContentText())
     if (responseObject.status && responseObject.status !== "OK") {
-      ss.toast(`Failure to send referral to ${endPoint.name}`, "Failure")
+      ss.toast(`Failure to send referral to ${endPoint.name}`)
       logError(`Failure to send referral to ${endPoint.name}`, responseObject)
       return false
     } else {
@@ -390,6 +390,8 @@ function sendCustomerReferral(sourceRow = null) {
       return true
     } 
   } catch(e) {
+    const ui = SpreadsheetApp.getUi()
+    ui.alert(e.message)
     logError(e)
     return false
   }
