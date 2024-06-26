@@ -329,7 +329,7 @@ function sendCustomerReferral(sourceRow = null) {
       nickName: referral["Customer Nickname"],
       address: buildAddressToSpec(referral["Home Address"]),
       phone: buildPhoneNumberToSpec(referral["Home Phone Number"]),
-      mobilePhone: buildPhoneNumberToSpec(referral["Cell Phone Number"]),
+      mobilePhone: buildPhoneNumberToSpec(referral["Mobile Phone Number"]),
       mailingBillingAddress: buildAddressToSpec(referral["Mailing Address"]),
       fundingEntityBillingInformation: referral["Billing Information"],
       fundingType: valueToBoolean(referral["Funding Type?"]),

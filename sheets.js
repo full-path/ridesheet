@@ -203,8 +203,8 @@ function createRow(destSheet, data) {
     destSheet.appendRow(dataArray)
     let newRowIndex = destSheet.getLastRow()
     let newRow = destSheet.getRange(newRowIndex + ':' + newRowIndex)
-    fixRowNumberFormatting(newRow)
-    fixRowDataValidation(newRow)
+    //fixRowNumberFormatting(newRow)
+    //fixRowDataValidation(newRow)
     return true
   } catch(e) {
     logError(e)

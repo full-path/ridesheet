@@ -78,6 +78,10 @@ const localNamedRanges = {
   "lookupEthnicities": {
     "sheetName": "Lookups",
     "headerName": "Ethnicities"
+  },
+  "lookupGenders": {
+    "sheetName": "Lookups",
+    "headerName": "Genders"
   }
 }
 
@@ -268,7 +272,15 @@ const localColumns = {
     "Customer Nickname": {},
     "Customer Middle Name": {},
     "Customer Last Name": {},
-    "Gender": {},
+    "Gender": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupGenders",
+        showDropdown: true,
+        allowInvalid: true,
+        helpText: "Value must be a valid gender.",
+      },
+    },
     "Home Phone Number": {},
     "Mobile Phone Number": {},
     "Email": {
