@@ -214,6 +214,7 @@ function postResource(endPoint, params, payload) {
     return response
   } catch (e) {
     logError(e)
+    throw e
   }
 }
 
