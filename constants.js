@@ -32,7 +32,8 @@ const defaultSheets = [
   "Outside Runs",
   "Lookups",
   "Document Properties",
-  "Debug Log"
+  "Debug Log",
+  "Addressess"
 ]
 
 const sheetsWithHeaders = [
@@ -253,7 +254,6 @@ const defaultColumns = {
       },
     },
     "Default Service Level": {},
-    "Default Mobility Factors": {},
     "Customer Manifest Notes": {},
     "Customer Private Notes": {},
     "Customer Start Date": {
@@ -269,7 +269,17 @@ const defaultColumns = {
         criteriaType: "DATE_IS_VALID_DATE",
         helpText: "Value must be a valid date.",
       },
-    }
+    },
+    "Default Trip Purpose": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupTripPurposes",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid trip purpose.",
+      },
+    },
+    "Default Mobility Factors": {}
   },
   "Trips": {
     "Trip Date": {
@@ -379,6 +389,9 @@ const defaultColumns = {
         helpText: "Value must be a valid vehicle ID.",
       },
     },
+    "|Run OK?|": {
+      headerFormula: `={"|Run OK?|";MAP(formulaTripsTripDate, formulaTripsPuTime, formulaTripsDoTime, formulaTripsTripDriverId, formulaTripsTripVehicleId, formulaTripsTripRunId, LAMBDA(TripDate,TripPuTime,TripDoTime,TripDriverId,TripVehicleID,TripRunId, QUERY_RUN_MATCH_COUNT(TripDate,TripPuTime,TripDoTime,TripDriverId,TripVehicleID,TripRunId,formulaRunsSheet)))}`
+    },
     "Run ID": {},
     "Service ID": {
       dataValidation: {
@@ -398,6 +411,15 @@ const defaultColumns = {
       },
     },
     "Mobility Factors": {},
+    "Trip Purpose": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupTripPurposes",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid trip purpose.",
+      },
+    },
     "Notes": {},
     "Est Hours": {
       numberFormat: "0.00"
@@ -443,19 +465,17 @@ const defaultColumns = {
         helpText: "Value must be a valid time.",
       },
     },
-    "First PU Time": {
+    "|First PU Time|": {
+      headerFormula: `={"|First PU Time|","|Last DO Time|","|Trip Count|";MAP(formulaRunsRunDate, formulaRunsDriverId, formulaRunsVehicleId, formulaRunsRunId, LAMBDA(RunDate,RunDriverId,RunVehicleID,RunRunId, QUERY_RUN_TRIP_TIMES(RunDate,RunDriverId,RunVehicleID,RunRunId, formulaTripsCoreData, formulaTripsCoreHeaders)))}`,
       numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
     },
-    "Last DO Time": {
+    "|Last DO Time|": {
+      headerFormula: "",
       numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
+    },
+    "|Trip Count|": {
+      headerFormula: "",
+      numberFormat: '0',
     },
     "Scheduled End Time": {
       numberFormat: 'h":"mm am/pm',
@@ -678,6 +698,15 @@ const defaultColumns = {
         helpText: "Value must be a valid driver ID.",
       },
     },
+    "Trip Purpose": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupTripPurposes",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid trip type.",
+      },
+    },
     "Vehicle ID": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -802,6 +831,42 @@ const defaultColumns = {
     "Review TS": {
       numberFormat: "m/d/yyyy h:mm:ss"
     },
+    "Total Vehicle Miles": {
+      headerFormula: `={"Total Vehicle Miles";MAP(formulaRunReviewOdoStart,formulaRunReviewOdoEnd,LAMBDA(startOdo,endOdo,IF(COUNTBLANK(startOdo,endOdo)>0,"",endOdo-startOdo)))}`
+    },
+    "Total Deadhead Miles": {
+      headerFormula: `={"Total Deadhead Miles";MAP(formulaRunReviewStartingDeadheadMiles,formulaRunReviewEndingDeadheadMiles,LAMBDA(start,end,IF(COUNTBLANK(start,end)>0,"",start+end)))}`
+    },
+    "Revenue Miles": {
+      headerFormula: `={"Revenue Miles";MAP(formulaRunReviewTotalVehicleMiles,formulaRunReviewTotalDeadheadMiles,LAMBDA(vehicleMiles,deadheadMiles,IF(COUNTBLANK(vehicleMiles,deadheadMiles) > 0,"",vehicleMiles-deadheadMiles)))}`
+    },
+    "Total Vehicle Hours": {
+      headerFormula: `={"Total Vehicle Hours";MAP(formulaRunReviewTimeStart,formulaRunReviewTimeEnd,LAMBDA(start,end,IF(COUNTBLANK(start,end)>0,"",end-start)))}`,
+      numberFormat: "[h]:mm"
+    },
+    "Total Non-Revenue Hours": {
+      headerFormula: `={"Total Non-Revenue Hours";MAP(formulaRunReviewStartingDeadheadHours,formulaRunReviewEndingDeadheadHours,formulaRunReviewBreakTime,LAMBDA(start,end,middle,IF(COUNTBLANK(start,end,middle)>0,"",start+end+(middle/1440))))}`,
+      numberFormat: "[h]:mm"
+    },
+    "Revenue Hours": {
+      headerFormula: `={"Revenue Hours";MAP(formulaRunReviewTotalVehicleHours,formulaRunReviewTotalNonRevenueHours,LAMBDA(vehicleHours,deadheadHours,IF(COUNTBLANK(vehicleHours,deadheadHours)>0,"",vehicleHours-deadheadHours)))}`,
+      numberFormat: "[h]:mm"
+    },
+    "Starting Deadhead Miles": {
+      numberFormat: "0.0"
+    },
+    "Ending Deadhead Miles": {
+      numberFormat: "0.0"
+    },
+    "Starting Deadhead Hours": {
+      numberFormat: "[h]:mm"
+    },
+    "Ending Deadhead Hours": {
+      numberFormat: "[h]:mm"
+    },
+    "Vehicle Garage Address": {},
+    "First PU Address": {},
+    "Last DO Address": {}
   },
   "Trip Archive": {
     "Trip Date": {
@@ -904,6 +969,15 @@ const defaultColumns = {
       },
     },
     "Mobility Factors": {},
+    "Trip Purpose": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupTripPurposes",
+        showDropdown: false,
+        allowInvalid: false,
+        helpText: "Value must be a valid trip type.",
+      },
+    },
     "Notes": {},
     "Est Hours": {
       numberFormat: "0.00"
@@ -1004,6 +1078,42 @@ const defaultColumns = {
     "Archive TS": {
       numberFormat: "m/d/yyyy h:mm:ss"
     },
+    "Total Vehicle Miles": {
+      headerFormula: `={"Total Vehicle Miles";MAP(formulaRunArchiveOdoStart,formulaRunArchiveOdoEnd,LAMBDA(startOdo,endOdo,IF(COUNTBLANK(startOdo,endOdo)>0,"",endOdo-startOdo)))}`
+    },
+    "Total Deadhead Miles": {
+      headerFormula: `={"Total Deadhead Miles";MAP(formulaRunArchiveStartingDeadheadMiles,formulaRunArchiveEndingDeadheadMiles,LAMBDA(start,end,IF(COUNTBLANK(start,end)>0,"",start+end)))}`
+    },
+    "Revenue Miles": {
+      headerFormula: `={"Revenue Miles";MAP(formulaRunArchiveTotalVehicleMiles,formulaRunArchiveTotalDeadheadMiles,LAMBDA(vehicleMiles,deadheadMiles,IF(COUNTBLANK(vehicleMiles,deadheadMiles)>0,"",vehicleMiles-deadheadMiles)))}`
+    },
+    "Total Vehicle Hours": {
+      headerFormula: `={"Total Vehicle Hours";MAP(formulaRunArchiveTimeStart,formulaRunArchiveTimeEnd,LAMBDA(start,end,IF(COUNTBLANK(start,end)>0,"",end-start)))}`,
+      numberFormat: "[h]:mm"
+    },
+    "Total Non-Revenue Hours": {
+      headerFormula: `={"Total Non-Revenue Hours";MAP(formulaRunArchiveStartingDeadheadHours,formulaRunArchiveEndingDeadheadHours,formulaRunArchiveBreakTime,LAMBDA(start,end,middle,IF(COUNTBLANK(start,end,middle)>0,"",start+end+(middle/1440))))}`,
+      numberFormat: "[h]:mm"
+    },
+    "Revenue Hours": {
+      headerFormula: `={"Revenue Hours";MAP(formulaRunArchiveTotalVehicleHours,formulaRunArchiveTotalNonRevenueHours,LAMBDA(vehicleHours,deadheadHours,IF(COUNTBLANK(vehicleHours,deadheadHours)>0,"",vehicleHours-deadheadHours)))}`,
+      numberFormat: "[h]:mm"
+    },
+    "Starting Deadhead Miles": {
+      numberFormat: "0.0"
+    },
+    "Ending Deadhead Miles": {
+      numberFormat: "0.0"
+    },
+    "Starting Deadhead Hours": {
+      numberFormat: "[h]:mm"
+    },
+    "Ending Deadhead Hours": {
+      numberFormat: "[h]:mm"
+    },
+    "Vehicle Garage Address": {},
+    "First PU Address": {},
+    "Last DO Address": {}
   },
   "Vehicles": {
     "Vehicle ID": {},
@@ -1094,6 +1204,10 @@ const defaultColumns = {
         helpText: "Value must be a valid date.",
       }
     }
+  },
+  "Addresses": {
+    "Short Name": {},
+    "Address": {},
   },
   "Lookups": {
     "Customer Names and IDs": {
@@ -1265,4 +1379,212 @@ const defaultNamedRanges = {
     "sheetName":"Vehicles",
     "headerName":"Vehicle End Date"
   },
+  "formulaTripsTripDate": {
+    "sheetName":"Trips",
+    "headerName":"Trip Date"
+  },
+  "formulaTripsPuTime": {
+    "sheetName":"Trips",
+    "headerName":"PU Time"
+  },
+  "formulaTripsDoTime": {
+    "sheetName":"Trips",
+    "headerName":"DO Time"
+  },
+  "formulaTripsTripDriverId": {
+    "sheetName":"Trips",
+    "headerName":"Driver ID"
+  },
+  "formulaTripsTripVehicleId": {
+    "sheetName":"Trips",
+    "headerName":"Vehicle ID"
+  },
+  "formulaTripsTripRunId": {
+    "sheetName":"Trips",
+    "headerName":"Run ID"
+  },
+  "formulaTripsCoreHeaders": {
+    "sheetName":"Trips",
+    "startHeaderName":"Trip Date",
+    "endHeaderName":"Run ID",
+    "headerOnly": true
+  },
+  "formulaTripsCoreData": {
+    "sheetName":"Trips",
+    "startHeaderName":"Trip Date",
+    "endHeaderName":"Run ID",
+  },
+  "formulaRunsRunDate": {
+    "sheetName":"Runs",
+    "headerName":"Run Date"
+  },
+  "formulaRunsDriverId": {
+    "sheetName":"Runs",
+    "headerName":"Driver ID"
+  },
+  "formulaRunReviewRunDate": {
+    "sheetName":"Run Review",
+    "headerName":"Run Date"
+  },
+  "formulaRunsVehicleId": {
+    "sheetName":"Runs",
+    "headerName":"Vehicle ID"
+  },
+  "formulaRunsRunId": {
+    "sheetName":"Runs",
+    "headerName":"Run ID"
+  },
+  "formulaTripReviewCoreHeaders": {
+    "sheetName":"Trip Review",
+    "startHeaderName":"Trip Date",
+    "endHeaderName":"Run ID",
+    "headerOnly": true
+  },
+  "formulaTripReviewCoreData": {
+    "sheetName":"Trip Review",
+    "startHeaderName":"Trip Date",
+    "endHeaderName":"Run ID",
+  },
+  "formulaRunsSheet": {
+    "sheetName":"Runs",
+    "startHeaderName":"Run Date",
+    "endHeaderName":"Scheduled End Time",
+    "allRows": true
+  },
+  "formulaRunReviewDriverId": {
+    "sheetName":"Run Review",
+    "headerName":"Driver ID"
+  },
+  "formulaRunReviewVehicleId": {
+    "sheetName":"Run Review",
+    "headerName":"Vehicle ID"
+  },
+  "formulaRunReviewRunId": {
+    "sheetName":"Run Review",
+    "headerName":"Run ID"
+  },
+  "formulaRunReviewBreakTime": {
+    "sheetName":"Run Review",
+    "headerName":"Break Time in Minutes"
+  },
+  "formulaRunReviewTimeStart": {
+    "sheetName":"Run Review",
+    "headerName":"Actual Start Time"
+  },
+  "formulaRunReviewTimeEnd": {
+    "sheetName":"Run Review",
+    "headerName":"Actual End Time"
+  },
+  "formulaRunReviewOdoStart": {
+    "sheetName":"Run Review",
+    "headerName":"Odometer Start"
+  },
+  "formulaRunReviewOdoEnd": {
+    "sheetName":"Run Review",
+    "headerName":"Odometer End"
+  },
+  "formulaRunReviewStartingDeadheadMiles": {
+    "sheetName":"Run Review",
+    "headerName":"Starting Deadhead Miles"
+  },
+  "formulaRunReviewEndingDeadheadMiles": {
+    "sheetName":"Run Review",
+    "headerName":"Ending Deadhead Miles"
+  },
+  "formulaRunReviewTotalDeadheadMiles": {
+    "sheetName":"Run Review",
+    "headerName":"Total Deadhead Miles"
+  },
+  "formulaRunReviewTotalVehicleMiles": {
+    "sheetName":"Run Review",
+    "headerName":"Total Vehicle Miles"
+  },
+  "formulaRunReviewStartingDeadheadHours": {
+    "sheetName":"Run Review",
+    "headerName":"Starting Deadhead Hours"
+  },
+  "formulaRunReviewEndingDeadheadHours": {
+    "sheetName":"Run Review",
+    "headerName":"Ending Deadhead Hours"
+  },
+  "formulaRunReviewTotalNonRevenueHours": {
+    "sheetName":"Run Review",
+    "headerName":"Total Non-Revenue Hours"
+  },
+  "formulaRunReviewTotalVehicleHours": {
+    "sheetName":"Run Review",
+    "headerName":"Total Vehicle Hours"
+  },
+  "formulaRunArchiveRunDate": {
+    "sheetName":"Run Archive",
+    "headerName":"Run Date"
+  },
+  "formulaRunArchiveBreakTime": {
+    "sheetName":"Run Archive",
+    "headerName":"Break Time in Minutes"
+  },
+  "formulaRunArchiveOdoStart": {
+    "sheetName":"Run Archive",
+    "headerName":"Odometer Start"
+  },
+  "formulaRunArchiveOdoEnd": {
+    "sheetName":"Run Archive",
+    "headerName":"Odometer End"
+  },
+  "formulaRunArchiveTimeStart": {
+    "sheetName":"Run Archive",
+    "headerName":"Actual Start Time"
+  },
+  "formulaRunArchiveTimeEnd": {
+    "sheetName":"Run Archive",
+    "headerName":"Actual End Time"
+  },
+  "formulaRunArchiveStartingDeadheadMiles": {
+    "sheetName":"Run Archive",
+    "headerName":"Starting Deadhead Miles"
+  },
+  "formulaRunArchiveEndingDeadheadMiles": {
+    "sheetName":"Run Archive",
+    "headerName":"Ending Deadhead Miles"
+  },
+  "formulaRunArchiveTotalDeadheadMiles": {
+    "sheetName":"Run Archive",
+    "headerName":"Total Deadhead Miles"
+  },
+  "formulaRunArchiveTotalVehicleMiles": {
+    "sheetName":"Run Archive",
+    "headerName":"Total Vehicle Miles"
+  },
+  "formulaRunArchiveStartingDeadheadHours": {
+    "sheetName":"Run Archive",
+    "headerName":"Starting Deadhead Hours"
+  },
+  "formulaRunArchiveEndingDeadheadHours": {
+    "sheetName":"Run Archive",
+    "headerName":"Ending Deadhead Hours"
+  },
+  "formulaRunArchiveTotalNonRevenueHours": {
+    "sheetName":"Run Archive",
+    "headerName":"Total Non-Revenue Hours"
+  },
+  "formulaRunArchiveTotalVehicleHours": {
+    "sheetName":"Run Archive",
+    "headerName":"Total Vehicle Hours"
+  },
+  "formulaTripArchiveTripDate": {
+    "sheetName":"Trip Archive",
+    "headerName":"Trip Date"
+  },
+  "formulaTripArchiveCustomerId": {
+    "sheetName":"Trip Archive",
+    "headerName":"Customer ID"
+  },
+  "formulaTripArchivePuTime": {
+    "sheetName":"Trip Archive",
+    "headerName":"PU Time"
+  },
+  "codeFormatAddress9": {
+    "sheetName":"Addresses",
+    "headerName":"Address"
+  }
 }
