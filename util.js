@@ -62,11 +62,6 @@ function formatDate(date, timeZone, dateFormat) {
   }
 }
 
-function formatDateFromTrip(field, dateFormat) {
-  let val = field['@time']
-  return formatDate(new Date(val), null, dateFormat)
-}
-
 function dateAdd(date, days) {
   if (!date) date = new Date()
   let result = new Date(date)

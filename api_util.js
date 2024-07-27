@@ -245,3 +245,8 @@ function createErrorResponse(status) {
   response.setContent(JSON.stringify(errorContent))
   return response
 }
+
+function formatDateFromTrip(field, dateFormat) {
+  let val = field['@time']
+  return formatDate(new Date(val), null, dateFormat)
+}
