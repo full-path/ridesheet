@@ -38,14 +38,6 @@ const rangeTriggers = {
   codeUpdateTripVehicle: {
     functionCall: updateTripVehicleOnEdit,
     callOncePerRow: true
-  },
-  codeCheckSourceOnShare: {
-    functionCall: checkSourceOnShare,
-    callOncePerRow: true
-  },
-  codeVerifySourceOnEdit: {
-    functionCall: verifySourceOnEdit,
-    callOncePerRow: true
   }
 }
 
@@ -162,54 +154,6 @@ function formatAddressOnEdit(range) {
       range.setBackground(null)
     }
   } catch(e) { logError(e) }
-}
-
-// Named range = "Share" column
-function checkSourceOnShare(range) {
-  try {
-    if (range.getValue()) {
-      const app = SpreadsheetApp
-      const tripRow = getFullRow(range)
-      const tripValues = getRangeValuesAsTable(tripRow)[0]
-      if (tripValues["Source"]) {
-        let backgroundColor = app.newColor()
-        let msg = "Warning: Cannot share a trip with a set Source."
-        range.setNote(msg)
-        backgroundColor.setRgbColor(errorBackgroundColor)
-        range.setBackgroundObject(backgroundColor.build())
-      }
-    } else {
-      range.setNote("")
-      range.setBackground(null)
-    }
-  }
-  catch(e) {
-    logError(e)
-  }
-}
-
-// Named range: "Source" column
-function verifySourceOnEdit(range) {
-  try {
-    let tripRow = getFullRow(range)
-    let columnIndex = getRangeHeaderNames(tripRow).indexOf("Share")
-    let shareCell = tripRow.getCell(1, columnIndex + 1)
-    if (shareCell.getValue()) {
-      if (range.getValue()) {
-        const app = SpreadsheetApp
-        let backgroundColor = app.newColor()
-        let msg = "Warning: Cannot share a trip with a set Source."
-        shareCell.setNote(msg)
-        backgroundColor.setRgbColor(errorBackgroundColor)
-        shareCell.setBackgroundObject(backgroundColor.build())
-      } else {
-        shareCell.setNote("")
-        shareCell.setBackground(null)
-      }
-    }
-  } catch(e) {
-    logError(e)
-  }
 }
 
 function fillTripCellsOnEdit(range) {

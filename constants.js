@@ -20,7 +20,6 @@ const defaultSheets = [
   "Customers",
   "Trips",
   "Runs",
-  "Sent Trips",
   "Trip Review",
   "Run Review",
   "Trip Archive",
@@ -28,8 +27,6 @@ const defaultSheets = [
   "Vehicles",
   "Drivers",
   "Services",
-  "Outside Trips",
-  "Outside Runs",
   "Lookups",
   "Document Properties",
   "Debug Log",
@@ -40,7 +37,6 @@ const sheetsWithHeaders = [
   "Customers",
   "Trips",
   "Runs",
-  "Sent Trips",
   "Trip Review",
   "Run Review",
   "Trip Archive",
@@ -48,8 +44,7 @@ const sheetsWithHeaders = [
   "Vehicles",
   "Drivers",
   "Services",
-  "Lookups",
-  "Outside Trips"
+  "Lookups"
 ]
 
 const defaultDocumentProperties = {
@@ -148,41 +143,6 @@ const defaultDocumentProperties = {
     value: "",
     description: "Email address to use for notifications"
   },
-  apiGetAccess: {
-    type: "array",
-    value: [
-      {
-        name: "Example agency name",
-        url: "https://example.com",
-        apiVersion: "v1",
-        receiverId: "Enter key here",
-        secret: "Enter secret here",
-        hasRuns: true,
-        hasTrips: true
-      }
-    ],
-    description: "API information needed to connect to other agencies"
-  },
-  apiGiveAccess: {
-    type: "object",
-    value: {
-      Enter_agency_id_here: {
-        name: "Example agency name with API access to data in this sheet",
-          secret: "Enter secret here"
-      }
-    },
-    description: "API information needed to allow agencies to connect to this sheet. We recommend using https://www.uuidgenerator.net/ to generate API keys."
-  },
-  apiSenderId: {
-    type: "string",
-    value: "",
-    description: "UUID for this agency"
-  },
-  apiShowMenuItems: {
-    type: "boolean",
-    value: false,
-    description: "Show menu items for manually triggering API calls?"
-  },
   logLevel: {
     type: "string",
     value: "normal",
@@ -194,9 +154,6 @@ const defaultDocumentProperties = {
       Customers: [],
       Trips: [],
       Runs: [],
-      "Sent Trips": [],
-      "Outside Trips": [],
-      "Outside Runs": [],
       "Trip Review": [],
       "Run Review": [],
       "Trip Archive": [],
@@ -316,14 +273,6 @@ const defaultColumns = {
         allowInvalid: true,
       }
     },
-    "Share": {
-      dataValidation: {
-        criteriaType: "CHECKBOX",
-        checkedValue: "TRUE",
-        allowInvalid: true,
-      }
-    },
-    "Declined By": {},
     "Trip Result": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -333,7 +282,6 @@ const defaultColumns = {
         helpText: "Value must be a valid trip result.",
       },
     },
-    "Source": {},
     "Earliest PU Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -428,8 +376,7 @@ const defaultColumns = {
     "Driver Calendar ID": {},
     "Trip Event ID": {},
     "Trip ID": {},
-    "Customer ID": {},
-    "Shared": {}
+    "Customer ID": {}
   },
   "Runs": {
     "Run Date": {
@@ -485,139 +432,6 @@ const defaultColumns = {
       },
     }
   },
-  "Sent Trips": {
-    "Claimed By": {},
-    "Trip Date": {
-      numberFormat: "M/d/yyyy",
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid date.",
-      },
-    },
-    "Customer Name and ID": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupCustomerNames",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid customer name and ID.",
-      },
-    },
-    "Declined By": {},
-    "Earliest PU Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "PU Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "Latest PU Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "DO Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "Appt Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "PU Address": {},
-    "DO Address": {},
-    "Guests": {},
-    "Mobility Factors": {},
-    "Notes": {},
-    "Est Hours": {
-      numberFormat: "0.00"
-    },
-    "Est Miles": {},
-    "Trip ID": {},
-    "Customer ID": {}
-  },
-  "Outside Trips": {
-    "Decline": {dataValidation: {
-      criteriaType: "CHECKBOX",
-      checkedValue: "TRUE",
-      allowInvalid: true,
-    }},
-    "Claim": {dataValidation: {
-      criteriaType: "CHECKBOX",
-      checkedValue: "TRUE",
-      allowInvalid: true,
-    }},
-    "Trip Date": {
-      numberFormat: "M/d/yyyy",
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid date.",
-      },
-    },
-    "Earliest PU Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "Requested PU Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "Latest PU Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "Requested DO Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "Appt Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "PU Address": {},
-    "DO Address": {},
-    "Guests": {},
-    "Mobility Factors": {},
-    "Notes": {},
-    "Est Hours": {
-      numberFormat: "0.00"
-    },
-    "Est Miles": {},
-    "Trip ID": {},
-    "Customer Info": {},
-    "Extra Fields": {},
-    "Pending": {},
-  },
   "Trip Review": {
     "Trip Date": {
       numberFormat: "M/d/yyyy",
@@ -644,13 +458,6 @@ const defaultColumns = {
         helpText: "Value must be a valid trip result.",
       },
     },
-    "Share": {
-      dataValidation: {
-        criteriaType: "CHECKBOX",
-        checkedValue: "TRUE",
-        allowInvalid: true,
-      }
-    },
     "Actual PU Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -667,7 +474,6 @@ const defaultColumns = {
     },
     "Start Odo": {},
     "End Odo": {},
-    "Source": {},
     "PU Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -908,7 +714,6 @@ const defaultColumns = {
         helpText: "Value must be a valid time.",
       },
     },
-    "Source": {},
     "PU Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -1310,14 +1115,6 @@ const defaultNamedRanges = {
   "codeUpdateTripTimes3":{
     "sheetName":"Trips",
     "headerName":"Appt Time"
-  },
-  "codeCheckSourceOnShare": {
-    "sheetName":"Trips",
-    "headerName": "Share"
-  },
-  "codeVerifySourceOnEdit": {
-    "sheetName":"Trips",
-    "headerName":"Source"
   },
   "lookupCustomerNames": {
     "sheetName":"Lookups",
