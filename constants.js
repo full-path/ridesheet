@@ -373,8 +373,6 @@ const defaultColumns = {
       numberFormat: "0.00"
     },
     "Est Miles": {},
-    "Driver Calendar ID": {},
-    "Trip Event ID": {},
     "Trip ID": {},
     "Customer ID": {}
   },
@@ -549,7 +547,6 @@ const defaultColumns = {
     },
     "Est Miles": {},
     "Trip ID": {},
-    "Calendar ID": {},
     "Customer ID": {},
     "Review TS": {
       numberFormat: "m/d/yyyy h:mm:ss"
@@ -650,7 +647,7 @@ const defaultColumns = {
       headerFormula: `={"Total Vehicle Hours";MAP(formulaRunReviewTimeStart,formulaRunReviewTimeEnd,LAMBDA(start,end,IF(COUNTBLANK(start,end)>0,"",end-start)))}`,
       numberFormat: "[h]:mm"
     },
-    "Total Non-Revenue Hours": {
+    "Total Deadhead Hours": {
       headerFormula: `={"Total Non-Revenue Hours";MAP(formulaRunReviewStartingDeadheadHours,formulaRunReviewEndingDeadheadHours,formulaRunReviewBreakTime,LAMBDA(start,end,middle,IF(COUNTBLANK(start,end,middle)>0,"",start+end+(middle/1440))))}`,
       numberFormat: "[h]:mm"
     },
