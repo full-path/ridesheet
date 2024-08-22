@@ -490,6 +490,30 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#entering-run-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Entering Run Results
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Entering Run Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-data-to-runs-in-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding Data to Runs in Review
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#validating-and-archiving-data" class="md-nav__link">
     <span class="md-ellipsis">
       Validating and Archiving Data
@@ -885,6 +909,30 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#entering-run-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Entering Run Results
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Entering Run Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-data-to-runs-in-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding Data to Runs in Review
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#validating-and-archiving-data" class="md-nav__link">
     <span class="md-ellipsis">
       Validating and Archiving Data
@@ -926,21 +974,23 @@
 <p>RideSheet is a spreadsheet-based application consisting of multiple sheets or tabs. The basic view of RideSheet should look something like this:</p>
 <p><img alt="RideSheet home" src="../../images/ridesheet-screenshot1.png" /></p>
 <p>This screenshot comes from the <a href="https://docs.google.com/spreadsheets/d/1U_rmR08qW63hEK_5IWblzVXK4ZqQElaD1ymAQNGpNiU/edit#gid=0">RideSheet Public Sample</a>. If you are interested in trying out RideSheet, you can simply make a copy of this sheet and test out anything you would like, or use it to follow along with this guide.</p>
-<p>The first row of the spreadsheet, in yellow, is the header. Most of these fields are covered in detail in <a href="../data-fields/">Data Fields</a></p>
+<p>The first row of the spreadsheet, in yellow, is the header. Most of these fields are covered in detail in <a href="../data-fields/">Data Fields</a>. Some fields have blue headers or backgrounds. These fields are automatically populated by the application, and should not be edited by hand.</p>
 <p>Along the bottom, you can see the various tabs, such as Customers, Trips, and Runs. You will probably need to scroll to see all of the different sheets.</p>
 <p>In the main menu, you can see a dropdown menu item for <strong>RideSheet</strong>. This where you will run many of the workflows mentioned in this guide. </p>
 <p><img alt="Ridesheet menu" src="../../images/ridesheet-menu.png" /></p>
 <h3 id="common-workflows">Common Workflows<a class="headerlink" href="#common-workflows" title="Permanent link">#</a></h3>
 <p><strong>Handling Trip Requests</strong></p>
 <ol>
-<li>Customer calls in to request a ride</li>
-<li>If they are a <a href="#entering-new-customers">new customer</a>, information is entered in the Customers sheet</li>
-<li>Staff <a href="#entering-new-trip-requests">enters trip information</a> in the Trips sheet</li>
+<li>Customer calls in to request a ride.</li>
+<li>If they are a <a href="#entering-new-customers">new customer</a>, enter their information into the Customers sheet.</li>
+<li><a href="#entering-new-trip-requests">Enter trip information</a> in the Trips sheet. </li>
 </ol>
 <p><strong>Daily Operations</strong></p>
 <ol>
-<li>Every morning, <a href="#creating-manifests">driver manifests</a> are generated</li>
-<li>At the beginning or end of each day, all past trips and runs are <a href="#entering-trip-results">moved to review</a></li>
+<li>At the beginning of each day, <a href="#entering-trip-results">move all past trips and runs to review</a>.</li>
+<li>Fill in all additional details in <a href="#entering-trip-results">trip review</a> and <a href="#entering-run-results">run review</a>.</li>
+<li>Daily (or at least weekly) <a href="#validating-and-archiving-data">move completed run and trip data</a> to archive.</li>
+<li>At the end of the day, generate the next day's <a href="#creating-manifests">driver manifests</a>.</li>
 </ol>
 <h3 id="tips-for-working-with-spreadsheets">Tips for Working with Spreadsheets<a class="headerlink" href="#tips-for-working-with-spreadsheets" title="Permanent link">#</a></h3>
 <p>When working with RideSheet, it's helpful to be familiar with basic spreadsheet operations. For more information on using Google Sheets, refer to <a href="https://support.google.com/a/users/answer/9282959?hl=en">Google's official documentation</a>.</p>
@@ -965,7 +1015,7 @@
 <ol>
 <li>Navigate to the Trips sheet/tab.</li>
 <li>Enter the required trip details, including the customer name, pickup address and time, drop-off address and time, appointment time (if applicable), count of guests or attendants, and any additional notes. <a href="../data-fields/#trips">Learn more about Trip fields</a>.</li>
-<li>Optionally, associate the trip with specific resources such as the assigned driver and vehicle. This will be used for creating manifests and assigning trips to runs.</li>
+<li>Associate the trip with specific resources such as the assigned driver and vehicle. This will be used for creating manifests and assigning trips to runs. If the combination of driver and vehicle is not valid at that time, the <strong>Run OK?</strong> field will turn red. </li>
 </ol>
 <p>To add a return trip:</p>
 <ol>
@@ -974,23 +1024,33 @@
 <li>RideSheet will create a new trip with many details from the original.</li>
 <li>Fill in pick-up time for the return trip, and double check that additional information is correct</li>
 </ol>
-<p><img alt="Ridesheet action" src="../../images/ridesheet-action.png" /></p>
+<p><img alt="Ridesheet action" src="../../images/ridesheet-action.png" width="500" /></p>
 <h3 id="autofill-for-addresses-and-times">Autofill for Addresses and Times<a class="headerlink" href="#autofill-for-addresses-and-times" title="Permanent link">#</a></h3>
-<p>When you fill in a PU and DO location, RideSheet will use Google Maps to automatically estimate the mileage and duration of the trip. If you fill in a PU time, DO time, <strong>or</strong> appointment time, RideSheet will automatically fill in the other time fields based on the estimate. For example, if the estimated duration of the trip is 20 minutes and you set an appointment time at 2:00pm, RideSheet will automatically fill in the DO time at 1:50pm and the PU time at 1:30pm. The amount of padding is customizable in the configuration.</p>
+<p>When you fill in a PU and DO location, RideSheet will use Google Maps to automatically estimate the mileage and duration of the trip. If you fill in a <code>PU Time</code>, <code>DO Time</code>, <strong>or</strong> <code>Appt Time</code>, RideSheet will automatically fill in the other time fields based on the estimate. For example, if the estimated duration of the trip is 20 minutes and you set an appointment time at 2:00pm, RideSheet will automatically fill in the DO time at 1:50pm and the PU time at 1:30pm. The amount of padding is customizable in the configuration.</p>
 <p>RideSheet also offers many utilities for managing addresses, and can autocomplete based on place names. <a href="../data-fields/#address-fields">Learn more about addresses</a>.</p>
 <h2 id="creating-runs">Creating Runs<a class="headerlink" href="#creating-runs" title="Permanent link">#</a></h2>
 <p>A run in RideSheet is simply defined as a specific combination of driver and vehicle during a specified time. RideSheet will automatically create a new run for a trip once a driver and vehicle are set for it in the <code>Trips</code> sheet.</p>
-<p>You can also set up runs ahead of time in the <code>Runs</code> sheet, setting a scheduled start and end time for each vehicle/driver combination for that day. Any trips that are added for that day will automatically be assigned to the correct run. </p>
+<p>You can also set up runs ahead of time in the <code>Runs</code> sheet, setting a scheduled start and end time for each vehicle/driver combination for that day. Any trips that are added for that day will automatically be assigned to the correct run. Ensuring that scheduled start and end times are filled out in <code>Runs</code> will allow <code>Trips</code> to accurately fill in the <code>Run OK?</code> field. </p>
 <h2 id="creating-manifests">Creating Manifests<a class="headerlink" href="#creating-manifests" title="Permanent link">#</a></h2>
 <p>Before creating manifests, ensure that a driver and vehicle has been assigned to each of the day's trips. </p>
 <p>Select <code>Create manifests for day</code> from the RideSheet menu. A pop-up will appear, and you can choose to select a specific day or create manifests for the following day by default.</p>
 <p>Once the job has finished running, you will be able to find the driver manifests in the <code>Manifests</code> folder within your Google Workspace directory. Manifests are created based on a <a href="../customization/">customizable manifest template</a>.</p>
 <h2 id="entering-trip-results">Entering Trip Results<a class="headerlink" href="#entering-trip-results" title="Permanent link">#</a></h2>
-<p>Daily, or at least weekly, you will want to move trips over to <code>Trip Review</code> in order to fill in trip details such as whether the trip was completed or canceled, actual time and odometer information, and any fares/donations.</p>
+<p>Daily, you will want to move trips over to <code>Trip Review</code> in order to fill in trip details such as whether the trip was completed or canceled.</p>
 <p>In the RideSheet menu, select <code>Move past data to review</code>. This will move any trips and runs with a Trip Date in the past over to the respective <code>Trip Review</code> and <code>Run Review</code> sheets.</p>
 <p><img alt="Moving past trips to review" src="../../images/move-to-review.png" width="300" /></p>
+<p>Fill in the <code>Trip Result</code> for all trips from a day before attempting to <a href="#validating-and-archiving-data">move them to archive</a> or run the <a href="#adding-data-to-runs-in-review">add data to runs in review</a> process.</p>
+<h2 id="entering-run-results">Entering Run Results<a class="headerlink" href="#entering-run-results" title="Permanent link">#</a></h2>
+<p>As shown above in "Entering Trip Results", use the RideSheet menu to <code>Move past data to review</code>. </p>
+<p>Fill in the <code>Actual Start Time</code>, <code>Actual End Time</code>, <code>Break Time in Minutes</code>, <code>Odometer Start</code> and <code>Odometer End</code> for each run. It's imporant to fill in these fields for reports and in order to calculate <code>Revenue Miles</code> accurately.</p>
+<p>Once all data is filled in for an entire day's runs, you can have RideSheet automatically calculate Revenue Miles, Deadhead Miles, and other useful information.</p>
+<h3 id="adding-data-to-runs-in-review">Adding Data to Runs in Review<a class="headerlink" href="#adding-data-to-runs-in-review" title="Permanent link">#</a></h3>
+<p>Once a day's information is complete in both <code>Trip Review</code> and <code>Run Review</code>, navigate to the RideSheet menu and select <code>Add data to runs in review</code>.</p>
+<p>This will fill in all of the blue fields in <code>Run Review</code>, including Revenue Miles and Revenue Hours.</p>
 <h2 id="validating-and-archiving-data">Validating and Archiving Data<a class="headerlink" href="#validating-and-archiving-data" title="Permanent link">#</a></h2>
-<p>To move reviewed trips and runs to the archive, select <code>Move reviewed data to archive</code> in the RideSheet menu. This will move any trips from <code>Trip Review</code> that have the <code>Trip Result</code> field completed.</p>
+<p>To move reviewed trips and runs to the archive, select <code>Move reviewed data to archive</code> in the RideSheet menu. This will move all complete data from <code>Trip Review</code> and <code>Run Review</code>. </p>
+<p>A <strong>complete trip</strong> has the <code>Trip Result</code> field filled out, plus any other custom requirements defined in <code>Document Properties</code>.</p>
+<p>A <strong>complete run</strong> has a <code>Run Date</code>, <code>Driver ID</code>, <code>Vehicle ID</code>, and any custom requirements defined in <code>Document Properties</code>.</p>
 <p>In addition, RideSheet can be <a href="../customization/">customized</a> to require other fields in <code>Trip Review</code> and <code>Run Review</code> to be completed before an entry can be moved to archive. </p>
 <p>Only trips and runs in archive are used for generating <a href="../reports/">reports</a>. Any incomplete trips or runs left in review will not be included in report data.</p>
 <h2 id="creating-backups">Creating Backups<a class="headerlink" href="#creating-backups" title="Permanent link">#</a></h2>

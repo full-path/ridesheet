@@ -65,6 +65,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#troubleshooting" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -457,6 +462,19 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -467,6 +485,61 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#repairing-ridesheet" class="md-nav__link">
+    <span class="md-ellipsis">
+      Repairing RideSheet
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restoring-a-previous-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      Restoring a Previous Version
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other Common Issues
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-the-debug-log-advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using the Debug Log (Advanced)
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -634,6 +707,52 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#repairing-ridesheet" class="md-nav__link">
+    <span class="md-ellipsis">
+      Repairing RideSheet
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restoring-a-previous-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      Restoring a Previous Version
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other Common Issues
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-the-debug-log-advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using the Debug Log (Advanced)
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -651,9 +770,23 @@
   
 
 
-  <h1>Troubleshooting</h1>
-
-
+<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">#</a></h1>
+<p>Because RideSheet is spreadsheet-based and highly customizable, it is possible to edit fields or make changes which cause core functionality to break. Below are some of the most common issues, and ways to fix them. If none of these work, try <a href="../getting-help/">getting help</a>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Version History</p>
+<p>Google Sheets keeps a detailed version history of RideSheet, and you can easily revert to a past version at any time. If you catch an issue quickly enough, fixing it may be as simple as winding back time!</p>
+</div>
+<h2 id="repairing-ridesheet">Repairing RideSheet<a class="headerlink" href="#repairing-ridesheet" title="Permanent link">#</a></h2>
+<p>RideSheet is designed to be self-healing as much as possible. If you have accidentally edited a header or changed the formatting on a column, it may be able to restore itself. From the RideSheet menu, run <code>Settings &gt; Repair Sheets</code>. This may take some time to run.</p>
+<p><img alt="Ridesheet settings menu" src="../../images/troubleshooting-repair.png" /></p>
+<h2 id="restoring-a-previous-version">Restoring a Previous Version<a class="headerlink" href="#restoring-a-previous-version" title="Permanent link">#</a></h2>
+<p>If you catch the issue early enough, you may be able to revert to a past version. Please note that this will also remove any data, such as trips or customers, that you have entered since that point. </p>
+<p><img alt="Ridesheet versions menu" src="../../images/troubleshooting-versions.png" /></p>
+<p>In the main menu, select <code>File &gt; Version History &gt; See version history</code>.</p>
+<h2 id="other-common-issues">Other Common Issues<a class="headerlink" href="#other-common-issues" title="Permanent link">#</a></h2>
+<h2 id="using-the-debug-log-advanced">Using the Debug Log (Advanced)<a class="headerlink" href="#using-the-debug-log-advanced" title="Permanent link">#</a></h2>
+<p>On the bottom tab of RideSheet, you may see a sheet labeled <code>Debug Log</code>.</p>
+<p>This sheet provides technical information for issues, and will likely only be helpful to fairly technical users.</p>
 
 
 
