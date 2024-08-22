@@ -35,84 +35,95 @@ RideSheet supports combining address elements. For example:
 #### Common Addresses
 Common addresses can be stored with short names for easy reference. When a short name is entered, RideSheet replaces it with the corresponding full address. These can be created in the [Addresses](#addresses) sheet.
 
-### Dates and Times
-**[Kevin]** Does it seem useful to describe how dates/times are handled?
-
 ## Fields by Sheet
 ### Trips
 
-| Field Name                | Description                  |
-|---------------------------|------------------------------|
-| Trip Date                 | description                  |
-| Customer Name and ID      | description                  |
-| Action                    | description                  |
-| Go                        | description                  |
-| PU Time                   | description                  |
-| DO Time                   | description                  |
-| Appt Time                 | description                  |
-| PU Address                | description                  |
-| DO Address                | description                  |
-| Driver ID                 | description                  |
-| Vehicle ID                | description                  |
-| Service ID                | description                  |
-| Guests                    | description                  |
-| Mobility Factors          | description                  |
-| Notes                     | description                  |
-| Est Hours                 | description                  |
-| Est Miles                 | description                  |
-| Trip ID                   | description                  |
+#### Required Fields
+
+**Trip Date**  
+A date in m/d/yyyy format. When clicking on the `Trip Date` field, it should offer a datepicker pop-up as well. 
+
+**Customer Name and ID**  
+A valid customer must be selected from the dropdown. They must be added to the `Customers` sheet first in order to appear in the dropdown menu.
+
+**Time**  
+Either `PU Time`, `DO Time`, or `Appt Time` must be filled in. If any one of these fields is provided, along with a `PU Address` and `DO Address`, RideSheet will automatically estimate the trip time and fill in the other field(s). You may also manually edit the field to override the RideSheet estimate.
+
+**Addresses**  
+Both the `PU Address` and `DO Address` are required. If a `Default PU Address` or `Default DO Address` is provided in the Customers sheet, RideSheet will autofill those values. They may be overwritten by the user. Learn more about [Address Fields](#address-fields).
+
+**Driver ID**  
+A `Driver ID` must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the [Drivers](#drivers) sheet.
+
+**Vehicle ID**  
+A `Vehicle ID` must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the [Vehicles](#vehicles) sheet.
+
+**Service ID**  
+A `Service ID` must be selected from the dropdown in order to generate report information. Service information is entered in the [Services](#services) sheet.
+
+#### Optional Fields
+
+**Guests**  
+The number of riders, such as caregivers or other guests, apart from the primary customer.
+
+**Mobility Factors**  
+May be automatically filled in from `Default Mobility Factors` in the `Customers` sheet. Mobility factors will be included on the Driver Manifest.
+
+**Trip Purpose**  
+Dropdown is populated from the `Lookups` sheet.
+
+**Notes**  
+Any notes will be included on the Driver Manifest.
+
+#### Calculated Fields
+
+Calculated fields are colored blue. These fields are automatically calculated by RideSheet and should not be edited.
+
+**Est Miles** and **Est Hours** are calculated using Google Maps travel estimates. 
+
+**|Run OK?|** shows whether a specific combination of driver and vehicle is valid at the given day and time for the trip. 
 
 ### Customers
 
 #### Default Fields
 
-When a customer field starts with the word “Default,” its value will be automatically copied into a new trip record if there is a matching field without the word “Default” in the trips tab. For example, in the base version of RideSheet there is a “Default PU Address” field in the Customers sheet and a “PU Address” field in the Trips tab. If the “Default PU Address” field for a customer is filled in, then whenever a new trip for that customer is created, the “PU Address” field of the trips will be filled in with the “Default PU Address” value. If the default value for any particular trip is not appropriate, then the field can simply be cleared and replaced with the correct value.
+When a customer field starts with the word **Default**, its value will be automatically copied into a new trip record if there is a matching field without the word “Default” in the trips tab. For example, in the base version of RideSheet there is a `Default PU Address` field in the Customers sheet and a `PU Address` field in the Trips tab. If the `Default PU Address` field for a customer is filled in, then whenever a new trip for that customer is created, the `PU Address` field of the trips will be filled in with the `Default PU Address` value. If the default value for any particular trip is not appropriate, then the field can simply be cleared and replaced with the correct value.
 
-| Field Name                 | Description                  |
-|----------------------------|------------------------------|
-| Customer Name and ID       | description                  |
-| Customer ID                | description                  |
-| Customer First Name        | description                  |
-| Customer Last Name         | description                  |
-| Phone Number               | description                  |
-| Email                      | description                  |
-| Mailing Address            | description                  |
-| Home Address               | description                  |
-| Default PU Address         | description                  |
-| Default DO Address         | description                  |
-| Default Service ID         | description                  |
-| Default Service Level      | description                  |
-| Default Mobility Factors   | description                  |
-| Customer Manifest Notes    | description                  |
-| Customer Private Notes     | description                  |
-| Customer Start Date        | description                  |
-| Customer End Date          | description                  |
+#### Required Fields
+
+Just the `Customer First Name`, `Customer Last Name`, and `Phone Number` are required.
+
+If you do not provide a `Customer ID`, RideSheet will automatically fill in the next available ID number. 
 
 ### Runs
 
-| Field Name                 | Description                  |
-|----------------------------|------------------------------|
-| Run Date                   | description                  |
-| Driver ID                  | description                  |
-| Vehicle ID                 | description                  |
-| Scheduled Start Time       | description                  |
-| First PU Time              | description                  |
-| Last DO Time               | description                  |
-| Scheduled End Time         | description                  |
+#### Required Fields
+
+**Run Date**  ß
+Date in m/d/yyyy format. A datepicker should appear when the field is selected.
+
+**Driver ID**   
+A `Driver ID` must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the [Drivers](#drivers) sheet.
+
+**Vehicle ID**  
+A `Vehicle ID` must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the [Vehicles](#vehicles) sheet.
+
+**Scheduled Start Time**  
+Used to determine if a run is valid in `Trips`. 
+
+**Scheduled End Time**  
+Used to determine if a run is valid in `Trips`. 
+
+#### Calculated Fields
+
+**|First PU Time|**, **|Last DO Time|**, and **|Trip Count|** are all automatically calculated by RideSheet based on information in `Trips`. These fields should not be edited. 
 
 ### Trip Review
 
 Trip Review has most of the same fields as [Trips](#trips).
 
-The following fields are unique to Trip Review:
-
-| Field Name                | Description                  |
-|---------------------------|------------------------------|
-| Trip Result                 | description                  |
-| Actual PU Time      | description                  |
-| Actual DO Time                   | description                  |
-| Start ODO                      | description                  |
-| End ODO                  | description                  |
+**Trip Result**  
+The `Trip Result` must be selected from the dropdown menu for all trips. All trip results for a single day must be filled in order to calculate certain run data, such as revenue miles and hours. The possible options can be updated in the [Lookups](#lookups) sheet.
 
 ### Trip Archive
 
@@ -124,12 +135,20 @@ Run Review has most of the same fields as [Runs](#runs)
 
 The following fields are unique to Run Review:
 
-| Field Name                 | Description                  |
-|----------------------------|------------------------------|
-| Actual Start Time          | description                  |
-| Actual End Time            | description                  |
-| Odometer Start             | description                  |
-| Odometer End               | description                  |
+**Actual Start Time**  
+The actual start time for the run.
+
+**Actual End Time**  
+The actual end time for the run.
+
+**Break Time in Minutes**  
+Driver break time during the run (between the start and end time).
+
+**Odometer Start** and **Odometer End**
+
+#### Calculated Fields
+
+The remaining fields are colored blue and should not be edited. These are automatically calculated after running [add data to runs in review](using-ridesheet.md/#adding-data-to-runs-in-review).
 
 ### Run Archive
 
@@ -137,93 +156,45 @@ Run Archive has the all the fields from [Run Review](#run-review). Run Archive i
 
 ### Addresses
 
-| Field Name                 | Description                  |
-|----------------------------|------------------------------|
-| Short Name         | description                  |
-| Address           | description                  |
+Addresses can be used for defining common locations and making data entry easier. Any `Short Name` that is present in `Addresses` can be used within any of the other address fields in RideSheet, and RideSheet will automatically fill in the full address.
 
 ### Vehicles
 
-| Field Name                 | Description                  |
-|----------------------------|------------------------------|
-| Vehicle ID                 | description                  |
-| Vehicle Name               | description                  |
-| Garage Address             | description                  |
-| Seating Capacity           | description                  |
-| Wheelchair Capacity        | description                  |
-| Scooter Capacity           | description                  |
-| Has Ramp                   | description                  |
-| Has Lift                   | description                  |
-| Vehicle Start Date         | description                  |
-| Vehicle End Date           | description                  |
+`Vehicles` are used within dropdowns in `Runs` and `Trips`. Any vehicle added here will automatically appear in the dropdowns. If a vehicle is removed from service, it should not be removed from this sheet or else it will invalidate past data. Instead, use the `Vehicle End Date` field to indicate that the vehicle is not longer operating.
 
+The `Garage Address` is required to provide deadhead calculations in `Run Review`.
 
 ### Drivers
 
-| Field Name           | Description                  |
-|----------------------|------------------------------|
-| Driver ID            | description                  |
-| Driver Name          | description                  |
-| Driver Email         | description                  |
-| Default Vehicle ID   | description                  |
-| Driver Calendar ID   | description                  |
-| Driver Start Date    | description                  |
-| Driver End Date      | description                  |
+`Drivers` are used within dropdowns in `Runs` and `Trips`. Any driver added here will automatically appear in the dropdowns. If a driver is no longer available, they should not be removed from this sheet or else it will invalidate past data. Instead, use the `Driver End Date` field to indicate that the driver is no longer available.
+
+A `Default Vehicle ID` can be set so the `Vehicle ID` field automatically populates when this driver is selected.
 
 ### Services
 
-| Field Name         | Description                  |
-|--------------------|------------------------------|
-| Service ID         | description                  |
-| Service Name       | description                  |
-| Service Funder     | description                  |
-| Service Start Date | description                  |
-| Service End Date   | description                  |
+`Services` are used within dropdowns in `Trips` and are used in generating reports. 
 
+If a service is no longer available, it should not be removed from this sheet or else it will invalidate past data. Instead, use the `Service End Date` field to indicate that the service is no longer available.
 
 ### Lookups
 
-| Field Name            | Description                  |
-|-----------------------|------------------------------|
-| Customer Names and IDs| description                  |
-| Driver IDs            | description                  |
-| Vehicle IDs           | description                  |
-| Service IDs           | description                  |
-| Trip Purposes         | description                  |
-| Trip Results          | description                  |
-ß
+Most fields in `Lookups` are automatically generated, as indicated by the blue background.
+
+`Trip Purposes` and `Trip Results` can be edited in order to update dropdown options in the `Trips` and `Trip Review` sheets.
 
 ### Document Properties
 
-| Field Name                          | Description                  |
-|-------------------------------------|------------------------------|
-| apiGetAccess                        | description                  |
-| apiGiveAccess                       | description                  |
-| apiShowMenuItems                    | description                  |
-| calendarIdForUnassignedTrips        | description                  |
-| configFolderId                      | description                  |
-| defaultStayDuration                 | description                  |
-| driverManifestFolderId              | description                  |
-| driverManifestTemplateDocId         | description                  |
-| dropOffToAppointmentTimeInMinutes   | description                  |
-| dwellTimeInMinutes                  | description                  |
-| extraHeaderNames                    | description                  |
-| geocoderBoundNeLatitude             | description                  |
-| geocoderBoundNeLongitude            | description                  |
-| geocoderBoundSwLatitude             | description                  |
-| geocoderBoundSwLongitude            | description                  |
-| localTimeZone                       | description                  |
-| logLevel                            | description                  |
-| monthlyBackupFolderId               | description                  |
-| monthlyFileRetentionInDays          | description                  |
-| nightlyBackupFolderId               | description                  |
-| nightlyFileRetentionInDays          | description                  |
-| notificationEmail                   | description                  |
-| providerName                        | description                  |
-| runReviewRequiredFields             | description                  |
-| tripCalendarEntryTitleTemplate      | description                  |
-| tripPaddingPerHourInMinutes         | description                  |
-| tripReviewCompletedTripResults      | description                  |
-| tripReviewRequiredFields            | description                  |
-| weeklyBackupFolderId                | description                  |
-| weeklyFileRetentionInDays           | description                  |
+Document properties are used to configure RideSheet. Most of these will be set when RideSheet is initially installed, and not need to be edited again. However, the following may be useful to be aware of, in order to improve the accuracy of trip time estimates:
+
+**dropOffToAppointmentTimeInMinutes**  
+The length of time in minutes between the drop off time and the appointment time.
+
+**dwellTimeInMinutes**   
+The length of time in minutes added to the journey time to account for the time it takes to pick up and drop off a rider.
+
+**defaultStayDuration**  
+When creating a next leg or return trip, this is the length of time in minutes to set as the duration between rider dropoff or appt time and the pickup time of the next trip. Set to -1 (negative one) to keep the pickup time for the new trip blank.
+
+**tripPaddingPerHourInMinutes**  
+The length of time in minutes added to each hour of estimated travel time to account for weather, traffic, or other possible delays.
+
