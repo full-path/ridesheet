@@ -14,9 +14,9 @@ nav:
   - User Guide:
     - user-guide/index.md
     - Using RideSheet: user-guide/using-ridesheet.md
-    - Reports: user-guide/reports.md
     - Data Fields: user-guide/data-fields.md
     - Customization: user-guide/customization.md
+    - Reports: user-guide/reports.md
     - Trip Sharing and TDS: user-guide/trip-sharing-and-tds.md
     - Troubleshooting: user-guide/troubleshooting.md
     - Getting Help: user-guide/getting-help.md

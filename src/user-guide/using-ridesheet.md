@@ -22,15 +22,20 @@ In the main menu, you can see a dropdown menu item for **RideSheet**. This where
 **Handling Trip Requests**
 
 1. Customer calls in to request a ride.
-2. If they are a [new customer](#entering-new-customers), enter their information into the Customers sheet.
-3. [Enter trip information](#entering-new-trip-requests) in the Trips sheet. 
+2. If they are a [new customer](#entering-new-customers), enter their information into the `Customers` sheet.
+3. [Enter trip information](#entering-new-trip-requests) in the `Trips` sheet. 
+
+**Allocating Resources**
+
+1. [Assign drivers and vehicles](#creating-runs) in advance in the `Runs` sheet.
+2. Ensure that the next day's trips all have a driver and vehicle assigned, and that each is valid in the `|Run OK?|` field.
+1. At the end of the day, generate the next day's [driver manifests](#creating-manifests).
 
 **Daily Operations**
 
 1. At the beginning of each day, [move all past trips and runs to review](#entering-trip-results).
 1. Fill in all additional details in [trip review](#entering-trip-results) and [run review](#entering-run-results).
 1. Daily (or at least weekly) [move completed run and trip data](#validating-and-archiving-data) to archive.
-1. At the end of the day, generate the next day's [driver manifests](#creating-manifests).
 
 
 ### Tips for Working with Spreadsheets
@@ -84,7 +89,7 @@ Before creating manifests, ensure that a driver and vehicle has been assigned to
 
 Select `Create manifests for day` from the RideSheet menu. A pop-up will appear, and you can choose to select a specific day or create manifests for the following day by default.
 
-Once the job has finished running, you will be able to find the driver manifests in the `Manifests` folder within your Google Workspace directory. Manifests are created based on a [customizable manifest template](./customization.md).
+Once the job has finished running, you will be able to find the driver manifests in the `Manifests` folder within your Google Workspace directory. Manifests are created based on a [customizable manifest template](customization.md/#customizing-driver-manifests).
 
 ## Entering Trip Results
 

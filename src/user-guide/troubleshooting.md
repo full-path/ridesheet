@@ -15,9 +15,13 @@ RideSheet is designed to be self-healing as much as possible. If you have accide
 
 If you catch the issue early enough, you may be able to revert to a past version. Please note that this will also remove any data, such as trips or customers, that you have entered since that point. 
 
+Before restoring to a previous version, [make a copy](using-ridesheet.md/#creating-backups) of your current RideSheet. This way you can easily transfer over any data that may need to be re-entered.
+
 ![Ridesheet versions menu](../images/troubleshooting-versions.png)
 
 In the main menu, select `File > Version History > See version history`.
+
+Once in the version history, you can click through the menu on the righthand side of the screen. When you have located the latest version that you know was working correctly, click the blue button at the top of the page to "Restore this version".
 
 ## Other Common Issues
 

@@ -4,20 +4,8 @@ RideSheet allows you to create custom reports and automatically calculate billab
 
 ## Overview
 
-Reports are located in a separate spreadsheet from your RideSheet. They should be located in the same folder as RideSheet in your Google Drive, in a sub-folder simply called **Reports**.
+RideSheet is extremely flexible when it comes to reporting. The data in Trip Archive and Run Archive can be used to calculate key metrics for NTD reports and other business analytics. 
 
-The first sheet of your reports should look something like this:
+Older versions of RideSheet may have reports built into a separate Google Sheet. It's possible to use RideSheet archives as a database and pull them into another spreadsheet for analysis.
 
-![Reports](../images/reports-main.png)
-
-At the bottom of the window, there are several other sheets. Most of these have a lock icon. The locked sheets should not be edited! The only sheets you will need to open are `Configuration` and `ResultsByService`.
-
-![Report sheets](../images/reports-sheets.png)
-
-## Generating a Report
-
-In the **Configuration** sheet, the only fields you will need to edit are the `Report Start Date` and `Report End Date`, which are colored in bright lime green. Simply fill in the first and last date you want included in the report.
-
-Then, navigate to the **ResultsByService** tab. From here, you can select specific services in the dropdown, and the rest of the report data will populate automatically.
-
-
+Newer installations of RideSheet are migrating to using [Looker Studio](https://lookerstudio.google.com/overview). This guide will eventually cover how to set up Looker Studio with your copy of RideSheet.

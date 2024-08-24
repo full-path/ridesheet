@@ -11,10 +11,10 @@
         <link rel="canonical" href="https://full-path.github.io/ridesheet/user-guide/reports/">
       
       
-        <link rel="prev" href="../using-ridesheet/">
+        <link rel="prev" href="../customization/">
       
       
-        <link rel="next" href="../data-fields/">
+        <link rel="next" href="../trip-sharing-and-tds/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -369,6 +369,48 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-fields/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data Fields
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../customization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Customization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -426,61 +468,10 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#generating-a-report" class="md-nav__link">
-    <span class="md-ellipsis">
-      Generating a Report
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../data-fields/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Data Fields
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../customization/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Customization
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -707,15 +698,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#generating-a-report" class="md-nav__link">
-    <span class="md-ellipsis">
-      Generating a Report
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -737,14 +719,9 @@
 <h1 id="reports">Reports<a class="headerlink" href="#reports" title="Permanent link">#</a></h1>
 <p>RideSheet allows you to create custom reports and automatically calculate billable mileage on a per-service basis.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h2>
-<p>Reports are located in a separate spreadsheet from your RideSheet. They should be located in the same folder as RideSheet in your Google Drive, in a sub-folder simply called <strong>Reports</strong>.</p>
-<p>The first sheet of your reports should look something like this:</p>
-<p><img alt="Reports" src="../../images/reports-main.png" /></p>
-<p>At the bottom of the window, there are several other sheets. Most of these have a lock icon. The locked sheets should not be edited! The only sheets you will need to open are <code>Configuration</code> and <code>ResultsByService</code>.</p>
-<p><img alt="Report sheets" src="../../images/reports-sheets.png" /></p>
-<h2 id="generating-a-report">Generating a Report<a class="headerlink" href="#generating-a-report" title="Permanent link">#</a></h2>
-<p>In the <strong>Configuration</strong> sheet, the only fields you will need to edit are the <code>Report Start Date</code> and <code>Report End Date</code>, which are colored in bright lime green. Simply fill in the first and last date you want included in the report.</p>
-<p>Then, navigate to the <strong>ResultsByService</strong> tab. From here, you can select specific services in the dropdown, and the rest of the report data will populate automatically.</p>
+<p>RideSheet is extremely flexible when it comes to reporting. The data in Trip Archive and Run Archive can be used to calculate key metrics for NTD reports and other business analytics. </p>
+<p>Older versions of RideSheet may have reports built into a separate Google Sheet. It's possible to use RideSheet archives as a database and pull them into another spreadsheet for analysis.</p>
+<p>Newer installations of RideSheet are migrating to using <a href="https://lookerstudio.google.com/overview">Looker Studio</a>. This guide will eventually cover how to set up Looker Studio with your copy of RideSheet.</p>
 
 
 

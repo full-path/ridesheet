@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://full-path.github.io/ridesheet/user-guide/data-fields/">
       
       
-        <link rel="prev" href="../reports/">
+        <link rel="prev" href="../using-ridesheet/">
       
       
         <link rel="next" href="../customization/">
@@ -356,27 +356,6 @@
   
   <span class="md-ellipsis">
     Using RideSheet
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reports/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Reports
   </span>
   
 
@@ -762,6 +741,27 @@
   
   <span class="md-ellipsis">
     Customization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reports/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reports
   </span>
   
 
@@ -1331,69 +1331,85 @@
 <h2 id="fields-by-sheet">Fields by Sheet<a class="headerlink" href="#fields-by-sheet" title="Permanent link">#</a></h2>
 <h3 id="trips">Trips<a class="headerlink" href="#trips" title="Permanent link">#</a></h3>
 <h4 id="required-fields">Required Fields<a class="headerlink" href="#required-fields" title="Permanent link">#</a></h4>
-<p><strong>Trip Date</strong><br />
-A date in m/d/yyyy format. When clicking on the <code>Trip Date</code> field, it should offer a datepicker pop-up as well. </p>
-<p><strong>Customer Name and ID</strong><br />
-A valid customer must be selected from the dropdown. They must be added to the <code>Customers</code> sheet first in order to appear in the dropdown menu.</p>
-<p><strong>Time</strong><br />
-Either <code>PU Time</code>, <code>DO Time</code>, or <code>Appt Time</code> must be filled in. If any one of these fields is provided, along with a <code>PU Address</code> and <code>DO Address</code>, RideSheet will automatically estimate the trip time and fill in the other field(s). You may also manually edit the field to override the RideSheet estimate.</p>
-<p><strong>Addresses</strong><br />
-Both the <code>PU Address</code> and <code>DO Address</code> are required. If a <code>Default PU Address</code> or <code>Default DO Address</code> is provided in the Customers sheet, RideSheet will autofill those values. They may be overwritten by the user. Learn more about <a href="#address-fields">Address Fields</a>.</p>
-<p><strong>Driver ID</strong><br />
-A <code>Driver ID</code> must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the <a href="#drivers">Drivers</a> sheet.</p>
-<p><strong>Vehicle ID</strong><br />
-A <code>Vehicle ID</code> must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the <a href="#vehicles">Vehicles</a> sheet.</p>
-<p><strong>Service ID</strong><br />
-A <code>Service ID</code> must be selected from the dropdown in order to generate report information. Service information is entered in the <a href="#services">Services</a> sheet.</p>
+<dl>
+<dt><code>Trip Date</code></dt>
+<dd>A date in m/d/yyyy format. When clicking on the <code>Trip Date</code> field, it should offer a datepicker pop-up as well.</dd>
+<dt><code>Customer Name and ID</code></dt>
+<dd>A valid customer must be selected from the dropdown. They must be added to the <code>Customers</code> sheet first in order to appear in the dropdown menu.</dd>
+<dt><code>PU Time</code>, <code>DO Time</code>, and <code>Appt Time</code></dt>
+<dd>Either <code>PU Time</code>, <code>DO Time</code>, or <code>Appt Time</code> must be filled in. If any one of these fields is provided, along with a <code>PU Address</code> and <code>DO Address</code>, RideSheet will automatically estimate the trip time and fill in the other field(s). You may also manually edit the field to override the RideSheet estimate.</dd>
+<dt><code>PU Address</code> and <code>DO Address</code></dt>
+<dd>Both the <code>PU Address</code> and <code>DO Address</code> are required. If a <code>Default PU Address</code> or <code>Default DO Address</code> is provided in the Customers sheet, RideSheet will autofill those values. They may be overwritten by the user. Learn more about <a href="#address-fields">Address Fields</a>.</dd>
+<dt><code>Driver ID</code></dt>
+<dd>A <code>Driver ID</code> must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the <a href="#drivers">Drivers</a> sheet.</dd>
+<dt><code>Vehicle ID</code></dt>
+<dd>A <code>Vehicle ID</code> must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the <a href="#vehicles">Vehicles</a> sheet.</dd>
+<dt><code>Service ID</code></dt>
+<dd>A <code>Service ID</code> must be selected from the dropdown in order to generate report information. Service information is entered in the <a href="#services">Services</a> sheet.</dd>
+</dl>
 <h4 id="optional-fields">Optional Fields<a class="headerlink" href="#optional-fields" title="Permanent link">#</a></h4>
-<p><strong>Guests</strong><br />
-The number of riders, such as caregivers or other guests, apart from the primary customer.</p>
-<p><strong>Mobility Factors</strong><br />
-May be automatically filled in from <code>Default Mobility Factors</code> in the <code>Customers</code> sheet. Mobility factors will be included on the Driver Manifest.</p>
-<p><strong>Trip Purpose</strong><br />
-Dropdown is populated from the <code>Lookups</code> sheet.</p>
-<p><strong>Notes</strong><br />
-Any notes will be included on the Driver Manifest.</p>
+<dl>
+<dt><code>Guests</code></dt>
+<dd>The number of riders, such as caregivers or other guests, apart from the primary customer.</dd>
+<dt><code>Mobility Factors</code></dt>
+<dd>May be automatically filled in from <code>Default Mobility Factors</code> in the <code>Customers</code> sheet. Mobility factors will be included on the Driver Manifest.</dd>
+<dt><code>Trip Purpose</code></dt>
+<dd>Dropdown is populated from the <code>Lookups</code> sheet.</dd>
+<dt><code>Notes</code></dt>
+<dd>Any notes will be included on the Driver Manifest.</dd>
+</dl>
 <h4 id="calculated-fields">Calculated Fields<a class="headerlink" href="#calculated-fields" title="Permanent link">#</a></h4>
 <p>Calculated fields are colored blue. These fields are automatically calculated by RideSheet and should not be edited.</p>
-<p><strong>Est Miles</strong> and <strong>Est Hours</strong> are calculated using Google Maps travel estimates. </p>
-<p><strong>|Run OK?|</strong> shows whether a specific combination of driver and vehicle is valid at the given day and time for the trip. </p>
+<dl>
+<dt><code>Est Miles</code> and <code>Est Hours</code></dt>
+<dd>Calculated using Google Maps travel estimates.</dd>
+<dt><code>|Run OK?|</code></dt>
+<dd>Shows whether a specific combination of driver and vehicle is valid at the given day and time for the trip.</dd>
+</dl>
 <h3 id="customers">Customers<a class="headerlink" href="#customers" title="Permanent link">#</a></h3>
 <h4 id="default-fields">Default Fields<a class="headerlink" href="#default-fields" title="Permanent link">#</a></h4>
 <p>When a customer field starts with the word <strong>Default</strong>, its value will be automatically copied into a new trip record if there is a matching field without the word “Default” in the trips tab. For example, in the base version of RideSheet there is a <code>Default PU Address</code> field in the Customers sheet and a <code>PU Address</code> field in the Trips tab. If the <code>Default PU Address</code> field for a customer is filled in, then whenever a new trip for that customer is created, the <code>PU Address</code> field of the trips will be filled in with the <code>Default PU Address</code> value. If the default value for any particular trip is not appropriate, then the field can simply be cleared and replaced with the correct value.</p>
 <h4 id="required-fields_1">Required Fields<a class="headerlink" href="#required-fields_1" title="Permanent link">#</a></h4>
 <p>Just the <code>Customer First Name</code>, <code>Customer Last Name</code>, and <code>Phone Number</code> are required.</p>
-<p>If you do not provide a <code>Customer ID</code>, RideSheet will automatically fill in the next available ID number. </p>
+<p>If you do not provide a <code>Customer ID</code>, RideSheet will automatically fill in the next available ID number.</p>
 <h3 id="runs">Runs<a class="headerlink" href="#runs" title="Permanent link">#</a></h3>
 <h4 id="required-fields_2">Required Fields<a class="headerlink" href="#required-fields_2" title="Permanent link">#</a></h4>
-<p><strong>Run Date</strong>  ß
-Date in m/d/yyyy format. A datepicker should appear when the field is selected.</p>
-<p><strong>Driver ID</strong> <br />
-A <code>Driver ID</code> must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the <a href="#drivers">Drivers</a> sheet.</p>
-<p><strong>Vehicle ID</strong><br />
-A <code>Vehicle ID</code> must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the <a href="#vehicles">Vehicles</a> sheet.</p>
-<p><strong>Scheduled Start Time</strong><br />
-Used to determine if a run is valid in <code>Trips</code>. </p>
-<p><strong>Scheduled End Time</strong><br />
-Used to determine if a run is valid in <code>Trips</code>. </p>
+<dl>
+<dt><code>Run Date</code></dt>
+<dd>Date in m/d/yyyy format. A datepicker should appear when the field is selected.</dd>
+<dt><code>Driver ID</code></dt>
+<dd>A <code>Driver ID</code> must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the <a href="#drivers">Drivers</a> sheet.</dd>
+<dt><code>Vehicle ID</code></dt>
+<dd>A <code>Vehicle ID</code> must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the <a href="#vehicles">Vehicles</a> sheet.</dd>
+<dt><code>Scheduled Start Time</code></dt>
+<dd>Used to determine if a run is valid in <code>Trips</code>.</dd>
+<dt><code>Scheduled End Time</code></dt>
+<dd>Used to determine if a run is valid in <code>Trips</code>.</dd>
+</dl>
 <h4 id="calculated-fields_1">Calculated Fields<a class="headerlink" href="#calculated-fields_1" title="Permanent link">#</a></h4>
-<p><strong>|First PU Time|</strong>, <strong>|Last DO Time|</strong>, and <strong>|Trip Count|</strong> are all automatically calculated by RideSheet based on information in <code>Trips</code>. These fields should not be edited. </p>
+<dl>
+<dt><code>|First PU Time|</code>, <code>|Last DO Time|</code>, and <code>|Trip Count|</code></dt>
+<dd>All automatically calculated by RideSheet based on information in <code>Trips</code>. These fields should not be edited.</dd>
+</dl>
 <h3 id="trip-review">Trip Review<a class="headerlink" href="#trip-review" title="Permanent link">#</a></h3>
 <p>Trip Review has most of the same fields as <a href="#trips">Trips</a>.</p>
-<p><strong>Trip Result</strong><br />
-The <code>Trip Result</code> must be selected from the dropdown menu for all trips. All trip results for a single day must be filled in order to calculate certain run data, such as revenue miles and hours. The possible options can be updated in the <a href="#lookups">Lookups</a> sheet.</p>
+<dl>
+<dt><code>Trip Result</code></dt>
+<dd>The <code>Trip Result</code> must be selected from the dropdown menu for all trips. All trip results for a single day must be filled in order to calculate certain run data, such as revenue miles and hours. The possible options can be updated in the <a href="#lookups">Lookups</a> sheet.</dd>
+</dl>
 <h3 id="trip-archive">Trip Archive<a class="headerlink" href="#trip-archive" title="Permanent link">#</a></h3>
 <p>Trip Archive has all the fields from <a href="#trip-review">Trip Review</a>. Trip Archive is used to keep track of all past trips, and is used in reporting. <strong>Trips should not be edited or removed once in the archive</strong>.</p>
 <h3 id="run-review">Run Review<a class="headerlink" href="#run-review" title="Permanent link">#</a></h3>
-<p>Run Review has most of the same fields as <a href="#runs">Runs</a></p>
-<p>The following fields are unique to Run Review:</p>
-<p><strong>Actual Start Time</strong><br />
-The actual start time for the run.</p>
-<p><strong>Actual End Time</strong><br />
-The actual end time for the run.</p>
-<p><strong>Break Time in Minutes</strong><br />
-Driver break time during the run (between the start and end time).</p>
-<p><strong>Odometer Start</strong> and <strong>Odometer End</strong></p>
+<p>Run Review has most of the same fields as <a href="#runs">Runs</a>. The following fields are unique to Run Review:</p>
+<dl>
+<dt><code>Actual Start Time</code></dt>
+<dd>The actual start time for the run.</dd>
+<dt><code>Actual End Time</code></dt>
+<dd>The actual end time for the run.</dd>
+<dt><code>Break Time in Minutes</code></dt>
+<dd>Driver break time during the run (between the start and end time).</dd>
+</dl>
+<p><code>Odometer Start</code> and <code>Odometer End</code></p>
 <h4 id="calculated-fields_2">Calculated Fields<a class="headerlink" href="#calculated-fields_2" title="Permanent link">#</a></h4>
 <p>The remaining fields are colored blue and should not be edited. These are automatically calculated after running <a href="../using-ridesheet/#adding-data-to-runs-in-review">add data to runs in review</a>.</p>
 <h3 id="run-archive">Run Archive<a class="headerlink" href="#run-archive" title="Permanent link">#</a></h3>
@@ -1414,14 +1430,16 @@ Driver break time during the run (between the start and end time).</p>
 <p><code>Trip Purposes</code> and <code>Trip Results</code> can be edited in order to update dropdown options in the <code>Trips</code> and <code>Trip Review</code> sheets.</p>
 <h3 id="document-properties">Document Properties<a class="headerlink" href="#document-properties" title="Permanent link">#</a></h3>
 <p>Document properties are used to configure RideSheet. Most of these will be set when RideSheet is initially installed, and not need to be edited again. However, the following may be useful to be aware of, in order to improve the accuracy of trip time estimates:</p>
-<p><strong>dropOffToAppointmentTimeInMinutes</strong><br />
-The length of time in minutes between the drop off time and the appointment time.</p>
-<p><strong>dwellTimeInMinutes</strong> <br />
-The length of time in minutes added to the journey time to account for the time it takes to pick up and drop off a rider.</p>
-<p><strong>defaultStayDuration</strong><br />
-When creating a next leg or return trip, this is the length of time in minutes to set as the duration between rider dropoff or appt time and the pickup time of the next trip. Set to -1 (negative one) to keep the pickup time for the new trip blank.</p>
-<p><strong>tripPaddingPerHourInMinutes</strong><br />
-The length of time in minutes added to each hour of estimated travel time to account for weather, traffic, or other possible delays.</p>
+<dl>
+<dt><code>dropOffToAppointmentTimeInMinutes</code></dt>
+<dd>The length of time in minutes between the drop-off time and the appointment time.</dd>
+<dt><code>dwellTimeInMinutes</code></dt>
+<dd>The length of time in minutes added to the journey time to account for the time it takes to pick up and drop off a rider.</dd>
+<dt><code>defaultStayDuration</code></dt>
+<dd>When creating a next leg or return trip, this is the length of time in minutes to set as the duration between rider dropoff or appt time and the pickup time of the next trip. Set to -1 (negative one) to keep the pickup time for the new trip blank.</dd>
+<dt><code>tripPaddingPerHourInMinutes</code></dt>
+<dd>The length of time in minutes added to each hour of estimated travel time to account for weather, traffic, or other possible delays.</dd>
+</dl>
 
 
 

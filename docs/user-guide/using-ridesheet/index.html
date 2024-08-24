@@ -14,7 +14,7 @@
         <link rel="prev" href="../">
       
       
-        <link rel="next" href="../reports/">
+        <link rel="next" href="../data-fields/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -547,27 +547,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../reports/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Reports
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../data-fields/" class="md-nav__link">
         
   
@@ -594,6 +573,27 @@
   
   <span class="md-ellipsis">
     Customization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reports/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reports
   </span>
   
 
@@ -982,15 +982,20 @@
 <p><strong>Handling Trip Requests</strong></p>
 <ol>
 <li>Customer calls in to request a ride.</li>
-<li>If they are a <a href="#entering-new-customers">new customer</a>, enter their information into the Customers sheet.</li>
-<li><a href="#entering-new-trip-requests">Enter trip information</a> in the Trips sheet. </li>
+<li>If they are a <a href="#entering-new-customers">new customer</a>, enter their information into the <code>Customers</code> sheet.</li>
+<li><a href="#entering-new-trip-requests">Enter trip information</a> in the <code>Trips</code> sheet. </li>
+</ol>
+<p><strong>Allocating Resources</strong></p>
+<ol>
+<li><a href="#creating-runs">Assign drivers and vehicles</a> in advance in the <code>Runs</code> sheet.</li>
+<li>Ensure that the next day's trips all have a driver and vehicle assigned, and that each is valid in the <code>|Run OK?|</code> field.</li>
+<li>At the end of the day, generate the next day's <a href="#creating-manifests">driver manifests</a>.</li>
 </ol>
 <p><strong>Daily Operations</strong></p>
 <ol>
 <li>At the beginning of each day, <a href="#entering-trip-results">move all past trips and runs to review</a>.</li>
 <li>Fill in all additional details in <a href="#entering-trip-results">trip review</a> and <a href="#entering-run-results">run review</a>.</li>
 <li>Daily (or at least weekly) <a href="#validating-and-archiving-data">move completed run and trip data</a> to archive.</li>
-<li>At the end of the day, generate the next day's <a href="#creating-manifests">driver manifests</a>.</li>
 </ol>
 <h3 id="tips-for-working-with-spreadsheets">Tips for Working with Spreadsheets<a class="headerlink" href="#tips-for-working-with-spreadsheets" title="Permanent link">#</a></h3>
 <p>When working with RideSheet, it's helpful to be familiar with basic spreadsheet operations. For more information on using Google Sheets, refer to <a href="https://support.google.com/a/users/answer/9282959?hl=en">Google's official documentation</a>.</p>
@@ -1034,7 +1039,7 @@
 <h2 id="creating-manifests">Creating Manifests<a class="headerlink" href="#creating-manifests" title="Permanent link">#</a></h2>
 <p>Before creating manifests, ensure that a driver and vehicle has been assigned to each of the day's trips. </p>
 <p>Select <code>Create manifests for day</code> from the RideSheet menu. A pop-up will appear, and you can choose to select a specific day or create manifests for the following day by default.</p>
-<p>Once the job has finished running, you will be able to find the driver manifests in the <code>Manifests</code> folder within your Google Workspace directory. Manifests are created based on a <a href="../customization/">customizable manifest template</a>.</p>
+<p>Once the job has finished running, you will be able to find the driver manifests in the <code>Manifests</code> folder within your Google Workspace directory. Manifests are created based on a <a href="../customization/#customizing-driver-manifests">customizable manifest template</a>.</p>
 <h2 id="entering-trip-results">Entering Trip Results<a class="headerlink" href="#entering-trip-results" title="Permanent link">#</a></h2>
 <p>Daily, you will want to move trips over to <code>Trip Review</code> in order to fill in trip details such as whether the trip was completed or canceled.</p>
 <p>In the RideSheet menu, select <code>Move past data to review</code>. This will move any trips and runs with a Trip Date in the past over to the respective <code>Trip Review</code> and <code>Run Review</code> sheets.</p>

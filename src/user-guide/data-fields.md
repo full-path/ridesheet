@@ -40,48 +40,50 @@ Common addresses can be stored with short names for easy reference. When a short
 
 #### Required Fields
 
-**Trip Date**  
-A date in m/d/yyyy format. When clicking on the `Trip Date` field, it should offer a datepicker pop-up as well. 
+`Trip Date`
+:   A date in m/d/yyyy format. When clicking on the `Trip Date` field, it should offer a datepicker pop-up as well.
 
-**Customer Name and ID**  
-A valid customer must be selected from the dropdown. They must be added to the `Customers` sheet first in order to appear in the dropdown menu.
+`Customer Name and ID`
+:   A valid customer must be selected from the dropdown. They must be added to the `Customers` sheet first in order to appear in the dropdown menu.
 
-**Time**  
-Either `PU Time`, `DO Time`, or `Appt Time` must be filled in. If any one of these fields is provided, along with a `PU Address` and `DO Address`, RideSheet will automatically estimate the trip time and fill in the other field(s). You may also manually edit the field to override the RideSheet estimate.
+`PU Time`, `DO Time`, and `Appt Time`
+:   Either `PU Time`, `DO Time`, or `Appt Time` must be filled in. If any one of these fields is provided, along with a `PU Address` and `DO Address`, RideSheet will automatically estimate the trip time and fill in the other field(s). You may also manually edit the field to override the RideSheet estimate.
 
-**Addresses**  
-Both the `PU Address` and `DO Address` are required. If a `Default PU Address` or `Default DO Address` is provided in the Customers sheet, RideSheet will autofill those values. They may be overwritten by the user. Learn more about [Address Fields](#address-fields).
+`PU Address` and `DO Address`
+:   Both the `PU Address` and `DO Address` are required. If a `Default PU Address` or `Default DO Address` is provided in the Customers sheet, RideSheet will autofill those values. They may be overwritten by the user. Learn more about [Address Fields](#address-fields).
 
-**Driver ID**  
-A `Driver ID` must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the [Drivers](#drivers) sheet.
+`Driver ID`
+:   A `Driver ID` must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the [Drivers](#drivers) sheet.
 
-**Vehicle ID**  
-A `Vehicle ID` must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the [Vehicles](#vehicles) sheet.
+`Vehicle ID`
+:   A `Vehicle ID` must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the [Vehicles](#vehicles) sheet.
 
-**Service ID**  
-A `Service ID` must be selected from the dropdown in order to generate report information. Service information is entered in the [Services](#services) sheet.
+`Service ID`
+:   A `Service ID` must be selected from the dropdown in order to generate report information. Service information is entered in the [Services](#services) sheet.
 
 #### Optional Fields
 
-**Guests**  
-The number of riders, such as caregivers or other guests, apart from the primary customer.
+`Guests`
+:   The number of riders, such as caregivers or other guests, apart from the primary customer.
 
-**Mobility Factors**  
-May be automatically filled in from `Default Mobility Factors` in the `Customers` sheet. Mobility factors will be included on the Driver Manifest.
+`Mobility Factors`
+:   May be automatically filled in from `Default Mobility Factors` in the `Customers` sheet. Mobility factors will be included on the Driver Manifest.
 
-**Trip Purpose**  
-Dropdown is populated from the `Lookups` sheet.
+`Trip Purpose`
+:   Dropdown is populated from the `Lookups` sheet.
 
-**Notes**  
-Any notes will be included on the Driver Manifest.
+`Notes`
+:   Any notes will be included on the Driver Manifest.
 
 #### Calculated Fields
 
 Calculated fields are colored blue. These fields are automatically calculated by RideSheet and should not be edited.
 
-**Est Miles** and **Est Hours** are calculated using Google Maps travel estimates. 
+`Est Miles` and `Est Hours`
+:   Calculated using Google Maps travel estimates.
 
-**|Run OK?|** shows whether a specific combination of driver and vehicle is valid at the given day and time for the trip. 
+`|Run OK?|`
+:   Shows whether a specific combination of driver and vehicle is valid at the given day and time for the trip.
 
 ### Customers
 
@@ -93,37 +95,38 @@ When a customer field starts with the word **Default**, its value will be automa
 
 Just the `Customer First Name`, `Customer Last Name`, and `Phone Number` are required.
 
-If you do not provide a `Customer ID`, RideSheet will automatically fill in the next available ID number. 
+If you do not provide a `Customer ID`, RideSheet will automatically fill in the next available ID number.
 
 ### Runs
 
 #### Required Fields
 
-**Run Date**  ß
-Date in m/d/yyyy format. A datepicker should appear when the field is selected.
+`Run Date`
+:   Date in m/d/yyyy format. A datepicker should appear when the field is selected.
 
-**Driver ID**   
-A `Driver ID` must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the [Drivers](#drivers) sheet.
+`Driver ID`
+:   A `Driver ID` must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the [Drivers](#drivers) sheet.
 
-**Vehicle ID**  
-A `Vehicle ID` must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the [Vehicles](#vehicles) sheet.
+`Vehicle ID`
+:   A `Vehicle ID` must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the [Vehicles](#vehicles) sheet.
 
-**Scheduled Start Time**  
-Used to determine if a run is valid in `Trips`. 
+`Scheduled Start Time`
+:   Used to determine if a run is valid in `Trips`.
 
-**Scheduled End Time**  
-Used to determine if a run is valid in `Trips`. 
+`Scheduled End Time`
+:   Used to determine if a run is valid in `Trips`.
 
 #### Calculated Fields
 
-**|First PU Time|**, **|Last DO Time|**, and **|Trip Count|** are all automatically calculated by RideSheet based on information in `Trips`. These fields should not be edited. 
+`|First PU Time|`, `|Last DO Time|`, and `|Trip Count|`
+:   All automatically calculated by RideSheet based on information in `Trips`. These fields should not be edited.
 
 ### Trip Review
 
 Trip Review has most of the same fields as [Trips](#trips).
 
-**Trip Result**  
-The `Trip Result` must be selected from the dropdown menu for all trips. All trip results for a single day must be filled in order to calculate certain run data, such as revenue miles and hours. The possible options can be updated in the [Lookups](#lookups) sheet.
+`Trip Result`
+:   The `Trip Result` must be selected from the dropdown menu for all trips. All trip results for a single day must be filled in order to calculate certain run data, such as revenue miles and hours. The possible options can be updated in the [Lookups](#lookups) sheet.
 
 ### Trip Archive
 
@@ -131,20 +134,19 @@ Trip Archive has all the fields from [Trip Review](#trip-review). Trip Archive i
 
 ### Run Review
 
-Run Review has most of the same fields as [Runs](#runs)
+Run Review has most of the same fields as [Runs](#runs). The following fields are unique to Run Review:
 
-The following fields are unique to Run Review:
+`Actual Start Time`
+:   The actual start time for the run.
 
-**Actual Start Time**  
-The actual start time for the run.
+`Actual End Time`
+:   The actual end time for the run.
 
-**Actual End Time**  
-The actual end time for the run.
+`Break Time in Minutes`
+:   Driver break time during the run (between the start and end time).
 
-**Break Time in Minutes**  
-Driver break time during the run (between the start and end time).
+`Odometer Start` and `Odometer End`
 
-**Odometer Start** and **Odometer End**
 
 #### Calculated Fields
 
@@ -186,15 +188,16 @@ Most fields in `Lookups` are automatically generated, as indicated by the blue b
 
 Document properties are used to configure RideSheet. Most of these will be set when RideSheet is initially installed, and not need to be edited again. However, the following may be useful to be aware of, in order to improve the accuracy of trip time estimates:
 
-**dropOffToAppointmentTimeInMinutes**  
-The length of time in minutes between the drop off time and the appointment time.
+`dropOffToAppointmentTimeInMinutes`
+:   The length of time in minutes between the drop-off time and the appointment time.
 
-**dwellTimeInMinutes**   
-The length of time in minutes added to the journey time to account for the time it takes to pick up and drop off a rider.
+`dwellTimeInMinutes`
+:   The length of time in minutes added to the journey time to account for the time it takes to pick up and drop off a rider.
 
-**defaultStayDuration**  
-When creating a next leg or return trip, this is the length of time in minutes to set as the duration between rider dropoff or appt time and the pickup time of the next trip. Set to -1 (negative one) to keep the pickup time for the new trip blank.
+`defaultStayDuration`
+:   When creating a next leg or return trip, this is the length of time in minutes to set as the duration between rider dropoff or appt time and the pickup time of the next trip. Set to -1 (negative one) to keep the pickup time for the new trip blank.
 
-**tripPaddingPerHourInMinutes**  
-The length of time in minutes added to each hour of estimated travel time to account for weather, traffic, or other possible delays.
+`tripPaddingPerHourInMinutes`
+:   The length of time in minutes added to each hour of estimated travel time to account for weather, traffic, or other possible delays.
+
 
