@@ -30,7 +30,7 @@ const defaultSheets = [
   "Lookups",
   "Document Properties",
   "Debug Log",
-  "Addressess"
+  "Addresses"
 ]
 
 const sheetsWithHeaders = [
