@@ -96,29 +96,71 @@ function importDataFromSheet(fileId = null, showWarning = true) {
   }
 }
 
-// Stub function to import a single sheet.
-function importSheet(importSpreadsheet, sheetName) {
-  // Get the sheet from the import spreadsheet.
-  const importSheet = importSpreadsheet.getSheetByName(sheetName);
-  if (!importSheet) {
-    throw new Error(
-      'Sheet "' + sheetName + '" not found in the source spreadsheet.'
-    );
-  }
-
-  // Get the corresponding sheet in the current spreadsheet.
-  const targetSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  const targetSheet = targetSpreadsheet.getSheetByName(sheetName);
-  if (!targetSheet) {
-    throw new Error(
-      'Sheet "' + sheetName + '" not found in the target spreadsheet.'
-    );
-  }
-
-  // Clear the target sheet before importing data.
-
-  // Copy data from the import sheet to the target sheet.
-
-  // Log the completion of importing this sheet.
-  log("Successfully imported data into sheet", sheetName);
-}
+function importSheet(sourceSpreadsheet, sheetName) {
+    const sourceSheet = sourceSpreadsheet.getSheetByName(sheetName);
+    if (!sourceSheet) {
+      log('Skipping import for', sheetName, '- Source sheet not found.');
+      return;
+    }
+    const targetSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const targetSheet = targetSpreadsheet.getSheetByName(sheetName);
+    if (!targetSheet) {
+      log('Skipping import for', sheetName, '- Target sheet not found.');
+      return;
+    }
+    const sourceData = sourceSheet.getDataRange().getValues();
+    const targetHeaders = targetSheet.getRange(1, 1, 1, targetSheet.getMaxColumns()).getValues()[0];
+    const sourceHeaders = sourceData[0];
+  
+    const sourceHeaderMap = {};
+    sourceHeaders.forEach((header, index) => {
+      sourceHeaderMap[header] = index;
+    });
+  
+    const targetHeaderMap = {};
+    targetHeaders.forEach((header, index) => {
+      targetHeaderMap[header] = index;
+    });
+    const rowsToImport = [];
+  
+    // Process each row from the source sheet, starting from the second row (skipping headers).
+    for (let i = 1; i < sourceData.length; i++) {
+      const sourceRow = sourceData[i];
+      const targetRow = new Array(targetHeaders.length).fill(''); // Initialize the target row with empty values.
+  
+      targetHeaders.forEach((targetHeader, targetIndex) => {
+        // Skip columns that start with the "|" character.
+        if (targetHeader.startsWith('|')) {
+          return;
+        }
+  
+        // Check if the target header exists in the source headers.
+        if (sourceHeaderMap.hasOwnProperty(targetHeader)) {
+          const sourceIndex = sourceHeaderMap[targetHeader];
+          targetRow[targetIndex] = sourceRow[sourceIndex];
+        } else {
+          // Log missing columns in the source sheet.
+          log('Missing column in source for import:', sheetName, targetHeader);
+        }
+      });
+  
+      rowsToImport.push(targetRow);
+    }
+  
+    // Clear values in the target sheet before importing data, keeping the header intact.
+    const headerRange = targetSheet.getRange(1, 1, 1, targetSheet.getMaxColumns());
+    const headerValues = headerRange.getValues();
+    const numRows = targetSheet.getMaxRows();
+    const numCols = targetSheet.getMaxColumns();
+  
+    // Clear all but the first row (header).
+    targetSheet.getRange(2, 1, numRows - 1, numCols).clearContent();
+  
+    // Copy the mapped data to the target sheet.
+    if (rowsToImport.length > 0) {
+      const dataRange = targetSheet.getRange(2, 1, rowsToImport.length, rowsToImport[0].length);
+      dataRange.setValues(rowsToImport);
+    }
+  
+    log('Imported data into sheet', sheetName);
+  }  
