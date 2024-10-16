@@ -93,13 +93,13 @@ function importDataFromSheet(fileId = null, showWarning = true) {
 function importSheet(sourceSpreadsheet, sheetName) {
   const sourceSheet = sourceSpreadsheet.getSheetByName(sheetName);
   if (!sourceSheet) {
-    log('Skipping import for', sheetName, '- Source sheet not found.');
+    log(`Skipping import for ${sheetName}`, 'Source sheet not found.');
     return;
   }
   const targetSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const targetSheet = targetSpreadsheet.getSheetByName(sheetName);
   if (!targetSheet) {
-    log('Skipping import for', sheetName, '- Target sheet not found.');
+    log(`Skipping import for ${sheetName}`, 'Target sheet not found.');
     return;
   }
   const sourceData = sourceSheet.getDataRange().getValues();
@@ -119,7 +119,7 @@ function importSheet(sourceSpreadsheet, sheetName) {
 
   const missingInTarget = sourceHeaders.filter(header => !targetHeaders.includes(header));
   if (missingInTarget.length > 0) {
-    log('Columns in source but not in target for', sheetName, ':', missingInTarget.join(', '));
+    log(`Columns in source but not in target for ${sheetName}`, missingInTarget.join(', '));
   }
   
   for (let i = 1; i < sourceData.length; i++) {
@@ -145,21 +145,6 @@ function importSheet(sourceSpreadsheet, sheetName) {
   }
 
   applySheetFormatsAndValidation(targetSheet);
-
-  // TODO: Add conditional formatting for error highlighting - @kevin help
-  // const lastColumn = targetSheet.getLastColumn();
-  // const lastRow = targetSheet.getLastRow();
-  // const range = targetSheet.getRange(2, 1, lastRow - 1, lastColumn);
-  
-  // const rule = SpreadsheetApp.newConditionalFormatRule()
-  //   .whenFormulaSatisfied(`=SUMPRODUCT(--ISERROR(INDIRECT("R"&ROW()&"C1:C"&${lastColumn}, FALSE))) > 0`)
-  //   .setBackground('#FFFFD0') 
-  //   .setRanges([range])
-  //   .build();
-  
-  // const rules = targetSheet.getConditionalFormatRules();
-  // rules.push(rule);
-  // targetSheet.setConditionalFormatRules(rules);
 
   log(`Imported ${rowsToImport.length} rows into sheet ${sheetName}`);
 }
