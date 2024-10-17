@@ -83,7 +83,12 @@ function importDataFromSheet(fileId = null, showWarning = true) {
     for (const sheetName of sheetsToImport) {
       importSheet(importSpreadsheet, sheetName);
     }
+    
+    // Import document properties
+    importDocumentProperties(importSpreadsheet, SpreadsheetApp.getActiveSpreadsheet());
+    
     ui.alert("Data import completed successfully.");
+
   } catch (error) {
     ui.alert("Data import failed: " + error.message);
     logError(error);
@@ -147,4 +152,28 @@ function importSheet(sourceSpreadsheet, sheetName) {
   applySheetFormatsAndValidation(targetSheet);
 
   log(`Imported ${rowsToImport.length} rows into sheet ${sheetName}`);
+}
+
+function importDocumentProperties(sourceSpreadsheet, targetSpreadsheet) {
+  const sourceSheet = sourceSpreadsheet.getSheetByName("Document Properties");
+  const targetSheet = targetSpreadsheet.getSheetByName("Document Properties");
+  const sourceData = sourceSheet.getDataRange().getValues();
+  const targetData = targetSheet.getDataRange().getValues();
+  
+  const targetProps = new Map(targetData.slice(1).map(row => [row[0], row[1]]));
+  
+  sourceData.slice(1).forEach(row => {
+    const [key, value] = row;
+    if (key && value !== undefined) {
+      targetProps.set(key, value);
+    }
+  });
+  
+  const updatedData = [targetData[0].slice(0, 2), ...Array.from(targetProps)];
+  
+  targetSheet.getRange(1, 1, targetSheet.getLastRow(), 2).clearContent();
+  targetSheet.getRange(1, 1, updatedData.length, 2).setValues(updatedData);
+  
+  // Rebuild document properties from the updated sheet
+  buildDocumentPropertiesFromSheet();
 }
