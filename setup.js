@@ -1,3 +1,10 @@
+/**
+ * Imports data from another Google Sheet into the current RideSheet instance.
+ * This function will replace the data in the current sheet with data from the specified sheet.
+ * 
+ * @param {string} [fileId=null] - The ID of the Google Sheet to import data from. If not provided, the user will be prompted to enter it.
+ * @param {boolean} [showWarning=true] - Whether to show a warning message before proceeding with the import.
+ */
 function importDataFromSheet(fileId = null, showWarning = true) {
   const ui = SpreadsheetApp.getUi();
 
@@ -95,6 +102,12 @@ function importDataFromSheet(fileId = null, showWarning = true) {
   }
 }
 
+/**
+ * Imports data from a specific sheet in the source spreadsheet to the corresponding sheet in the target spreadsheet.
+ * 
+ * @param {SpreadsheetApp.Spreadsheet} sourceSpreadsheet - The spreadsheet to import data from.
+ * @param {string} sheetName - The name of the sheet to import.
+ */
 function importSheet(sourceSpreadsheet, sheetName) {
   const sourceSheet = sourceSpreadsheet.getSheetByName(sheetName);
   if (!sourceSheet) {
@@ -154,6 +167,12 @@ function importSheet(sourceSpreadsheet, sheetName) {
   log(`Imported ${rowsToImport.length} rows into sheet ${sheetName}`);
 }
 
+/**
+ * Imports document properties from the source spreadsheet to the target spreadsheet.
+ * 
+ * @param {SpreadsheetApp.Spreadsheet} sourceSpreadsheet - The spreadsheet to import properties from.
+ * @param {SpreadsheetApp.Spreadsheet} targetSpreadsheet - The spreadsheet to import properties to.
+ */
 function importDocumentProperties(sourceSpreadsheet, targetSpreadsheet) {
   const sourceSheet = sourceSpreadsheet.getSheetByName("Document Properties");
   const targetSheet = targetSpreadsheet.getSheetByName("Document Properties");
@@ -164,8 +183,12 @@ function importDocumentProperties(sourceSpreadsheet, targetSpreadsheet) {
   
   sourceData.slice(1).forEach(row => {
     const [key, value] = row;
-    if (key && value !== undefined && targetProps.has(key)) {
-      targetProps.set(key, value);
+    if (key && value !== undefined) {
+      if (targetProps.has(key)) {
+        targetProps.set(key, value);
+      } else {
+        log("Key found in source but not in target Document Properties", key);
+      }
     }
   });
   
