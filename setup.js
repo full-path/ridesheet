@@ -164,7 +164,7 @@ function importDocumentProperties(sourceSpreadsheet, targetSpreadsheet) {
   
   sourceData.slice(1).forEach(row => {
     const [key, value] = row;
-    if (key && value !== undefined) {
+    if (key && value !== undefined && targetProps.has(key)) {
       targetProps.set(key, value);
     }
   });
