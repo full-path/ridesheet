@@ -123,16 +123,6 @@ const defaultDocumentProperties = {
     value: [],
     description: "The names of run columns that must have data in them in order to be archived."
   },
-  calendarIdForUnassignedTrips: {
-    type: "string",
-    value: "Enter ID here",
-    description: "The ID of the Google Calendar where trips without drivers are shown"
-  },
-  tripCalendarEntryTitleTemplate: {
-    type: "string",
-    value: "{Customer Name and ID}",
-    description: "The template for calendar entries made for scheduled trips. Field names should be entered in braces like so: {Driver ID}"
-  },
   providerName: {
     type: "string",
     value: "Enter provider name here",
