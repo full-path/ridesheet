@@ -103,7 +103,7 @@ function importDataFromSheet(fileId = null, showWarning = true) {
 }
 
 /**
- * Imports data from a specific sheet in the source spreadsheet to the corresponding sheet in the target spreadsheet.
+ * Imports data from a specific sheet in the source spreadsheet to the corresponding sheet in the target (active) spreadsheet.
  * 
  * @param {SpreadsheetApp.Spreadsheet} sourceSpreadsheet - The spreadsheet to import data from.
  * @param {string} sheetName - The name of the sheet to import.
