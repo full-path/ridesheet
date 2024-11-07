@@ -1,7 +1,6 @@
 function buildMenus() {
   const ui = SpreadsheetApp.getUi()
   const menu = ui.createMenu('RideSheet')
-  menu.addItem('Refresh driver calendars', 'updateDriverCalendars')
   menu.addItem('Add return trip', 'createReturnTrip')
   menu.addItem('Add stop', 'addStop')
   menu.addItem('Create manifests for day', 'createManifests')
@@ -12,7 +11,6 @@ function buildMenus() {
   menu.addSeparator()
   let settingsMenu = ui.createMenu('Settings')
   settingsMenu.addItem('Refresh document properties sheet', 'presentProperties')
-  settingsMenu.addItem('Scheduled calendar updates', 'presentCalendarTrigger')
   settingsMenu.addItem('Repair sheets', 'repairSheets')
   settingsMenu.addItem('Rebuild metadata', 'rebuildAllMetadata')
   menu.addSubMenu(settingsMenu)
