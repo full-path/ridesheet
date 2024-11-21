@@ -319,6 +319,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -384,6 +385,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -502,6 +504,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -560,6 +563,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -732,6 +736,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -803,6 +808,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -908,7 +914,9 @@ const defaultColumns = {
     "Last DO Address": {}
   },
   "Vehicles": {
-    "Vehicle ID": {},
+    "Vehicle ID": {
+      numberFormat: '@',
+    },
     "Vehicle Name": {},
     "Garage Address": {},
     "Seating Capacity": {},
@@ -954,6 +962,7 @@ const defaultColumns = {
       }
     },
     "Default Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
