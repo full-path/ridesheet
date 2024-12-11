@@ -128,36 +128,10 @@ const defaultDocumentProperties = {
     value: "Enter provider name here",
     description: "Name of the agency using this RideSheet document"
   },
-  notificationEmail: {
-    type: "string",
-    value: "",
-    description: "Email address to use for notifications"
-  },
   logLevel: {
     type: "string",
     value: "normal",
     description: "Set logging level to normal or verbose"
-  },
-  extraHeaderNames: {
-    type: "object",
-    value: {
-      Customers: [],
-      Trips: [],
-      Runs: [],
-      "Trip Review": [],
-      "Run Review": [],
-      "Trip Archive": [],
-      "Run Archive": [],
-      Vehicles: [],
-      Drivers: [],
-      Services: []
-    },
-    description: "Extra header names that should be preserved when doing sheet repairs"
-  },
-  configFolderId: {
-    type: "string",
-    value: "Enter ID here",
-    description: "The ID of the folder where configuration files will be located."
   },
   defaultStayDuration: {
     type: "number",

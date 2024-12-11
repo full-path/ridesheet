@@ -487,7 +487,7 @@ function setupNewInstall() {
     const currentFile = DriveApp.getFileById(ss.getId())
     const parentFolder = currentFile.getParents().next()
     const manifestsFolder = parentFolder.createFolder("Manifests")
-    const templatesFolder = parentFolder.createFolder("Templates")
+    const templatesFolder = parentFolder.createFolder("Settings")
     const sourceTemplateId = "1-E-gxHgS3h5gr9Fh4VfdZkAwcN5kjJ7_hqx69Cs1BmY"
     const sourceTemplate = DriveApp.getFileById(sourceTemplateId)
     const newTemplate = sourceTemplate.makeCopy(templatesFolder)
