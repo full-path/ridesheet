@@ -6,7 +6,7 @@ RideSheet is an Open Source ride scheduling application for small, demand respon
 
 RideSheet requires a copy of the spreadsheets in Google Sheets set up with the correct sheet and header names. The easiest way to do this is to copy an existing RideSheet. [Use the public sample to get started](https://docs.google.com/spreadsheets/d/1U_rmR08qW63hEK_5IWblzVXK4ZqQElaD1ymAQNGpNiU/edit). Simply make a copy of the sheet in your own local directory, and then make sure you have the latest version of the script installed.
 
-*Note that you may need to reload the sheet (simply refresh the browser) in order to see the RideSheet options in your new copy. You will know that the RideSheet scripts are loaded if you see "API" and "RideSheet" in the main options menu.* 
+*Note that you may need to reload the sheet (simply refresh the browser) in order to see the RideSheet options in your new copy. You will know that the RideSheet scripts are loaded if you see "RideSheet" in the main options menu.* 
 <img width="602" alt="Screen Shot 2023-06-08 at 12 59 25 PM" src="https://github.com/full-path/ridesheet/assets/9342771/8fd65c9f-fd71-4794-a50d-c05ecb8bbb48">
 
 To get the latest version of the code, you can use [Clasp](https://developers.google.com/apps-script/guides/clasp) to manage Apps Script. You can find the scriptID by opening Extensions > Apps Script and then selecting Project Settings in the lefthand menu.
