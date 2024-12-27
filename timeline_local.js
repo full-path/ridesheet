@@ -9,7 +9,11 @@ function refreshTimelineIfChanged(e) {
   const sourceTripRange = ss.getSheetByName("Trips").getDataRange()
   const sourceRunRange = ss.getSheetByName("Runs").getDataRange()
   const tripFilter = function(row) {
-    return row["Trip Date"] instanceof Date && row["Driver ID"] && row["Vehicle ID"]
+    return row["Trip Date"] instanceof Date &&
+      row["Driver ID"] &&
+      row["Vehicle ID"] && (
+        !row["Trip Result"] || row["Trip Result"] == "Completed"
+      )
   }
   const runFilter = function(row) {
     return row["Run Date"] instanceof Date && row["Driver ID"] && row["Vehicle ID"]
@@ -21,7 +25,8 @@ function refreshTimelineIfChanged(e) {
     "Run ID",
     "Customer Name and ID",
     "PU Time",
-    "DO Time"
+    "DO Time",
+    "Trip Result"
   ]
   const runColsToCheck = [
     "Run Date",
@@ -98,16 +103,20 @@ function buildTimelineReport(sourceTripRange, sourceRunRange) {
     sourceRunData.filter(row => {
       return row["Run Date"] instanceof Date && row["Driver ID"] && row["Vehicle ID"]
     }).forEach(row => {
-      const runKey = getRunKey(row["Run Date"], row, timeZone)
+      const runKey = getTimelineRunKey(row["Run Date"], row, timeZone)
       data[runKey] = {}
       data[runKey]["run"] = row
       data[runKey]["trips"] = []
     })
 
     sourceTripData.filter(row => {
-      return row["Trip Date"] instanceof Date && row["Driver ID"] && row["Vehicle ID"]
+      return row["Trip Date"] instanceof Date &&
+      row["Driver ID"] &&
+      row["Vehicle ID"] && (
+        !row["Trip Result"] || row["Trip Result"] == "Completed"
+      )
     }).forEach(row => {
-      const runKey = getRunKey(row["Trip Date"], row, timeZone)
+      const runKey = getTimelineRunKey(row["Trip Date"], row, timeZone)
       if (Object.hasOwn(data,runKey)) {
         data[runKey]["trips"].push(row)
       }
@@ -209,7 +218,7 @@ function buildTimelineReport(sourceTripRange, sourceRunRange) {
   //Logger.log(["buildTimeline duration:",(new Date()) - startTime])
 }
 
-function getRunKey(date, row, timeZone) {
+function getTimelineRunKey(date, row, timeZone) {
   if (row["Run ID"] == "") {
     return `${Utilities.formatDate(date,timeZone,"yyyy-MM-dd")} ${row["Driver ID"]}:${row["Vehicle ID"]}`
   } else {
