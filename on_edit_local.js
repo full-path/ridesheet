@@ -4,7 +4,11 @@
 
 const initialLocalSheetTriggers = {}
 
-const finalLocalSheetTriggers  = {}
+const finalLocalSheetTriggers  = {
+  "Timeline": localCodeTimelineManualRefresh,
+  "Trips": localCodeRefreshTimelineIfChanged,
+  "Runs": localCodeRefreshTimelineIfChanged
+}
 
 const rangeTriggersLocal = {}
 
@@ -77,5 +81,17 @@ function callLocalCellTriggers(e) {
         rangeTriggersLocal[rangeTrigger]["functionCall"](range)
       })
     })
+  } catch(e) { logError(e) }
+}
+
+function localCodeTimelineManualRefresh(e) {
+  try {
+    timelineManualRefresh(e)
+  } catch(e) { logError(e) }
+}
+
+function localCodeRefreshTimelineIfChanged(e) {
+  try {
+    refreshTimelineIfChanged(e)
   } catch(e) { logError(e) }
 }
