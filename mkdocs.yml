@@ -22,6 +22,12 @@ nav:
     - Getting Help: user-guide/getting-help.md
   - Technical Guide: 
     - technical-guide/index.md
+    - Installing RideSheet: technical-guide/installing-ridesheet.md
+    - Configuration: technical-guide/configuration.md
+    - Importing data: technical-guide/importing-data.md
+    - Apps Script: technical-guide/apps-script.md
+    - Updating the Code: technical-guide/updating-the-code.md
+    - Troubleshooting: technical-guide/troubleshooting.md
   - About:
     - about/index.md 
 markdown_extensions:
