@@ -21,9 +21,3 @@ RideSheet is an Open Source ride scheduling application designed for small, dema
 ## Documentation
 
 [Read the complete guide](https://docs.ridesheet.org/) for detailed installation instructions, usage tutorials, and customization options.
-
-## Support
-
-- [Report issues](https://github.com/full-path/ridesheet/issues) on GitHub
-- Join the [discussion forum](https://github.com/full-path/ridesheet/discussions) for help and tips
-- Consider [contributing](https://github.com/full-path/ridesheet/blob/main/CONTRIBUTING.md) to the project
