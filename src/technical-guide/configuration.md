@@ -77,9 +77,4 @@ However, you can and should edit the `Trip Purposes` and `Trip Results` columns 
 RideSheet is designed to be customizable to meet different organizations' needs. There are several ways to customize your installation:
 
 - For basic customizations like adding columns or modifying the manifest template, see the [User Guide page on customization](../user-guide/customization.md)
-- For advanced customizations involving code changes, see the [Apps Script](apps-script.md) page to learn about:
-  - Using local scripts
-  - Updating validation rules
-  - Modifying formatting
-  - Customizing menus
-  - And more
+- For advanced customizations involving code changes, see the [Apps Script](apps-script.md) page to learn more.
