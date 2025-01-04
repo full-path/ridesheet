@@ -23,10 +23,8 @@ In the main menu, select `File > Version History > See version history`.
 
 Once in the version history, you can click through the menu on the righthand side of the screen. When you have located the latest version that you know was working correctly, click the blue button at the top of the page to "Restore this version".
 
-## Other Common Issues
-
 ## Using the Debug Log (Advanced)
 
 On the bottom tab of RideSheet, you may see a sheet labeled `Debug Log`.
 
-This sheet provides technical information for issues, and will likely only be helpful to fairly technical users.
+This sheet provides technical information for issues, and will likely only be helpful to fairly technical users. See the [Technical Troubleshooting Guide](../technical-guide/troubleshooting.md) for more information.

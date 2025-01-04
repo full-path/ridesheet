@@ -41,12 +41,20 @@ After creating your copy, you'll need to authorize the RideSheet Apps Script:
 3. You'll see a pop-up requesting authorization
 4. Follow the authorization prompts, selecting "Allow" when asked
 
-!!! tip "Unsafe Warning"
-    All RideSheet users will need to complete this authorization process. If users see an **Unsafe** warning, they can:
+!!! warning "Unsafe Warning"
+    All RideSheet users will need to complete this authorization process. If users see an **Unsafe** warning (which typically appears when the user trying to execute the function is not the sheet owner), they can:
 
     1. Click "Advanced" at the bottom of the pop-up
     2. Click "Go to RideSheet (unsafe)"
     3. Click "Allow" to authorize the script
+
+    If you're seeing this warning, check:
+
+    - That you're signed into the correct Google Workspace account, not a personal account
+    - That you have the necessary permissions to access RideSheet
+    - That RideSheet was properly set up from a Google Workspace account
+    - That the spreadsheet is located in a shared drive with correct permissions
+
 
 ## Complete Initial Setup
 

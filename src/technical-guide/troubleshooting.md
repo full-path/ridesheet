@@ -1,6 +1,6 @@
 # Troubleshooting
 
-This guide covers common issues you may encounter while using RideSheet and how to resolve them.
+This guide covers common issues you may encounter while using RideSheet and how to resolve them. Also see the [User Troubleshooting Guide](../user-guide/troubleshooting.md) for additonal tips.
 
 ## Debug Log
 
