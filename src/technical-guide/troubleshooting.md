@@ -25,7 +25,6 @@ This will display all metadata in the Debug Log sheet for review.
 If you need help with the code that powers RideSheet, these resources may be helpful:
 
 - [Google Apps Script Documentation](https://developers.google.com/apps-script)
-- [Apps Script Community](https://developers.google.com/apps-script/community)
 - [Stack Overflow - google-apps-script tag](https://stackoverflow.com/questions/tagged/google-apps-script)
 
 ### Opening an Issue
