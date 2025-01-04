@@ -21,5 +21,6 @@ When migrating to RideSheet, you'll need to import your existing trip and custom
 - Validate that required fields are present and formatted correctly
 - Check that dates and times are in the expected format
 - Consider what amount of historical data is necessary to import, and consider handling it in batches.
+- After importing outside data, run `Settings > Repair sheets` from the RideSheet menu to help format data
 
 If you need help planning your data migration, consider reaching out to [RideSheet support](../user-guide/getting-help.md) for guidance specific to your situation.

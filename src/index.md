@@ -18,3 +18,7 @@ Welcome to RideSheet! RideSheet is a simple and affordable tool for operating an
     [Learn more about RideSheet](what-is-ridesheet.md) and if it is right for your organization.
 
 For developers and technical users, see our [Technical Guide](technical-guide/index.md) or check out RideSheet on [GitHub](https://github.com/full-path/ridesheet).
+
+---
+
+RideSheet © 2024 Full Path LLC is Open Source software available under the [MIT License](https://github.com/full-path/ridesheet/blob/main/LICENSE).

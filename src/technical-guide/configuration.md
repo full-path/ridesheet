@@ -37,6 +37,9 @@ After installing RideSheet, you'll need to configure several settings to match y
 `localTimeZone`
 : The time zone used for all date/time calculations (e.g. "America/New_York"); see [all timezone codes](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
 
+`logLevel`
+: Sets what type of events are recorded in the `Debug Log` sheet; "normal" only logs errors, "verbose" mode will log most events and actions
+
 `providerName`
 : The name of your organization
 
@@ -44,7 +47,7 @@ After installing RideSheet, you'll need to configure several settings to match y
 : Comma-separated list of fields that must be completed before a run can be archived
 
 `runUserReviewRequiredFields`
-: The names of run columns that must have data in them in order to for RideSheet to calculate deadhead or other run information.
+: The names of run columns that must have data in them in order for RideSheet to calculate deadhead or other run information.
 
 `tripPaddingPerHourInMinutes`
 : Extra time in minutes added per hour of estimated trip duration for traffic/delays
