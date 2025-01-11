@@ -181,9 +181,9 @@ function createRow(destSheet, data) {
     let dataArray = columnNames.map(colName => data[colName] ? data[colName] : null)
     destSheet.appendRow(dataArray)
     let newRowIndex = destSheet.getLastRow()
-    let newRow = destSheet.getRange(newRowIndex + ':' + newRowIndex)
-    fixRowNumberFormatting(newRow)
-    fixRowDataValidation(newRow)
+    // These row based formatting errors are broken; leaving them here as a reminder
+    // fixRowNumberFormatting(newRow)
+    // fixRowDataValidation(newRow)
     return true
   } catch(e) {
     logError(e)

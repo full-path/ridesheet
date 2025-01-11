@@ -130,3 +130,75 @@ function mergeStop(newStop, runStops) {
     runStops.push(newStop)
   }  
 }
+
+// Fill in a week of entries in the "Runs" sheet using the schedule information in "Run Template"
+function buildRunsFromTemplate() {
+  const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+  let ss = SpreadsheetApp.getActiveSpreadsheet()
+  let runsSheet = ss.getSheetByName("Runs") 
+  let runTemplateSheet = ss.getSheetByName("Run Template")
+  let runs = getRangeValuesAsTable(runsSheet.getDataRange())
+  let runTemplates = getRangeValuesAsTable(runTemplateSheet.getDataRange())
+  let runDate = runs.reduce((latest, run) => 
+    run["Run Date"] > latest ? run["Run Date"] : latest, 
+    runs[0]["Run Date"]
+  )
+  runDate.setDate(runDate.getDate() + 1) // Add one day to the latest run date
+  
+  const ui = SpreadsheetApp.getUi()
+  const response = ui.alert(
+    'Generate Runs', 
+    'Would you like to generate runs starting from ' + formatDate(runDate) + '? Click No to enter a custom date.',
+    ui.ButtonSet.YES_NO_CANCEL
+  )
+
+  let startDate
+  if (response == ui.Button.YES) {
+    startDate = runDate
+  } else if (response == ui.Button.NO) {
+    const promptResult = ui.prompt(
+      'Enter Start Date',
+      'Enter the date to start generating runs from (MM/DD/YYYY):',
+      ui.ButtonSet.OK_CANCEL
+    )
+    if (promptResult.getSelectedButton() == ui.Button.OK) {
+      startDate = parseDate(promptResult.getResponseText())
+      if (!isValidDate(startDate)) {
+        ui.alert('Invalid date entered. Operation cancelled.')
+        return
+      }
+    } else {
+      ss.toast('Action cancelled')
+      return
+    }
+  } else {
+    ss.toast('Action cancelled') 
+    return
+  }
+
+  const lastRow = runsSheet.getLastRow()
+
+  for (let i = 0; i < 7; i++) {
+    let currentDate = new Date(startDate)
+    currentDate.setDate(startDate.getDate() + i)
+    let currentDayOfWeek = weekday[currentDate.getDay()]
+    
+    const matchingTemplates = runTemplates.filter(row => 
+      row["Days of Week"] && row["Days of Week"].includes(currentDayOfWeek)
+    ).sort((a,b) => {
+      return a["Scheduled Start Time"] - b["Scheduled Start Time"]
+    })
+
+    matchingTemplates.forEach(template => {
+      const newRun = {
+        "Run Date": formatDate(currentDate),
+        "Driver ID": template["Driver ID"],
+        "Vehicle ID": template["Vehicle ID"],
+        "Scheduled Start Time": template["Scheduled Start Time"],
+        "Scheduled End Time": template["Scheduled End Time"]
+      }
+      createRow(runsSheet, newRun)
+    })
+  }
+  applySheetFormatsAndValidation(runsSheet, lastRow + 1)
+}
