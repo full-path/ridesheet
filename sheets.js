@@ -175,6 +175,8 @@ function applySheetFormatsAndValidation(sheet, startRow=2) {
   }
 }
 
+// This function no longer handles formatting. If using, it is recommended
+// to call applySheetFormatsAndValidation after creating new row(s)
 function createRow(destSheet, data) {
   try {
     let columnNames = getSheetHeaderNames(destSheet)
