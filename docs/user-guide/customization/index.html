@@ -898,9 +898,13 @@
 <h1 id="customization">Customization<a class="headerlink" href="#customization" title="Permanent link">#</a></h1>
 <p>Because RideSheet is a spreadsheet-based application, it is highly customizable to a wide variety of agency needs. Some customizations are possible without any specialized technical knowledge, although familiarity with spreadsheets is advisable.</p>
 <h2 id="customizing-ridesheets-appearance">Customizing RideSheet's Appearance<a class="headerlink" href="#customizing-ridesheets-appearance" title="Permanent link">#</a></h2>
-<p>You should be able to customize RideSheet's appearance without affecting its functionality. Note that in certain places, the existing coloring is meaningful (fields which should not be edited are blue, |Run OK?| in trips uses conditional formatting to indicate whether a run is valid).</p>
+<p>You should be able to customize RideSheet's appearance without affecting its functionality. Note that in certain places, the existing coloring is meaningful (fields which should not be edited are blue, <code>|Run OK?|</code> in trips uses conditional formatting to indicate whether a run is valid).</p>
 <p>However, editing font-size, row colors, or adjusting column widths should have no negative effects on the application.</p>
-<p>Users who are comfortable with conditional formatting in spreadsheets can use it if desired.</p>
+<p>Users who are comfortable with conditional formatting in spreadsheets can use it if desired. </p>
+<div class="admonition tip">
+<p class="admonition-title">Date Formats and Other Field Settings</p>
+<p>Some fields in RideSheet, such as date fields, have their number format set in the code. Operations like "repair sheets" will reset date fields to "m/d/yyyy" format. If you customize the format of these fields, be aware that running certain RideSheet operations may revert them back to their default settings.</p>
+</div>
 <h2 id="customizing-driver-manifests">Customizing Driver Manifests<a class="headerlink" href="#customizing-driver-manifests" title="Permanent link">#</a></h2>
 <p>Driver manifests are generated using a template, built from a Google Doc. That template should be availabe in Google Drive in your <code>Settings</code> folder. The Manifest Template includes editing instructions. To be safe, make a copy of your current template before making any edits. </p>
 <h2 id="adding-custom-fields">Adding Custom Fields<a class="headerlink" href="#adding-custom-fields" title="Permanent link">#</a></h2>

@@ -1464,11 +1464,13 @@
 <h4 id="address-descriptions">Address Descriptions<a class="headerlink" href="#address-descriptions" title="Permanent link">#</a></h4>
 <p>Address descriptions are optional and used to provide additional information about a location, such as specific instructions for drivers. They are enclosed in parentheses and do not affect geolocation.</p>
 <h4 id="combining-address-elements">Combining Address Elements<a class="headerlink" href="#combining-address-elements" title="Permanent link">#</a></h4>
-<p>RideSheet supports combining address elements. For example:
-- Street Address: "1600 Pennsylvania Avenue NW, Washington, DC 20500, USA"
-- Plus Code: "VXX7+3FV"
-- Address Description: "(The White House)"
-- Combined: "VXX7+3FV; 1600 Pennsylvania Avenue NW, Washington, DC 20500, USA (The White House)"</p>
+<p>RideSheet supports combining address elements. For example:</p>
+<ul>
+<li><strong>Street Address</strong>: "1600 Pennsylvania Avenue NW, Washington, DC 20500, USA"</li>
+<li><strong>Plus Code</strong>: "VXX7+3FV"</li>
+<li><strong>Address Description</strong>: "(The White House)"</li>
+<li><strong>Combined</strong>: "VXX7+3FV; 1600 Pennsylvania Avenue NW, Washington, DC 20500, USA (The White House)"</li>
+</ul>
 <h4 id="common-addresses">Common Addresses<a class="headerlink" href="#common-addresses" title="Permanent link">#</a></h4>
 <p>Common addresses can be stored with short names for easy reference. When a short name is entered, RideSheet replaces it with the corresponding full address. These can be created in the <a href="#addresses">Addresses</a> sheet.</p>
 <h2 id="fields-by-sheet">Fields by Sheet<a class="headerlink" href="#fields-by-sheet" title="Permanent link">#</a></h2>
@@ -1507,7 +1509,7 @@
 <dt><code>Est Miles</code> and <code>Est Hours</code></dt>
 <dd>Calculated using Google Maps travel estimates.</dd>
 <dt><code>|Run OK?|</code></dt>
-<dd>Shows whether a specific combination of driver and vehicle is valid at the given day and time for the trip.</dd>
+<dd>Shows whether a specific combination of driver and vehicle is valid at the given day and time for the trip. Requires the driver and vehicle availability to be specified in <code>Runs</code> first.</dd>
 </dl>
 <h3 id="customers">Customers<a class="headerlink" href="#customers" title="Permanent link">#</a></h3>
 <h4 id="default-fields">Default Fields<a class="headerlink" href="#default-fields" title="Permanent link">#</a></h4>
@@ -1572,7 +1574,7 @@
 <p>Most fields in <code>Lookups</code> are automatically generated, as indicated by the blue background.</p>
 <p><code>Trip Purposes</code> and <code>Trip Results</code> can be edited in order to update dropdown options in the <code>Trips</code> and <code>Trip Review</code> sheets.</p>
 <h3 id="document-properties">Document Properties<a class="headerlink" href="#document-properties" title="Permanent link">#</a></h3>
-<p>Document properties are used to configure RideSheet. Most of these will be set when RideSheet is initially installed, and not need to be edited again. However, the following may be useful to be aware of, in order to improve the accuracy of trip time estimates:</p>
+<p>Document properties are used to configure RideSheet. Most of these will be set when RideSheet is initially installed, and not need to be edited again. See <a href="../../technical-guide/configuration/">Technical Guide: Configuration</a> for a full list of all document properties. The following may be useful to be aware of, in order to improve the accuracy of trip time estimates:</p>
 <dl>
 <dt><code>dropOffToAppointmentTimeInMinutes</code></dt>
 <dd>The length of time in minutes between the drop-off time and the appointment time.</dd>
