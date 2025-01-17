@@ -2,7 +2,7 @@
 
 ---
 
-Welcome to RideSheet! RideSheet is a simple and affordable tool for operating and reporting on small demand-response transportation services. It supports rural, small urban, and urban specialized services that are ready to move away from paper, whiteboards, and ad-hoc spreadsheets and move to systematic and accessible tracking tools.
+Welcome to RideSheet! RideSheet is a simple and affordable tool for operating and reporting on small demand-response transportation services. It supports rural, small urban, and urban specialized services that are ready to move away from paper, whiteboards, and ad-hoc spreadsheets and toward systematic and accessible tracking tools.
 
 [Getting started](getting-started.md){ .md-button .md-button--primary }
 [User Guide](user-guide/index.md){ .md-button }

@@ -27,10 +27,11 @@ Address descriptions are optional and used to provide additional information abo
 
 #### Combining Address Elements
 RideSheet supports combining address elements. For example:
-- Street Address: "1600 Pennsylvania Avenue NW, Washington, DC 20500, USA"
-- Plus Code: "VXX7+3FV"
-- Address Description: "(The White House)"
-- Combined: "VXX7+3FV; 1600 Pennsylvania Avenue NW, Washington, DC 20500, USA (The White House)"
+
+- **Street Address**: "1600 Pennsylvania Avenue NW, Washington, DC 20500, USA"
+- **Plus Code**: "VXX7+3FV"
+- **Address Description**: "(The White House)"
+- **Combined**: "VXX7+3FV; 1600 Pennsylvania Avenue NW, Washington, DC 20500, USA (The White House)"
 
 #### Common Addresses
 Common addresses can be stored with short names for easy reference. When a short name is entered, RideSheet replaces it with the corresponding full address. These can be created in the [Addresses](#addresses) sheet.
@@ -83,7 +84,7 @@ Calculated fields are colored blue. These fields are automatically calculated by
 :   Calculated using Google Maps travel estimates.
 
 `|Run OK?|`
-:   Shows whether a specific combination of driver and vehicle is valid at the given day and time for the trip.
+:   Shows whether a specific combination of driver and vehicle is valid at the given day and time for the trip. Requires the driver and vehicle availability to be specified in `Runs` first.
 
 ### Customers
 
@@ -186,7 +187,7 @@ Most fields in `Lookups` are automatically generated, as indicated by the blue b
 
 ### Document Properties
 
-Document properties are used to configure RideSheet. Most of these will be set when RideSheet is initially installed, and not need to be edited again. However, the following may be useful to be aware of, in order to improve the accuracy of trip time estimates:
+Document properties are used to configure RideSheet. Most of these will be set when RideSheet is initially installed, and not need to be edited again. See [Technical Guide: Configuration](../technical-guide/configuration.md) for a full list of all document properties. The following may be useful to be aware of, in order to improve the accuracy of trip time estimates:
 
 `dropOffToAppointmentTimeInMinutes`
 :   The length of time in minutes between the drop-off time and the appointment time.

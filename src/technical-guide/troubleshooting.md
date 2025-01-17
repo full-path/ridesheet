@@ -58,8 +58,8 @@ Red markers in cells indicate validation issues:
 
 If you're experiencing general issues with sheets or data, try these steps:
 
-1. From the RideSheet menu, select "Settings"
-2. Run "Rebuild metadata" to recreate all column tracking information
-3. Run "Repair sheets" to fix formatting and validation issues
+1. From the RideSheet menu, select **Settings**
+2. Run **Rebuild metadata** to recreate all column tracking information
+3. Run **Repair sheets** to fix formatting and validation issues
 
 If problems persist after trying these solutions, consider reaching out to [RideSheet support](../user-guide/getting-help.md) for additional help.

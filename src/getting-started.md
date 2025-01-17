@@ -28,11 +28,14 @@ Ideally, you will also have some experience using:
 - GitHub
 - Basic JavaScript
 
+If you feel comfortable with these skills and would like to learn more or set up a demo sheet to explore RideSheet's capabilities, see the [guide to installing RideSheet](technical-guide/installing-ridesheet.md).
+
+
 ### Getting Help Installing/Setting Up RideSheet
 If you're not confident in setting up RideSheet on your own, don't worry. Most small agencies will not have the resources or technical expertise on hand to set up RideSheet independently. You can:
 
 - Hire a technical consultant: Consider hiring a consultant with experience in setting up Google Workspace and spreadsheet-based solutions.
-- Seek help from Full Path: Contact us for guidance on installation and setup. In some cases, there may be grant-based assistance available to help you get started.
+- Seek help from Full Path: [Contact us](about/index.md) for guidance on installation and setup. In some cases, there may be grant-based assistance available to help you get started.
 
 ## Creating a Plan for Migrating to RideSheet
 
@@ -45,7 +48,7 @@ Transfer existing data from paper records or other digital systems to RideSheet.
 - Formatting data to fit RideSheet's structure
 
 ### Training Staff
-Prepare your team for using RideSheet effectively, and plan for a temporary loss of productivity as staff acclimate to a new tool. If you are working with FullPath to get RideSheet set-up for your organization, we will help you conduct training sessions and get started. 
+Prepare your team for using RideSheet effectively, and plan for a temporary loss of productivity as staff acclimate to a new tool. If you are working with FullPath to get RideSheet set up for your organization, we will help you conduct training sessions and get started. 
 
 ### Security Best Practices
 Protect your organization's data by implementing security best practices, such as:
@@ -68,4 +71,4 @@ While RideSheet offers a cost-effective solution, consider ongoing maintenance a
 - Software updates to access new features and security patches
 - Budgeting for technical support and assistance as needed
 
-With careful planning and attention to detail, RideSheet can streamline your DRT service management, making operations more efficient and organized. Let's get started!
+With careful planning and attention to detail, RideSheet can streamline your DRT service management, making operations more efficient and organized.

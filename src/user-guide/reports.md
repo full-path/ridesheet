@@ -4,7 +4,7 @@ RideSheet allows you to create custom reports and automatically calculate billab
 
 ## Overview
 
-RideSheet is extremely flexible when it comes to reporting. The data in Trip Archive and Run Archive can be used to calculate key metrics for NTD reports and other business analytics. 
+RideSheet is extremely flexible when it comes to reporting. The data in `Trip Archive` and `Run Archive` can be used to calculate key metrics for NTD reports and other business analytics. 
 
 Older versions of RideSheet may have reports built into a separate Google Sheet. It's possible to use RideSheet archives as a database and pull them into another spreadsheet for analysis.
 

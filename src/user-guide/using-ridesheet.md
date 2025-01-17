@@ -7,11 +7,11 @@ RideSheet is a spreadsheet-based application consisting of multiple sheets or ta
 
 ![RideSheet home](../images/ridesheet-screenshot1.png)
 
-This screenshot comes from the [RideSheet Public Sample](https://docs.google.com/spreadsheets/d/1U_rmR08qW63hEK_5IWblzVXK4ZqQElaD1ymAQNGpNiU/edit#gid=0). If you are interested in trying out RideSheet, you can simply make a copy of this sheet and test out anything you would like, or use it to follow along with this guide.
+This screenshot comes from the [RideSheet Public Sample](https://docs.google.com/spreadsheets/d/1U_rmR08qW63hEK_5IWblzVXK4ZqQElaD1ymAQNGpNiU/edit#gid=0). If you are interested in trying out RideSheet, you can simply make a copy of this sheet and test out anything you would like, or use it to follow along with this guide. Check out [Installing RideSheet](../technical-guide/installing-ridesheet.md) for more detailed information on how to create your own copy.
 
-The first row of the spreadsheet, in yellow, is the header. Most of these fields are covered in detail in [Data Fields](data-fields.md). Some fields have blue headers or backgrounds. These fields are automatically populated by the application, and should not be edited by hand.
+The first row of the spreadsheet, <span style="background-color: #fff2cc">in yellow</span>, is the header. Most of these fields are covered in detail in [Data Fields](data-fields.md). Some fields have <span style="background-color: #a4c2f4">blue headers</span> or backgrounds. These fields are automatically populated by the application, and should not be edited by hand.
 
-Along the bottom, you can see the various tabs, such as Customers, Trips, and Runs. You will probably need to scroll to see all of the different sheets.
+Along the bottom, you can see the various tabs, such as `Customers`, `Trips`, and `Runs`. You will probably need to scroll to see all of the different sheets.
 
 In the main menu, you can see a dropdown menu item for **RideSheet**. This where you will run many of the workflows mentioned in this guide. 
 
@@ -35,6 +35,7 @@ In the main menu, you can see a dropdown menu item for **RideSheet**. This where
 
 1. At the beginning of each day, [move all past trips and runs to review](#entering-trip-results).
 1. Fill in all additional details in [trip review](#entering-trip-results) and [run review](#entering-run-results).
+1. [Add data to runs in review](#adding-data-to-runs-in-review) once trip results are complete for past dates.
 1. Daily (or at least weekly) [move completed run and trip data](#validating-and-archiving-data) to archive.
 
 
@@ -60,14 +61,14 @@ Within RideSheet, a **Trip** is a one-way segment between two locations. A round
 
 1. Navigate to the Trips sheet/tab.
 2. Enter the required trip details, including the customer name, pickup address and time, drop-off address and time, appointment time (if applicable), count of guests or attendants, and any additional notes. [Learn more about Trip fields](data-fields.md#trips).
-3. Associate the trip with specific resources such as the assigned driver and vehicle. This will be used for creating manifests and assigning trips to runs. If the combination of driver and vehicle is not valid at that time, the **Run OK?** field will turn red. 
+3. Associate the trip with specific resources such as the assigned driver and vehicle. This will be used for creating manifests and assigning trips to runs. If the combination of driver and vehicle is not valid at that time, the `|Run OK?|` field will turn red. 
 
 To add a return trip:
 
-1. In the **Action** column, select "Add return trip"
-2. In the next column over, click the checkbox under **Go**
+1. In the `|Action|` column, select **Add return trip**
+2. In the next column over, click the checkbox under `|Go|`
 3. RideSheet will create a new trip with many details from the original.
-4. Fill in pick-up time for the return trip, and double check that additional information is correct
+4. Fill in pick-up time for the return trip, and double check that additional information is correct.
 
 ![Ridesheet action](../images/ridesheet-action.png){ width="500" }
 
@@ -79,15 +80,15 @@ RideSheet also offers many utilities for managing addresses, and can autocomplet
 
 ## Creating Runs
 
-A run in RideSheet is simply defined as a specific combination of driver and vehicle during a specified time. RideSheet will automatically create a new run for a trip once a driver and vehicle are set for it in the `Trips` sheet.
+A run in RideSheet is simply defined as a specific combination of driver and vehicle during a specified time.
 
-You can also set up runs ahead of time in the `Runs` sheet, setting a scheduled start and end time for each vehicle/driver combination for that day. Any trips that are added for that day will automatically be assigned to the correct run. Ensuring that scheduled start and end times are filled out in `Runs` will allow `Trips` to accurately fill in the `Run OK?` field. 
+You should set up runs ahead of time in the `Runs` sheet, setting a scheduled start and end time for each vehicle/driver combination for that day. The scheduled start and end time can be a best guess or planned availability. Any trips that are added for that day will automatically be assigned to the correct run. Ensuring that scheduled start and end times are filled out in `Runs` will allow `Trips` to accurately fill in the `|Run OK?|` field. 
 
 ## Creating Manifests
 
 Before creating manifests, ensure that a driver and vehicle has been assigned to each of the day's trips. 
 
-Select `Create manifests for day` from the RideSheet menu. A pop-up will appear, and you can choose to select a specific day or create manifests for the following day by default.
+Select **Create manifests for day** from the RideSheet menu. A pop-up will appear, and you can choose to select a specific day or create manifests for the following day by default.
 
 Once the job has finished running, you will be able to find the driver manifests in the `Manifests` folder within your Google Workspace directory. Manifests are created based on a [customizable manifest template](customization.md/#customizing-driver-manifests).
 
@@ -95,7 +96,7 @@ Once the job has finished running, you will be able to find the driver manifests
 
 Daily, you will want to move trips over to `Trip Review` in order to fill in trip details such as whether the trip was completed or canceled.
 
-In the RideSheet menu, select `Move past data to review`. This will move any trips and runs with a Trip Date in the past over to the respective `Trip Review` and `Run Review` sheets.
+In the RideSheet menu, select **Move past data to review**. This will move any trips and runs with a Trip Date in the past over to the respective `Trip Review` and `Run Review` sheets.
 
 ![Moving past trips to review](../images/move-to-review.png){ width="300" }
 
@@ -103,7 +104,7 @@ Fill in the `Trip Result` for all trips from a day before attempting to [move th
 
 ## Entering Run Results
 
-As shown above in "Entering Trip Results", use the RideSheet menu to `Move past data to review`. 
+As shown above in "Entering Trip Results", use the RideSheet menu to **Move past data to review**. 
 
 Fill in the `Actual Start Time`, `Actual End Time`, `Break Time in Minutes`, `Odometer Start` and `Odometer End` for each run. It's imporant to fill in these fields for reports and in order to calculate `Revenue Miles` accurately.
 
@@ -111,13 +112,13 @@ Once all data is filled in for an entire day's runs, you can have RideSheet auto
 
 ### Adding Data to Runs in Review
 
-Once a day's information is complete in both `Trip Review` and `Run Review`, navigate to the RideSheet menu and select `Add data to runs in review`.
+Once a day's information is complete in both `Trip Review` and `Run Review`, navigate to the RideSheet menu and select **Add data to runs in review**.
 
 This will fill in all of the blue fields in `Run Review`, including Revenue Miles and Revenue Hours.
 
 ## Validating and Archiving Data
 
-To move reviewed trips and runs to the archive, select `Move reviewed data to archive` in the RideSheet menu. This will move all complete data from `Trip Review` and `Run Review`. 
+To move reviewed trips and runs to the archive, select **Move reviewed data to archive** in the RideSheet menu. This will move all complete data from `Trip Review` and `Run Review`. 
 
 A **complete trip** has the `Trip Result` field filled out, plus any other custom requirements defined in `Document Properties`.
 

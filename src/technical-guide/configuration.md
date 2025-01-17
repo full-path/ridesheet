@@ -1,6 +1,6 @@
 # Configuration
 
-After installing RideSheet, you'll need to configure several settings to match your organization's needs. At minimum, you will need to fill in the 'Document Properties' sheet. You will also likely want to update the default Trip Purposes and Trip Results in the 'Lookups' sheet.
+After installing RideSheet, you'll need to configure several settings to match your organization's needs. At minimum, you will need to fill in the `Document Properties` sheet. You will also likely want to update the default `Trip Purposes` and `Trip Results` in the `Lookups` sheet.
 
 ## Document Properties
 
@@ -60,12 +60,12 @@ After installing RideSheet, you'll need to configure several settings to match y
 
 ## Lookups
 
-The 'Lookups' sheet contains items used for filling the dropdown boxes throughout RideSheet. Most columns in this sheet (colored in blue) will automatically populate when you add entries to other sheets:
+The `Lookups` sheet contains items used for filling the dropdown boxes throughout RideSheet. Most columns in this sheet (colored in blue) will automatically populate when you add entries to other sheets:
 
-- Customer names and IDs populate from the Customers sheet
-- Driver IDs populate from the Drivers sheet
-- Vehicle IDs populate from the Vehicles sheet
-- Service IDs populate from the Services sheet
+- Customer names and IDs populate from the `Customers` sheet
+- Driver IDs populate from the `Drivers` sheet
+- Vehicle IDs populate from the `Vehicles` sheet
+- Service IDs populate from the `Services` sheet
 
 However, you can and should edit the `Trip Purposes` and `Trip Results` columns to reflect the categories of information you want to track for your organization.
 
@@ -78,3 +78,14 @@ RideSheet is designed to be customizable to meet different organizations' needs.
 
 - For basic customizations like adding columns or modifying the manifest template, see the [User Guide page on customization](../user-guide/customization.md)
 - For advanced customizations involving code changes, see the [Apps Script](apps-script.md) page to learn more.
+
+
+!!! note "Next Steps"
+    After configuring your RideSheet installation, you can either:
+
+    - Learn more about how to [use RideSheet](../user-guide/using-ridesheet.md) to start entering data and managing rides
+    - Continue to [importing data](importing-data.md) if you want to migrate existing data into your RideSheet installation
+
+
+
+

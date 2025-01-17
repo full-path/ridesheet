@@ -4,11 +4,15 @@ Because RideSheet is a spreadsheet-based application, it is highly customizable 
 
 ## Customizing RideSheet's Appearance
 
-You should be able to customize RideSheet's appearance without affecting its functionality. Note that in certain places, the existing coloring is meaningful (fields which should not be edited are blue, |Run OK?| in trips uses conditional formatting to indicate whether a run is valid).
+You should be able to customize RideSheet's appearance without affecting its functionality. Note that in certain places, the existing coloring is meaningful (fields which should not be edited are blue, `|Run OK?|` in trips uses conditional formatting to indicate whether a run is valid).
 
 However, editing font-size, row colors, or adjusting column widths should have no negative effects on the application.
 
-Users who are comfortable with conditional formatting in spreadsheets can use it if desired.
+Users who are comfortable with conditional formatting in spreadsheets can use it if desired. 
+
+!!! tip "Date Formats and Other Field Settings"
+    Some fields in RideSheet, such as date fields, have their number format set in the code. Operations like "repair sheets" will reset date fields to "m/d/yyyy" format. If you customize the format of these fields, be aware that running certain RideSheet operations may revert them back to their default settings.
+
 
 ## Customizing Driver Manifests
 
