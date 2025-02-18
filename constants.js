@@ -128,36 +128,10 @@ const defaultDocumentProperties = {
     value: "Enter provider name here",
     description: "Name of the agency using this RideSheet document"
   },
-  notificationEmail: {
-    type: "string",
-    value: "",
-    description: "Email address to use for notifications"
-  },
   logLevel: {
     type: "string",
     value: "normal",
     description: "Set logging level to normal or verbose"
-  },
-  extraHeaderNames: {
-    type: "object",
-    value: {
-      Customers: [],
-      Trips: [],
-      Runs: [],
-      "Trip Review": [],
-      "Run Review": [],
-      "Trip Archive": [],
-      "Run Archive": [],
-      Vehicles: [],
-      Drivers: [],
-      Services: []
-    },
-    description: "Extra header names that should be preserved when doing sheet repairs"
-  },
-  configFolderId: {
-    type: "string",
-    value: "Enter ID here",
-    description: "The ID of the folder where configuration files will be located."
   },
   defaultStayDuration: {
     type: "number",
@@ -319,6 +293,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -381,6 +356,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -499,6 +475,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -557,6 +534,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -567,20 +545,6 @@ const defaultColumns = {
     },
     "Run ID": {},
     "Scheduled Start Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "First PU Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "Last DO Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
         criteriaType: "DATE_IS_VALID_DATE",
@@ -729,6 +693,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -800,6 +765,7 @@ const defaultColumns = {
       },
     },
     "Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -809,20 +775,6 @@ const defaultColumns = {
       },
     },
     "Run ID": {},
-    "First PU Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "Last DO Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
     "Scheduled Start Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -905,7 +857,9 @@ const defaultColumns = {
     "Last DO Address": {}
   },
   "Vehicles": {
-    "Vehicle ID": {},
+    "Vehicle ID": {
+      numberFormat: '@',
+    },
     "Vehicle Name": {},
     "Garage Address": {},
     "Seating Capacity": {},
@@ -951,6 +905,7 @@ const defaultColumns = {
       }
     },
     "Default Vehicle ID": {
+      numberFormat: '@',
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupVehicleIds",
@@ -1053,16 +1008,24 @@ const defaultNamedRanges = {
     "headerName":"Default PU Address"
   },
   "codeFormatAddress5": {
+    "sheetName":"Customers",
+    "headerName":"Default DO Address"
+  },
+  "codeFormatAddress6": {
     "sheetName":"Vehicles",
     "headerName":"Garage Address"
   },
-  "codeFormatAddress6": {
+  "codeFormatAddress7": {
     "sheetName":"Trip Review",
     "headerName":"PU Address"
   },
-  "codeFormatAddress7": {
+  "codeFormatAddress8": {
     "sheetName":"Trip Review",
     "headerName":"DO Address"
+  },
+  "codeFormatAddress9": {
+    "sheetName":"Addresses",
+    "headerName":"Address"
   },
   "codeScanForDuplicates1": {
     "sheetName":"Customers",
@@ -1363,9 +1326,5 @@ const defaultNamedRanges = {
   "formulaTripArchivePuTime": {
     "sheetName":"Trip Archive",
     "headerName":"PU Time"
-  },
-  "codeFormatAddress9": {
-    "sheetName":"Addresses",
-    "headerName":"Address"
   }
 }
