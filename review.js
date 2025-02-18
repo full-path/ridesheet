@@ -202,6 +202,17 @@ function isReviewedTrip(trip) {
     }
 }
 
+function isTripWithCompletedTripResult(trip) {
+  const tripReviewCompletedTripResults = getDocProp("tripReviewCompletedTripResults")
+  if (!trip["Trip Result"]) {
+    return false
+  } else if (tripReviewCompletedTripResults.includes(trip["Trip Result"])) {
+    return true
+  } else {
+    return false
+  }
+}
+
 function isUserReviewedRun(run) {
   const runReviewRequiredFields = getDocProp("runUserReviewRequiredFields")
   const blankColumns = runReviewRequiredFields.filter(column => {
@@ -266,12 +277,23 @@ function moveTripsToArchive() {
       const theseTrips = trips.filter((row) => row["Trip Date"].valueOf() === date)
       const theseRuns = runs.filter((row) => row["Run Date"].valueOf() === date)
       const incompleteTrips = theseTrips.filter((row) => !isReviewedTrip(row))
+      const tripsWithCompletedTripResults = theseTrips.filter((row) => isTripWithCompletedTripResult(row))
+      //Logger.log(incompleteTrips.length)
       const incompleteRuns = theseRuns.filter((row) => !isFullyReviewedRun(row))
+      // Where there are trips and runs, and no trip or run is incomplete
       if (theseTrips.length &&
           theseRuns.length &&
           !incompleteTrips.length &&
-          !incompleteRuns.length
-      ) moveDates.push(date)
+          !incompleteRuns.length) {
+        moveDates.push(date)
+      // Where every trip is cancelled, so there's no run info. Good for weather events.
+      } else if (theseTrips.length &&
+          !theseRuns.length &&
+          !incompleteTrips.length &&
+          !tripsWithCompletedTripResults.length
+          ) {
+        moveDates.push(date)
+      }
     })
 
     moveRows(tripReviewSheet, tripArchiveSheet, function(row){
