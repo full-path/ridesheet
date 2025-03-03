@@ -10,7 +10,12 @@ const finalLocalSheetTriggers  = {
   "Runs": localCodeRefreshTimelineIfChanged
 }
 
-const rangeTriggersLocal = {}
+const rangeTriggersLocal = {
+  localCodeExpandAddress: {
+    functionCall: localExpandAddress,
+    callOncePerRow: true
+  }
+}
 
 function callLocalSheetTriggers(e, sheetName, triggers) {
   if (Object.keys(triggers).indexOf(sheetName) !== -1) {
@@ -94,4 +99,23 @@ function localCodeRefreshTimelineIfChanged(e) {
   try {
     refreshTimelineIfChanged(e)
   } catch(e) { logError(e) }
+}
+
+function localExpandAddress(sourceRange) {
+  const shortName = sourceRange.getValue()
+  if (shortName?.toString().trim()) {
+    try {
+      const targetSheet = sourceRange.getSheet()
+      const targetRange = targetSheet.getRange(sourceRange.getRow(), sourceRange.getColumn(), 1, 2)
+      const result = getAddressByShortName(shortName)
+      if (result) {
+        targetRange.setValues([["",result]]).setNotes([["",""]]).setBackground(null)
+        return true
+      }
+      return false
+    } catch(e) {
+      logError(e)
+      return false
+    }
+  }
 }
