@@ -302,6 +302,9 @@ const defaultColumns = {
         helpText: "Value must be a valid vehicle ID.",
       },
     },
+    "|Run OK?|": {
+      headerFormula: `={"|Run OK?|";MAP(formulaTripsTripDate, formulaTripsPuTime, formulaTripsDoTime, formulaTripsTripDriverId, formulaTripsTripVehicleId, formulaTripsTripRunId, LAMBDA(TripDate,TripPuTime,TripDoTime,TripDriverId,TripVehicleID,TripRunId, QUERY_RUN_MATCH_COUNT(TripDate,TripPuTime,TripDoTime,TripDriverId,TripVehicleID,TripRunId,formulaRunsSheet)))}`
+    },
     "Run ID": {},
     "Service ID": {
       dataValidation: {
