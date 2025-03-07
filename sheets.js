@@ -215,7 +215,7 @@ function safelyDeleteRow(sheet, row) {
 }
 
 const defaultColumnFilter = colHeader => {
-  const colsToSkip = ["Action", "Go", "Share", "Shared", "Earliest PU Time", "Latest PU Time"]
+  const colsToSkip = ["Action", "Go", "Earliest PU Time", "Latest PU Time"]
   if (colHeader.trim() == '') {
     return false
   }

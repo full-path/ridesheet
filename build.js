@@ -1,7 +1,6 @@
 function buildMenus() {
   const ui = SpreadsheetApp.getUi()
   const menu = ui.createMenu('RideSheet')
-  menu.addItem('Refresh driver calendars', 'updateDriverCalendars')
   menu.addItem('Add return trip', 'createReturnTrip')
   menu.addItem('Add stop', 'addStop')
   menu.addItem('Create manifests for day', 'createManifests')
@@ -12,18 +11,10 @@ function buildMenus() {
   menu.addSeparator()
   let settingsMenu = ui.createMenu('Settings')
   settingsMenu.addItem('Refresh document properties sheet', 'presentProperties')
-  settingsMenu.addItem('Scheduled calendar updates', 'presentCalendarTrigger')
   settingsMenu.addItem('Repair sheets', 'repairSheets')
   settingsMenu.addItem('Rebuild metadata', 'rebuildAllMetadata')
+  settingsMenu.addItem('Setup new installation', 'setupNewInstall')
   menu.addSubMenu(settingsMenu)
-  if (getDocProp("apiShowMenuItems")) {
-    const menuApi = ui.createMenu('Ride Sharing')
-    menuApi.addItem('Get trip requests (Deprecated)', 'sendRequestForTripRequests')
-    menuApi.addItem('Send trip requests', 'sendTripRequests')
-    menuApi.addItem('Send responses to trip requests', 'sendTripRequestResponses')
-    menuApi.addItem('Refresh outside runs', 'sendRequestForRuns')
-    menuApi.addToUi()
-  }
   menu.addToUi()
   buildLocalMenus()
 }
@@ -479,6 +470,37 @@ function buildRideSheetInstall(destFolderId, sourceRideSheetFileId, namePrefix) 
   updatePropertyRange(propSheetData,"driverManifestTemplateDocId",newTemplateFile.getId())
   updatePropertyRange(propSheetData,"configFolderId",newSettingsFolder.getId())
   propSheetDataRange.setValues(propSheetData)
+}
+
+/**
+ * Sets up a new RideSheet installation by:
+ * - Building document properties from the properties sheet
+ * - Creating Manifests and Templates folders in the parent directory
+ * - Copying the manifest template from RideSheet Public Sample to the Templates folder
+ * - Updating document properties with new folder and template IDs
+ * @throws {Error} If any step of the setup process fails
+ */
+function setupNewInstall() {
+  try {
+    buildDocumentPropertiesFromSheet()
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const currentFile = DriveApp.getFileById(ss.getId())
+    const parentFolder = currentFile.getParents().next()
+    const manifestsFolder = parentFolder.createFolder("Manifests")
+    const templatesFolder = parentFolder.createFolder("Settings")
+    const sourceTemplateId = "1-E-gxHgS3h5gr9Fh4VfdZkAwcN5kjJ7_hqx69Cs1BmY"
+    const sourceTemplate = DriveApp.getFileById(sourceTemplateId)
+    const newTemplate = sourceTemplate.makeCopy(templatesFolder)
+    const propSheet = ss.getSheetByName("Document Properties")
+    const propSheetDataRange = propSheet.getDataRange()
+    const propSheetData = propSheetDataRange.getValues()
+
+    updatePropertyRange(propSheetData, "driverManifestFolderId", manifestsFolder.getId())
+    updatePropertyRange(propSheetData, "driverManifestTemplateDocId", newTemplate.getId())
+    propSheetDataRange.setValues(propSheetData)
+  } catch(e) {
+    logError(e)
+  }
 }
 
 function updatePropertyRange(dataRange, propName, newPropValue) {
