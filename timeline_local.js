@@ -98,7 +98,7 @@ function buildTimelineReport(sourceTripRange, sourceRunRange) {
     const timeZone = getDocProp("localTimeZone")
     const startRow = 3 // This should be the header row
 
-    ss.getRangeByName("timelineLastRefreshed").setValue(new Date())
+    ss.getRangeByName("timelineLastRefreshed")?.setValue(new Date())
     data = {}
     sourceRunData.filter(row => {
       return row["Run Date"] instanceof Date && row["Driver ID"] && row["Vehicle ID"]

@@ -145,9 +145,8 @@ function callCellTriggers(e) {
 function formatAddressOnEdit(range) {
   try {
     if (range.getValue() && range.getValue().toString().trim()) {
-      const app = SpreadsheetApp
-      if (!setAddressByShortName(app, range)) {
-        setAddressByApi(app, range)
+      if (!setAddressByShortName(range)) {
+        setAddressByApi(range)
       }
     } else {
       range.setNote("")
@@ -321,10 +320,6 @@ function tripActionButton(goCheckBoxRange) {
         goCheckBoxRange.setValue(null)
         actionCell.setValue(null)
         addStop()
-      } else if (actionText === "Approve pending claim") {
-        goCheckBoxRange.setValue(null)
-        actionCell.setValue(null)
-        sendClientOrderConfirmation(null)
       } else {
         goCheckBoxRange.setValue(null)
         actionCell.setValue(null)

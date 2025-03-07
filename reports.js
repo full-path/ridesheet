@@ -1,56 +1,56 @@
 const tempText = "{{Temporary Text}}"
 
-function createManifests() {
-  let startTime = new Date()
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const activeSheet = ss.getActiveSheet()
-  const ui = SpreadsheetApp.getUi()
-  let defaultDate
-  let manifestDate
-  let runDate
-  if (activeSheet.getName() == "Trips") {
-    runDate = getValueByHeaderName("Trip Date", getFullRows(activeSheet.getActiveCell()))
-  } else if (activeSheet.getName() == "Runs") {
-    runDate = getValueByHeaderName("Run Date", getFullRows(activeSheet.getActiveCell()))
-  } else {
-    // tomorrow, at midnight
-    runDate = dateOnly(dateAdd(new Date(), 1))
-  }
+function createManifestsByRunForDate() {
+  try {
+    const templateDocId = getDocProp("driverManifestTemplateDocId")
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const activeSheet = ss.getActiveSheet()
+    const ui = SpreadsheetApp.getUi()
+    let defaultDate
+    let date
+    let runDate
+    if (activeSheet.getName() == "Trips") {
+      runDate = getValueByHeaderName("Trip Date", getFullRows(activeSheet.getActiveCell()))
+    } else if (activeSheet.getName() == "Runs") {
+      runDate = getValueByHeaderName("Run Date", getFullRows(activeSheet.getActiveCell()))
+    } else {
+      // tomorrow, at midnight
+      runDate = dateOnly(dateAdd(new Date(), 1))
+    }
 
-  if (isValidDate(runDate)) {
-    defaultDate = runDate
-  } else {
-    // tomorrow, at midnight
-    defaultDate = dateOnly(dateAdd(new Date(), 1))
-  }
+    if (isValidDate(runDate)) {
+      defaultDate = runDate
+    } else {
+      // tomorrow, at midnight
+      defaultDate = dateOnly(dateAdd(new Date(), 1))
+    }
 
-  let promptResult = ui.prompt("Create Manifests",
-      "Enter date for manifests. Leave blank for " + formatDate(defaultDate, null, null),
-      ui.ButtonSet.OK_CANCEL)
-  startTime = new Date()
-  if (promptResult.getResponseText() == "") {
-    manifestDate = defaultDate
-  } else {
-    manifestDate = parseDate(promptResult.getResponseText(),"Invalid Date")
-  }
-  if (!isValidDate(manifestDate)) {
-    ui.alert("Invalid date, action cancelled.")
-    return
-  } else if (promptResult.getSelectedButton() !== ui.Button.OK) {
-    ui.alert("Action cancelled as requested.")
-    return
-  }
+    let promptResult = ui.prompt("Create Manifests",
+        "Enter date for manifests. Leave blank for " + formatDate(defaultDate, null, null),
+        ui.ButtonSet.OK_CANCEL)
+    startTime = new Date()
+    if (promptResult.getResponseText() == "") {
+      date = defaultDate
+    } else {
+      date = parseDate(promptResult.getResponseText(),"Invalid Date")
+    }
+    if (!isValidDate(date)) {
+      ui.alert("Invalid date, action cancelled.")
+      return
+    } else if (promptResult.getSelectedButton() !== ui.Button.OK) {
+      ss.toast("Action cancelled as requested.")
+      return
+    }
 
-  const templateDoc = DocumentApp.openById(getDocProp("driverManifestTemplateDocId"))
-  prepareTemplate(templateDoc)
-  let runs = getManifestData(manifestDate)
-  runs.forEach(run => {
-    createManifest(run, templateDoc)
-  })
-  log('All manifests created',(new Date()).getTime() - startTime.getTime())
+    const dateFilter = createDateFilterForManifestData(date)
+    const manifestData = getManifestData(dateFilter)
+    const groupedManifestData = groupManifestDataByRun(manifestData)
+    const manifestCount = createManifests(templateDocId, groupedManifestData, getManifestFileNameByRun)
+    ss.toast(manifestCount + " created.","Manifest creation complete.")
+  } catch(e) { logError(e) }
 }
 
-function createSelectedManifests() {
+function createSelectedManifestsByRun() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const activeSheet = ss.getActiveSheet()
@@ -60,61 +60,64 @@ function createSelectedManifests() {
       return
     }
     const rangeList = activeSheet.getActiveRangeList().getRanges()
-    const templateDoc = DocumentApp.openById(getDocProp("driverManifestTemplateDocId"))
-    let rows = []
-    rangeList.forEach(range => {rows.push(...getRangeValuesAsTable(getFullRows(range)))})
-    let uniqRuns = []
-    rows.forEach(row => {
+    const templateDocId = getDocProp("driverManifestTemplateDocId")
+    let selectedRows = []
+    rangeList.forEach(range => {selectedRows.push(...getRangeValuesAsTable(getFullRows(range)))})
+    let runList = []
+    selectedRows.forEach(row => {
       let thisRun = {}
-      thisRun.date = (activeSheetName == "Trips" ? row["Trip Date"] : row["Run Date"])
-      thisRun.driverId = row["Driver ID"]
-      thisRun.vehicleId = row["Vehicle ID"]
-      const found = uniqRuns.find(uniqRun => {
-        return uniqRun.date.getTime() == thisRun.date.getTime() &&
-               uniqRun.driverId == thisRun.driverId &&
-               uniqRun.vehicleId == thisRun.vehicleId
-      })
-      if (!found) uniqRuns.push(thisRun)
+      thisRun["Trip Date"] = (activeSheetName == "Trips" ? row["Trip Date"] : row["Run Date"])
+      thisRun["Driver ID"] = row["Driver ID"]
+      thisRun["Vehicle ID"] = row["Vehicle ID"]
+      runList.push(thisRun)
     })
-    prepareTemplate(templateDoc)
-    let manifestCount = 0
-    uniqRuns.forEach(uniqRun => {
-      if (isValidDate(uniqRun.date) && uniqRun.driverId && uniqRun.vehicleId) {
-        let runsData = getManifestData(uniqRun.date, uniqRun.driverId, uniqRun.vehicleId)
-        if (runsData.length) {
-          runsData.forEach(runData => {
-            manifestCount++
-            createManifest(runData, templateDoc)
-          })
-        }
-      }
-    })
+
+    const runFilter = createRunFilterForManifestData(runList)
+    const manifestData = getManifestData(runFilter)
+    const groupedManifestData = groupManifestDataByRun(manifestData)
+    const manifestCount = createManifests(templateDocId, groupedManifestData, getManifestFileNameByRun)
     ss.toast(manifestCount + " created.","Manifest creation complete.")
   } catch(e) { logError(e) }
 }
 
-function copyTemplateManifest(run, templateFileId, driverManifestFolderId) {
-  const manifestFileName = `${formatDate(run["Trip Date"], null, "yyyy-MM-dd")} manifest for ${run["Driver Name"]} on ${run["Vehicle Name"]}`
-  const manifestFolder   = DriveApp.getFolderById(driverManifestFolderId)
-  const manifestFile     = DriveApp.getFileById(templateFileId).makeCopy(manifestFolder).setName(manifestFileName)
-  const manifestDoc      = DocumentApp.openById(manifestFile.getId())
-  return manifestDoc
+function createManifests(templateDocId, groupedManifestData, fileNameFunction) {
+  try {
+    const templateDoc = DocumentApp.openById(templateDocId)
+    const folder = DriveApp.getFolderById(getDocProp("driverManifestFolderId"))
+    prepareTemplate(templateDoc)
+
+    let manifestCount = 0
+    groupedManifestData.forEach(manifestGroup => {
+      const manifestFileName = fileNameFunction(manifestGroup)
+      const manifestDocFile = createManifest(manifestGroup, templateDoc, manifestFileName, folder)
+      createPdfFromDocFile(manifestDocFile, folder)
+      manifestCount++
+    })
+    return manifestCount
+  } catch(e) {
+    logError(e)
+  }
 }
 
-function createManifest(run, templateDoc) {
-    const driverManifestFolderId = getDocProp("driverManifestFolderId")
-    const templateFileId = getDocProp("driverManifestTemplateDocId")
-    const manifestDoc = copyTemplateManifest(run, templateFileId, driverManifestFolderId)
-    emptyBody(manifestDoc)
-    populateManifest(manifestDoc, templateDoc, run)
-    removeTempElement(manifestDoc)
-    manifestDoc.saveAndClose()
-    const manifestFile = DriveApp.getFileById(manifestDoc.getId())
-    let manifestPDFFile = DriveApp.getFolderById(driverManifestFolderId).createFile(manifestFile.getBlob().getAs("application/pdf"))
-    manifestPDFFile.setName(manifestFile + ".pdf")
+function createManifest(manifestGroup, templateDoc, manifestFileName, folder) {
+  const templateFileId = getDocProp("driverManifestTemplateDocId")
+  const manifestFile   = DriveApp.getFileById(templateFileId).makeCopy(folder).setName(manifestFileName)
+  const manifestDoc    = DocumentApp.openById(manifestFile.getId())
+
+  emptyBody(manifestDoc)
+  populateManifest(manifestDoc, templateDoc, manifestGroup)
+  removeTempElement(manifestDoc)
+  manifestDoc.saveAndClose()
+  return manifestFile
+}
+
+function createPdfFromDocFile(manifestFile, folder) {
+  const PdfFile = folder.createFile(manifestFile.getBlob().getAs("application/pdf"))
+  PdfFile.setName(manifestFile + ".pdf")
+  return PdfFile
 }
                                                   
-function populateManifest(manifestDoc, templateDoc, run) {
+function populateManifest(manifestDoc, templateDoc, manifestGroup) {
   //templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
   
   const manifestBody   = manifestDoc.getBody()
@@ -125,20 +128,20 @@ function populateManifest(manifestDoc, templateDoc, run) {
   for (let i = 0, c = manifestParent.getNumChildren(); i < c; i++) {
     let section = manifestParent.getChild(i)
     if (section.getType() === DocumentApp.ElementType.HEADER_SECTION) {
-      replaceElementText(section, run["Events"][0])
+      replaceElementText(section, manifestGroup["Events"][0])
     } else if (section.getType() === DocumentApp.ElementType.FOOTER_SECTION) {
-      replaceElementText(section, run["Events"][run["Events"].length - 1])
+      replaceElementText(section, manifestGroup["Events"][manifestGroup["Events"].length - 1])
     }  
   }
 
   // Add the header elements
-  replaceTextInRange(templateDoc.getNamedRanges("HEADER")[0].getRange(), manifestBody, run["Events"][0])
+  replaceTextInRange(templateDoc.getNamedRanges("HEADER")[0].getRange(), manifestBody, manifestGroup["Events"][0])
   // Add all the PU and DO elements. Use the section name of each event to decide whether to add a PU or DO range.
-  run["Events"].forEach((event, i) => {
+  manifestGroup["Events"].forEach((event, i) => {
     replaceTextInRange(templateDoc.getNamedRanges(event["Section Name"])[0].getRange(), manifestBody, event)
   })
   // Add the footer elements
-  replaceTextInRange(templateDoc.getNamedRanges("FOOTER")[0].getRange(), manifestBody, run["Events"][run["Events"].length - 1])
+  replaceTextInRange(templateDoc.getNamedRanges("FOOTER")[0].getRange(), manifestBody, manifestGroup["Events"][manifestGroup["Events"].length - 1])
 }
 
 function replaceTextInRange(range, docSection, data) {
@@ -169,7 +172,7 @@ function replaceElementText(element, data) {
     }
     if (Object.keys(data).indexOf(field) != -1) {
       element.replaceText("{" + field + "}", datum)
-      if (field.match(/\baddress\b/i)) {
+      if (field.match(/\baddress\b/i) && datum) {
         let url = createGoogleMapsDirectionsURL(datum)
         let text = element.asText()
         let addressRange = text.findText(escapeRegex(datum))
@@ -198,18 +201,14 @@ function removeTempElement(doc) {
   if (body.getChild(0).asText().getText() === tempText) body.removeChild(body.getChild(0))
 }
 
-function getManifestData(date, driverId, vehicleId) {
-  if (!date) date = new Date(2020, 5, 1)
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  
+function getManifestData(filterFunction) {
   // Get all the raw data
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
   const drivers = getRangeValuesAsTable(ss.getSheetByName("Drivers").getDataRange())
   const vehicles = getRangeValuesAsTable(ss.getSheetByName("Vehicles").getDataRange())
   const customers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
   const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange())
-  let manifestTrips = trips.filter(row => new Date(row["Trip Date"]).valueOf() == date.valueOf())
-  if (driverId) manifestTrips = manifestTrips.filter(row => row["Driver ID"] == driverId)
-  if (vehicleId) manifestTrips = manifestTrips.filter(row => row["Vehicle ID"] == vehicleId)
+  let manifestTrips = trips.filter(filterFunction)
   
   // Pull in the lookup table data
   manifestTrips.forEach(tripRow => {
@@ -220,7 +219,7 @@ function getManifestData(date, driverId, vehicleId) {
     tripRow["Manifest Creation Date"] = new Date()
   })
   
-  // For events, create to rows for each trip -- one for PU, and one for DO
+  // For events, create two rows for each trip -- one for PU, and one for DO
   let pickups = manifestTrips.map(tripRow => {
     let newRow = Object.assign({},tripRow)
     newRow["Section Name"] = "PICKUP"
@@ -242,32 +241,53 @@ function getManifestData(date, driverId, vehicleId) {
     if (a["Sort Field"] > b["Sort Field"]) { return  1 }
     return 0
   })
-  
-  // Group the trips into runs -- A run is a collection of trips on the same day with the same driver and vehicle
-  let manifestRuns = []
-  manifestTrips.forEach(trip => {
-    let runIndex = manifestRuns.findIndex(r => r["Driver ID"] == trip["Driver ID"] && r["Vehicle ID"] == trip["Vehicle ID"])
+
+  const result = {
+    "trips": manifestTrips,
+    "events": manifestEvents
+  }
+  return result
+}
+
+function groupManifestDataByRun(manifestData) {
+  // Group the trips into runs -- A run is a collection of trips on the same day
+  // with the same driver, vehicle, and run id
+  // TODO add date and run ID to code
+  let manifestGroups = []
+  manifestData.trips.forEach(trip => {
+    let runIndex = manifestGroups.findIndex(r =>
+      r["Trip Date"].getTime() == trip["Trip Date"].getTime() &&
+      r["Driver ID"] == trip["Driver ID"] &&
+      r["Vehicle ID"] == trip["Vehicle ID"] &&
+      r["Run ID"] == trip["Run ID"]
+    )
     if (runIndex == -1) {
       let newRun = {}
       newRun["Driver ID"]    = trip["Driver ID"]
       newRun["Vehicle ID"]   = trip["Vehicle ID"]
+      newRun["Run ID"]       = trip["Run ID"]
       newRun["Driver Name"]  = trip["Driver Name"]
-      newRun["Driver Email"]  = trip["Driver Email"]
+      newRun["Driver Email"] = trip["Driver Email"]
       newRun["Vehicle Name"] = trip["Vehicle Name"]
       newRun["Trip Date"]    = trip["Trip Date"]
       newRun["Trips"]        = [trip]
       newRun["Events"]       = []
-      manifestRuns.push(newRun)
+      manifestGroups.push(newRun)
     } else {
-      manifestRuns[runIndex]["Trips"].push(trip)
+      manifestGroups[runIndex]["Trips"].push(trip)
     }
   })
-  manifestEvents.forEach(event => {
-    let matchedRun = manifestRuns.find(run => run["Driver ID"] === event["Driver ID"] && run["Vehicle ID"] === event["Vehicle ID"])
+  // Group the manifest events into the same runs
+  manifestData.events.forEach(event => {
+    let matchedRun = manifestGroups.find(run =>
+      run["Trip Date"].getTime() == event["Trip Date"].getTime() &&
+      run["Driver ID"] == event["Driver ID"] &&
+      run["Vehicle ID"] == event["Vehicle ID"] &&
+      run["Run ID"] == event["Run ID"]
+    )
     matchedRun["Events"].push(event)
   })
-  
-  return manifestRuns
+  return manifestGroups
 }
 
 function createDriverManifest(manifestDate, driverId) {
@@ -390,5 +410,27 @@ function mergeAttributes(primaryRow, secondaryTable, primaryKeyName, secondaryKe
         }
       })
     }
+  }
+}
+
+function getManifestFileNameByRun(manifestGroup) {
+  const manifestFileName = `${formatDate(manifestGroup["Trip Date"], null, "yyyy-MM-dd")} manifest for ${manifestGroup["Driver Name"]} on ${manifestGroup["Vehicle Name"]}`
+  return manifestFileName
+}
+
+function createDateFilterForManifestData(date) {
+  return function(trip) {
+    return new Date(trip["Trip Date"]).valueOf() === date.valueOf()
+  }
+}
+
+function createRunFilterForManifestData(runs) {
+  return function (trip) {
+    return runs.some(run => {
+      return trip["Trip Date"] instanceof Date &&
+              trip["Trip Date"].getTime() === run["Trip Date"].getTime() &&
+              trip["Driver ID"] === run["Driver ID"] &&
+              trip["Vehicle ID"] === run["Vehicle ID"]
+    })
   }
 }
