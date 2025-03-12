@@ -601,7 +601,7 @@ const defaultColumns = {
       headerFormula: `={"Total Vehicle Hours";MAP(formulaRunReviewTimeStart,formulaRunReviewTimeEnd,LAMBDA(start,end,IF(COUNTBLANK(start,end)>0,"",end-start)))}`,
       numberFormat: "[h]:mm"
     },
-    "Total Deadhead Hours": {
+    "Total Non-Revenue Hours": {
       headerFormula: `={"Total Non-Revenue Hours";MAP(formulaRunReviewStartingDeadheadHours,formulaRunReviewEndingDeadheadHours,formulaRunReviewBreakTime,LAMBDA(start,end,middle,IF(COUNTBLANK(start,end,middle)>0,"",start+end+(middle/1440))))}`,
       numberFormat: "[h]:mm"
     },
@@ -730,9 +730,9 @@ const defaultColumns = {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupTripPurposes",
-        showDropdown: false,
-        allowInvalid: false,
-        helpText: "Value must be a valid trip type.",
+        showDropdown: true,
+        allowInvalid: true,
+        helpText: "Value should be a valid trip type.",
       },
     },
     "Notes": {},
