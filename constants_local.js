@@ -152,6 +152,15 @@ const localColumns = {
         helpText: "Value must be a valid rider type.",
       },
     },
+    "Mobility Factors": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupMobilityFactors",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid mobility factor.",
+      },
+    },
     "Fare": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -218,6 +227,15 @@ const localColumns = {
         helpText: "Value must be a valid rider type.",
       },
     },
+    "Mobility Factors": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupMobilityFactors",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid mobility factor.",
+      },
+    },
     "Fare": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -259,6 +277,15 @@ const localColumns = {
         showDropdown: true,
         allowInvalid: true,
         helpText: "Value must be a valid rider type.",
+      },
+    },
+    "Mobility Factors": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupMobilityFactors",
+        showDropdown: true,
+        allowInvalid: true,
+        helpText: "Value must be a valid mobility factor.",
       },
     },
     "Fare": {
