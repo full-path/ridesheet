@@ -94,26 +94,47 @@ function isPartialMatch(geocodeResults) {
   return false
 }
 
-function setAddressByShortName(app, range) {
+function getAddressByShortName(shortName) {
   try {
-    const ss = app.getActiveSpreadsheet()
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
     const sheet = ss.getSheetByName('Addresses')
-    const dataRange = sheet.getDataRange()
-    const data = getRangeValuesAsTable(dataRange)
-    const searchTerm = range.getValue().toString().toLowerCase().trim()
-    const result = data.find((row) => row["Short Name"].toString().toLowerCase().trim() === searchTerm)["Address"].trim()
-    if (!result) { throw new Error('No address found by short name') }
-    range.setValue(result)
-    range.setNote("")
-    range.setBackground(null)
-    return true
+    if (sheet) {
+      const dataRange = sheet.getDataRange()
+      const data = getRangeValuesAsTable(dataRange)
+      const searchTerm = shortName?.toString().toLowerCase().trim()
+      if (searchTerm) {
+        const foundRow = data.find((row) => row["Short Name"].toString().toLowerCase().trim() === searchTerm)
+        if (foundRow) {
+          const result = foundRow["Address"].trim()
+          return result
+        }
+      }
+    }
+  } catch(e) {
+    logError(e)
+  }
+}
+
+function setAddressByShortName(range) {
+  try {
+    const shortName = range.getValue()
+    const result = getAddressByShortName(shortName)
+    if (result) {
+      range.setValue(result)
+      range.setNote("")
+      range.setBackground(null)
+      return true
+    } else {
+      return false
+    }
   } catch(e) {
     return false
   }
 }
 
-function setAddressByApi(app, range) {
+function setAddressByApi(range) {
   try {
+    const app = SpreadsheetApp
     const rawAddressParts = parseAddress(range.getValue())
     let globalPlusCode = ""
     let formattedAddress = ""

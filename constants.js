@@ -554,20 +554,6 @@ const defaultColumns = {
         helpText: "Value must be a valid time.",
       },
     },
-    "First PU Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "Last DO Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
     "Scheduled End Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -615,7 +601,7 @@ const defaultColumns = {
       headerFormula: `={"Total Vehicle Hours";MAP(formulaRunReviewTimeStart,formulaRunReviewTimeEnd,LAMBDA(start,end,IF(COUNTBLANK(start,end)>0,"",end-start)))}`,
       numberFormat: "[h]:mm"
     },
-    "Total Deadhead Hours": {
+    "Total Non-Revenue Hours": {
       headerFormula: `={"Total Non-Revenue Hours";MAP(formulaRunReviewStartingDeadheadHours,formulaRunReviewEndingDeadheadHours,formulaRunReviewBreakTime,LAMBDA(start,end,middle,IF(COUNTBLANK(start,end,middle)>0,"",start+end+(middle/1440))))}`,
       numberFormat: "[h]:mm"
     },
@@ -744,9 +730,9 @@ const defaultColumns = {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupTripPurposes",
-        showDropdown: false,
-        allowInvalid: false,
-        helpText: "Value must be a valid trip type.",
+        showDropdown: true,
+        allowInvalid: true,
+        helpText: "Value should be a valid trip type.",
       },
     },
     "Notes": {},
@@ -792,20 +778,6 @@ const defaultColumns = {
       },
     },
     "Run ID": {},
-    "First PU Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
-    "Last DO Time": {
-      numberFormat: 'h":"mm am/pm',
-      dataValidation: {
-        criteriaType: "DATE_IS_VALID_DATE",
-        helpText: "Value must be a valid time.",
-      },
-    },
     "Scheduled Start Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
@@ -1039,16 +1011,24 @@ const defaultNamedRanges = {
     "headerName":"Default PU Address"
   },
   "codeFormatAddress5": {
+    "sheetName":"Customers",
+    "headerName":"Default DO Address"
+  },
+  "codeFormatAddress6": {
     "sheetName":"Vehicles",
     "headerName":"Garage Address"
   },
-  "codeFormatAddress6": {
+  "codeFormatAddress7": {
     "sheetName":"Trip Review",
     "headerName":"PU Address"
   },
-  "codeFormatAddress7": {
+  "codeFormatAddress8": {
     "sheetName":"Trip Review",
     "headerName":"DO Address"
+  },
+  "codeFormatAddress9": {
+    "sheetName":"Addresses",
+    "headerName":"Address"
   },
   "codeScanForDuplicates1": {
     "sheetName":"Customers",
@@ -1349,9 +1329,5 @@ const defaultNamedRanges = {
   "formulaTripArchivePuTime": {
     "sheetName":"Trip Archive",
     "headerName":"PU Time"
-  },
-  "codeFormatAddress9": {
-    "sheetName":"Addresses",
-    "headerName":"Address"
   }
 }
