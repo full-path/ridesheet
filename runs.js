@@ -1,115 +1,49 @@
-function updateRuns(e) {
+/**
+ * Updates run details based on associated trips and returns array of runs
+ * @param {Object} runsObject - Object with run data in format {tripKey: {run: {...}, trips: [...]}}
+ * @returns {Array} Array of run objects with calculated details
+ */
+function updateRunDetails(runsObject) {
   try {
-    let newRun
-    let runsRange
-    let runsData
-    let ss = SpreadsheetApp.getActiveSpreadsheet()
+    // Process each run entry
+    for (let tripKey in runsObject) {
+      let runEntry = runsObject[tripKey]
+      let tripsArray = runEntry.trips
 
-    // Gather all needed trip data
-    let trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange()).filter(tripRow => {
-      return tripRow["Trip Date"] && tripRow["Driver ID"] && tripRow["Vehicle ID"]
-    })
-    // Gather all run data
-    let runsSheet = ss.getSheetByName("Runs")
-    let runsLastRow = runsSheet.getLastRow()
-    let runsLastColumn = runsSheet.getLastColumn()
-    if (runsLastRow > 1) {
-      runsRange = runsSheet.getDataRange()
-      runsData = getRangeValuesAsTable(runsRange)
-    } else {
-      runsData = []
+      // Calculate First PU Time
+      let puTrips = tripsArray.filter(trip => trip["PU Time"])
+      if (puTrips.length === 0) {
+        runEntry.run["First PU Time"] = null
+        runEntry.run["Scheduled Start Time"] = null
+      } else {
+        runEntry.run["First PU Time"] = puTrips.reduce(
+          (min, trip) => trip["PU Time"] < min ? trip["PU Time"] : min, 
+          puTrips[0]["PU Time"]
+        )
+        runEntry.run["Scheduled Start Time"] = runEntry.run["First PU Time"]
+      }
+
+      // Calculate Last DO Time
+      let doTrips = tripsArray.filter(trip => trip["DO Time"])
+      if (doTrips.length === 0) {
+        runEntry.run["Last DO Time"] = null
+        runEntry.run["Scheduled End Time"] = null
+      } else {
+        runEntry.run["Last DO Time"] = doTrips.reduce(
+          (max, trip) => trip["DO Time"] > max ? trip["DO Time"] : max, 
+          doTrips[0]["DO Time"]
+        )
+        runEntry.run["Scheduled End Time"] = runEntry.run["Last DO Time"]
+      }
     }
 
-    // Iterate through trip data, associating it with the matching run row
-    // Using a map here rather than an object, as the map allows us to use the entire
-    // run row as a key.
-    // The result here is two maps: one for runs already present, and one for runs that need to be
-    // added
-    let runsOut = new Map()
-    let newRunsOut = new Map()
-    let uniqueRuns = []
-    runsData.forEach(runRow => {
-      let runFingerprint = JSON.stringify(runRow["Run Date"]) + runRow["Driver ID"] + runRow["Vehicle ID"]
-      if (!uniqueRuns.includes(runFingerprint)) {
-        uniqueRuns.push(runFingerprint)
-        runsOut.set(runRow,[])
-      }
-    })
-    trips.forEach((tripRow, tripIndex) => {
-      let found = false
-      runsOut.forEach((value, runRow) => {
-        if (tripRow["Trip Date"]  >=  runRow["Run Date"] &&
-            tripRow["Trip Date"]  <=  runRow["Run Date"] &&
-            tripRow["Driver ID"]  === runRow["Driver ID"] &&
-            tripRow["Vehicle ID"] === runRow["Vehicle ID"]) {
-          found = true
-          runsOut.get(runRow).push(tripRow)
-        }
-      })
-      if (!found) {
-        newRunsOut.forEach((value, runRow) => {
-          if (tripRow["Trip Date"]  >=  runRow["Run Date"] &&
-              tripRow["Trip Date"]  <=  runRow["Run Date"] &&
-              tripRow["Driver ID"]  === runRow["Driver ID"] &&
-              tripRow["Vehicle ID"] === runRow["Vehicle ID"]) {
-            found = true
-            newRunsOut.get(runRow).push(tripRow)
-          }
-        })
-      }
-      if (!found) {
-        newRun = {}
-        newRun["Run Date"] = tripRow["Trip Date"]
-        newRun["Driver ID"] = tripRow["Driver ID"]
-        newRun["Vehicle ID"] = tripRow["Vehicle ID"]
-        newRunsOut.set(newRun,[tripRow])
-      }
-    })
+    // Return array of just the run objects
+    return Object.values(runsObject).map(entry => entry.run)
 
-    // Merge together the existing and new runs, sorting the merged data set by Run Date
-    const existingRuns = updateRunDetails(runsOut)
-    const newRuns = updateRunDetails(newRunsOut)
-    let runsToSave = [...existingRuns, ...newRuns].sort((a,b) => {
-      return a["Run Date"] - b["Run Date"]
-    })
-
-    // If the resulting run list is longer than the original one, get a larger range.
-    // If the resulting run list is shorter than the original one, clear out the values in the last rows
-    const countOfRowsUnfilled = runsData.length - runsToSave.length
-    let runsRangeOut = runsRange
-    if (countOfRowsUnfilled < 0) {
-      runsRangeOut = runsSheet.getRange(1, 1, runsToSave.length + 1, runsLastColumn)
-    } else if (countOfRowsUnfilled > 0) {
-      runsToSave = [...runsToSave, ...Array(countOfRowsUnfilled).fill({})]
-    }
-    // log("runsToSave",JSON.stringify(runsToSave))
-    // log("runsRangeOut",runsRangeOut.getA1Notation())
-    if (runsRangeOut) setValuesByHeaderNames(runsToSave,runsRangeOut,{overwriteAll: true})
-  } catch(e) { logError(e) }
-}
-
-function updateRunDetails(runsMap) {
-  try {
-    let runsArray = Array.from(runsMap.keys()).filter(runRow => runsMap.get(runRow).length > 0)
-    runsArray.forEach(run => {
-      let tripsArray = runsMap.get(run).filter(trip => trip["PU Time"])
-      if (tripsArray.length === 0) {
-        run["First PU Time"] = null
-      } else {
-        run["First PU Time"] = tripsArray.reduce((min, p) => p["PU Time"] < min ? p["PU Time"] : min, tripsArray[0]["PU Time"])
-      }
-    })
-
-    runsArray.forEach(run => {
-      let tripsArray = runsMap.get(run).filter(trip => trip["DO Time"])
-      if (tripsArray.length === 0) {
-        run["Last DO Time"] = null
-      } else {
-        run["Last DO Time"] = tripsArray.reduce((max, p) => p["DO Time"] > max ? p["DO Time"] : max, tripsArray[0]["DO Time"])
-      }
-    })
-    return runsArray
-  } catch(e) { logError(e) }
+  } catch(e) { 
+    logError(e)
+    throw new Error(`Failed to update run details: ${e.message}`)
+  }
 }
 
 // Fill in a week of entries in the "Runs" sheet using the schedule information in "Run Template"
@@ -182,4 +116,60 @@ function buildRunsFromTemplate() {
     })
   }
   applySheetFormatsAndValidation(runsSheet, lastRow + 1)
+}
+
+/**
+ * Creates run entries in the Run Review sheet based on trips being moved to review
+ * @param {Array} trips - Array of trip objects being moved to review
+ * @returns {void}
+ */
+function createRunsInReview(trips) {
+  try {
+    let ss = SpreadsheetApp.getActiveSpreadsheet()
+    let runReviewSheet = ss.getSheetByName("Run Review")
+    
+    // Initialize new runs object to group trips by run
+    let newRunsOut = {}
+    
+    // Group trips into runs
+    trips.forEach(tripRow => {
+      // Create fingerprint string directly from trip values
+      let tripKey = JSON.stringify(tripRow["Trip Date"]) + 
+                    tripRow["Driver ID"] + 
+                    tripRow["Vehicle ID"]
+      
+      if (tripKey in newRunsOut) {
+        newRunsOut[tripKey].trips.push(tripRow)
+      } else {
+        let newRun = {
+          "Run Date": tripRow["Trip Date"],
+          "Driver ID": tripRow["Driver ID"],
+          "Vehicle ID": tripRow["Vehicle ID"]
+        }
+        newRunsOut[tripKey] = {
+          run: newRun,
+          trips: [tripRow]
+        }
+      }
+    })
+    // Process the runs and calculate their details
+    const runsToCreate = updateRunDetails(newRunsOut)
+      .sort((a,b) => a["Run Date"] - b["Run Date"])
+
+    // Create new rows in Run Review sheet
+    if (runsToCreate.length > 0) {
+      runsToCreate.forEach(run => {
+        createRow(runReviewSheet, run)
+      })
+      
+      // Apply formatting to the newly added rows
+      const lastRow = runReviewSheet.getLastRow()
+      const startRow = lastRow - runsToCreate.length + 1
+      applySheetFormatsAndValidation(runReviewSheet, startRow)
+    }
+
+  } catch(e) { 
+    logError(e)
+    throw new Error(`Failed to create runs in review: ${e.message}`)
+  }
 }

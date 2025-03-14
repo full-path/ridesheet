@@ -137,6 +137,11 @@ const defaultDocumentProperties = {
     type: "number",
     value: 60,
     description: "When creating a next leg or return trip, this is the length of time in minutes to set as the duration between rider dropoff or appt time and the pickup time of the next trip. Set to -1 (negative one) to keep the pickup time for the new trip blank"
+  },
+  runMode: {
+    type: "string",
+    value: "default",
+    description: "Options: default or auto"
   }
 }
 

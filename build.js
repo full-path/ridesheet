@@ -8,7 +8,9 @@ function buildMenus() {
   menu.addItem('Move past data to review', 'moveTripsToReview')
   menu.addItem('Add data to runs in review','addDataToRunsInReview')
   menu.addItem('Move reviewed data to archive', 'moveTripsToArchive')
-  menu.addItem('Generate weekly runs from template', 'buildRunsFromTemplate')
+  if (getDocProp("runMode") === "default") {
+    menu.addItem('Generate weekly runs from template', 'buildRunsFromTemplate')
+  }
   menu.addSeparator()
   let settingsMenu = ui.createMenu('Settings')
   settingsMenu.addItem('Refresh document properties sheet', 'presentProperties')
