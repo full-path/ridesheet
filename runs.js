@@ -112,25 +112,6 @@ function updateRunDetails(runsMap) {
   } catch(e) { logError(e) }
 }
 
-function getStopText(riderChange) {
-  if (riderChange > 0) {
-    if (riderChange > 1) return riderChange + ' riders board'
-    return '1 rider boards'
-  } else {
-    if (riderChange < -1) return Math.abs(riderChange) + ' riders alight'
-    return '1 rider alights'
-  }
-}
-
-function mergeStop(newStop, runStops) {
-  let matchingStop = runStops.find(s => s.time === newStop.time && s.city === newStop.city)
-  if (matchingStop) {
-    matchingStop.riderChange = matchingStop.riderChange + newStop.riderChange
-  } else {
-    runStops.push(newStop)
-  }  
-}
-
 // Fill in a week of entries in the "Runs" sheet using the schedule information in "Run Template"
 function buildRunsFromTemplate() {
   const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
