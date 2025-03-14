@@ -580,6 +580,20 @@ const defaultColumns = {
         helpText: "Value must be a valid time.",
       },
     },
+    "First PU Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Last DO Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
     "Odometer Start": {},
     "Odometer End": {},
     "Break Time in Minutes": {

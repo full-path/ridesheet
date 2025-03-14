@@ -5,7 +5,6 @@
  */
 function updateRunDetails(runsObject) {
   try {
-    // Process each run entry
     for (let tripKey in runsObject) {
       let runEntry = runsObject[tripKey]
       let tripsArray = runEntry.trips
@@ -38,7 +37,6 @@ function updateRunDetails(runsObject) {
       runEntry.run["Review TS"] = new Date()
     }
 
-    // Return array of just the run objects
     return Object.values(runsObject).map(entry => entry.run)
 
   } catch(e) { 
@@ -129,12 +127,9 @@ function createRunsInReview(trips) {
     let ss = SpreadsheetApp.getActiveSpreadsheet()
     let runReviewSheet = ss.getSheetByName("Run Review")
     
-    // Initialize new runs object to group trips by run
     let newRunsOut = {}
     
-    // Group trips into runs
     trips.forEach(tripRow => {
-      // Create fingerprint string directly from trip values
       let tripKey = JSON.stringify(tripRow["Trip Date"]) + 
                     tripRow["Driver ID"] + 
                     tripRow["Vehicle ID"]
@@ -153,17 +148,15 @@ function createRunsInReview(trips) {
         }
       }
     })
-    // Process the runs and calculate their details
+
     const runsToCreate = updateRunDetails(newRunsOut)
       .sort((a,b) => a["Run Date"] - b["Run Date"])
 
-    // Create new rows in Run Review sheet
     if (runsToCreate.length > 0) {
       runsToCreate.forEach(run => {
         createRow(runReviewSheet, run)
       })
       
-      // Apply formatting to the newly added rows
       const lastRow = runReviewSheet.getLastRow()
       const startRow = lastRow - runsToCreate.length + 1
       applySheetFormatsAndValidation(runReviewSheet, startRow)
