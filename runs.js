@@ -35,6 +35,7 @@ function updateRunDetails(runsObject) {
         )
         runEntry.run["Scheduled End Time"] = runEntry.run["Last DO Time"]
       }
+      runEntry.run["Review TS"] = new Date()
     }
 
     // Return array of just the run objects
