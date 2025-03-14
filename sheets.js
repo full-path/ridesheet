@@ -142,17 +142,17 @@ function createRows(destSheet, data, timestampColName) {
  */
 function applySheetFormatsAndValidation(sheet, startRow=2) {
   let sheetName = sheet.getName()
-  let rules = defaultColumns[sheetName]
-  let defaultHeaderNames = Object.keys(rules) // defaultColumns is a global variable
+  let rules = defaultColumns[sheetName] // defaultColumns is a global variable
+  let defaultHeaderNames = Object.keys(rules) 
 
   // Get the headers of the sheet
   let headerRange = sheet.getRange(1, 1, 1, sheet.getLastColumn())
   let sheetHeaders = headerRange.getValues()[0]
 
   // Get the range of rows beginning with startRow and ending at the last row in the sheet
-  // Set formatting on that range to ensure text is normal weight (not bold) and clear any background color on cells
+  // Set formatting on that range to ensure text is normal weight (not bold)
   let dataRange = sheet.getRange(startRow, 1, sheet.getLastRow() - startRow + 1, sheet.getLastColumn())
-  dataRange.setFontWeight('normal').setBackground(null)
+  dataRange.setFontWeight('normal')
 
   // Loop through defaultHeaderNames and apply formatting and validation rules as appropriate
   for (let i = 0; i < defaultHeaderNames.length; i++) {
@@ -182,7 +182,7 @@ function createRow(destSheet, data) {
     let columnNames = getSheetHeaderNames(destSheet)
     let dataArray = columnNames.map(colName => data[colName] ? data[colName] : null)
     destSheet.appendRow(dataArray)
-    let newRowIndex = destSheet.getLastRow()
+    //let newRowIndex = destSheet.getLastRow()
     // These row based formatting errors are broken; leaving them here as a reminder
     // fixRowNumberFormatting(newRow)
     // fixRowDataValidation(newRow)
