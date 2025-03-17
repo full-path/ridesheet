@@ -44,7 +44,8 @@ const sheetsWithHeaders = [
   "Vehicles",
   "Drivers",
   "Services",
-  "Lookups"
+  "Lookups",
+  "Addresses"
 ]
 
 const defaultDocumentProperties = {
