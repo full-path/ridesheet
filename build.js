@@ -13,6 +13,8 @@ function buildMenus() {
   settingsMenu.addItem('Refresh document properties sheet', 'presentProperties')
   settingsMenu.addItem('Repair sheets', 'repairSheets')
   settingsMenu.addItem('Rebuild metadata', 'rebuildAllMetadata')
+  settingsMenu.addItem('Show metadata as column header notes', 'showColumnMetadata')
+  settingsMenu.addItem('Clear metadata notes', 'clearHeaderNotes')
   settingsMenu.addItem('Setup new installation', 'setupNewInstall')
   menu.addSubMenu(settingsMenu)
   menu.addToUi()
