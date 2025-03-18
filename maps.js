@@ -98,17 +98,20 @@ function getAddressByShortName(shortName) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const sheet = ss.getSheetByName('Addresses')
-    const dataRange = sheet.getDataRange()
-    const data = getRangeValuesAsTable(dataRange)
-    const searchTerm = shortName?.toString().toLowerCase().trim()
-    if (searchTerm) {
-      const result = data.find((row) => row["Short Name"].toString().toLowerCase().trim() === searchTerm)["Address"].trim()
-      if (!result) { throw new Error('No address found by short name') }
-      return result
+    if (sheet) {
+      const dataRange = sheet.getDataRange()
+      const data = getRangeValuesAsTable(dataRange)
+      const searchTerm = shortName?.toString().toLowerCase().trim()
+      if (searchTerm) {
+        const foundRow = data.find((row) => row["Short Name"].toString().toLowerCase().trim() === searchTerm)
+        if (foundRow) {
+          const result = foundRow["Address"].trim()
+          return result
+        }
+      }
     }
   } catch(e) {
     logError(e)
-    return ""
   }
 }
 
@@ -116,11 +119,14 @@ function setAddressByShortName(range) {
   try {
     const shortName = range.getValue()
     const result = getAddressByShortName(shortName)
-    if (!result) { throw new Error('No address found by short name') }
-    range.setValue(result)
-    range.setNote("")
-    range.setBackground(null)
-    return true
+    if (result) {
+      range.setValue(result)
+      range.setNote("")
+      range.setBackground(null)
+      return true
+    } else {
+      return false
+    }
   } catch(e) {
     return false
   }
