@@ -110,6 +110,7 @@ function localExpandAddress(sourceRange) {
       const result = getAddressByShortName(shortName)
       if (result) {
         targetRange.setValues([["",result]]).setNotes([["",""]]).setBackground(null)
+        fillHoursAndMilesOnEdit(sourceRange)
         return true
       }
       return false
