@@ -253,7 +253,7 @@ function moveTripsToReview() {
     const tripFilter      = function(row) { return row["Trip Date"] && row["Trip Date"] < dateToday() }
     const movedTrips      = moveRows(tripSheet, tripReviewSheet, tripFilter, "Review TS")
 
-    const runMode = getDocProp("runMode")
+    const runMode = getDocProp("createRunMode")
     if (runMode === "default") {
       const runSheet        = ss.getSheetByName("Runs")
       const runReviewSheet  = ss.getSheetByName("Run Review")

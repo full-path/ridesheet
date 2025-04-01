@@ -8,7 +8,7 @@ function buildMenus() {
   menu.addItem('Move past data to review', 'moveTripsToReview')
   menu.addItem('Add data to runs in review','addDataToRunsInReview')
   menu.addItem('Move reviewed data to archive', 'moveTripsToArchive')
-  if (getDocProp("runMode") === "default") {
+  if (getDocProp("createRunMode") === "default") {
     menu.addItem('Generate weekly runs from template', 'buildRunsFromTemplate')
   }
   menu.addSeparator()
