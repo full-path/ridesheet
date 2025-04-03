@@ -138,6 +138,11 @@ const defaultDocumentProperties = {
     type: "number",
     value: 60,
     description: "When creating a next leg or return trip, this is the length of time in minutes to set as the duration between rider dropoff or appt time and the pickup time of the next trip. Set to -1 (negative one) to keep the pickup time for the new trip blank"
+  },
+  createRunMode: {
+    type: "string",
+    value: "default",
+    description: "Options: default (user creates runs in advance in 'Runs' sheet) or auto (automatically generate run data when moving data to review)"
   }
 }
 
@@ -570,6 +575,20 @@ const defaultColumns = {
       },
     },
     "Actual End Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "First PU Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Last DO Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
         criteriaType: "DATE_IS_VALID_DATE",

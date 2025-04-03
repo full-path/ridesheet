@@ -251,12 +251,22 @@ function moveTripsToReview() {
     const tripSheet       = ss.getSheetByName("Trips")
     const tripReviewSheet = ss.getSheetByName("Trip Review")
     const tripFilter      = function(row) { return row["Trip Date"] && row["Trip Date"] < dateToday() }
-    moveRows(tripSheet, tripReviewSheet, tripFilter, "Review TS")
+    const movedTrips      = moveRows(tripSheet, tripReviewSheet, tripFilter, "Review TS")
 
-    const runSheet        = ss.getSheetByName("Runs")
-    const runReviewSheet  = ss.getSheetByName("Run Review")
-    const runFilter       = function(row) { return row["Run Date"] && row["Run Date"] < dateToday() }
-    moveRows(runSheet, runReviewSheet, runFilter, "Review TS")
+    const runMode = getDocProp("createRunMode")
+    if (runMode === "default") {
+      const runSheet        = ss.getSheetByName("Runs")
+      const runReviewSheet  = ss.getSheetByName("Run Review")
+      const runFilter       = function(row) { return row["Run Date"] && row["Run Date"] < dateToday() }
+      moveRows(runSheet, runReviewSheet, runFilter, "Review TS")
+    }
+    else if (runMode === "auto") {
+      createRunsInReview(movedTrips)
+    } else {
+      const errorMessage = `Invalid runMode setting: ${runMode}`
+      ss.toast(errorMessage)
+      logError(errorMessage)
+    }
   } catch(e) { logError(e) }
 }
 
@@ -305,12 +315,20 @@ function moveTripsToArchive() {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Moves rows from the source sheet to the destination sheet based on a filter function.
+ * @param {Sheet} sourceSheet - The sheet to move rows from.
+ * @param {Sheet} destSheet - The sheet to move rows to.
+ * @param {function} filter - A function to filter which rows to move.
+ * @param {string} timestampColName - The name of the column to add a timestamp to.
+ * @return {Array} - The rows that were moved.
+ */
 function moveRows(sourceSheet, destSheet, filter, timestampColName) {
   try {
     const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
     const rowsToMove = sourceData.filter(row => filter(row))
     if (rowsToMove.length < 1) {
-      return
+      return []
     }
     const rowsMovedSuccessfully = createRows(destSheet, rowsToMove, timestampColName)
     if (rowsMovedSuccessfully) {
@@ -318,7 +336,11 @@ function moveRows(sourceSheet, destSheet, filter, timestampColName) {
     } else {
       SpreadsheetApp.getActiveSpreadsheet().toast('Error moving data. Please check for duplicate entries.')
     }
-  } catch(e) { logError(e) }
+    return rowsToMove
+  } catch(e) { 
+    logError(e) 
+    return []
+  }
 }
 
 function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
