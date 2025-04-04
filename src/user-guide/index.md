@@ -18,7 +18,7 @@ If the information you are looking for is not in this guide, it is likely becaus
 [Reports](reports.md)
 :   Overview of using RideSheet data to generate reports.
 
-[Trip Sharing and TDS](trip-sharing.md)
+[Trip Sharing and TDS](trip-sharing-and-tds.md)
 :   Information on the Transactional Data Specification for trip-sharing between organizations.
 
 [Troubleshooting](troubleshooting.md)

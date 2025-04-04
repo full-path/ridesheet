@@ -698,6 +698,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#run-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run Template
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#lookups" class="md-nav__link">
     <span class="md-ellipsis">
       Lookups
@@ -1407,6 +1416,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#run-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run Template
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#lookups" class="md-nav__link">
     <span class="md-ellipsis">
       Lookups
@@ -1570,6 +1588,20 @@
 <h3 id="services">Services<a class="headerlink" href="#services" title="Permanent link">#</a></h3>
 <p><code>Services</code> are used within dropdowns in <code>Trips</code> and are used in generating reports. </p>
 <p>If a service is no longer available, it should not be removed from this sheet or else it will invalidate past data. Instead, use the <code>Service End Date</code> field to indicate that the service is no longer available.</p>
+<h3 id="run-template">Run Template<a class="headerlink" href="#run-template" title="Permanent link">#</a></h3>
+<p>The <code>Run Template</code> is used to automatically generate weekly runs in the <code>Runs</code> sheet.</p>
+<dl>
+<dt><code>Driver ID</code></dt>
+<dd>A <code>Driver ID</code> must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the <a href="#drivers">Drivers</a> sheet.</dd>
+<dt><code>Vehicle ID</code></dt>
+<dd>A <code>Vehicle ID</code> must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the <a href="#vehicles">Vehicles</a> sheet.</dd>
+<dt><code>Days of Week</code></dt>
+<dd>Multi-select for what days the selected Driver/Vehicle combination is available.</dd>
+<dt><code>Scheduled Start Time</code></dt>
+<dd>Used to determine if a run is valid in <code>Trips</code>.</dd>
+<dt><code>Scheduled End Time</code></dt>
+<dd>Used to determine if a run is valid in <code>Trips</code>.</dd>
+</dl>
 <h3 id="lookups">Lookups<a class="headerlink" href="#lookups" title="Permanent link">#</a></h3>
 <p>Most fields in <code>Lookups</code> are automatically generated, as indicated by the blue background.</p>
 <p><code>Trip Purposes</code> and <code>Trip Results</code> can be edited in order to update dropdown options in the <code>Trips</code> and <code>Trip Review</code> sheets.</p>

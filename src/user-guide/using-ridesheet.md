@@ -28,6 +28,8 @@ In the main menu, you can see a dropdown menu item for **RideSheet**. This where
 **Allocating Resources**
 
 1. [Assign drivers and vehicles](#creating-runs) in advance in the `Runs` sheet.
+    * You may [generate weekly runs](#generating-weekly-runs-from-the-run-template) ahead of time using the `Run Template` sheet.
+    * Some agencies may choose to use [automatic run creation](#automatic-run-creation), in which case the `Runs` and `Run Template` sheets will be hidden, and run data will be automatically created when moving data to review.
 2. Ensure that the next day's trips all have a driver and vehicle assigned, and that each is valid in the `|Run OK?|` field.
 1. At the end of the day, generate the next day's [driver manifests](#creating-manifests).
 
@@ -83,6 +85,18 @@ RideSheet also offers many utilities for managing addresses, and can autocomplet
 A run in RideSheet is simply defined as a specific combination of driver and vehicle during a specified time.
 
 You should set up runs ahead of time in the `Runs` sheet, setting a scheduled start and end time for each vehicle/driver combination for that day. The scheduled start and end time can be a best guess or planned availability. Any trips that are added for that day will automatically be assigned to the correct run. Ensuring that scheduled start and end times are filled out in `Runs` will allow `Trips` to accurately fill in the `|Run OK?|` field. 
+
+### Generating Weekly Runs from the Run Template
+
+Rather than entering each run by hand, you can use the `Run Template` sheet to create a weekly schedule. For each Driver and Vehicle combination, enter what days of the week they are available using the multi-select field. If their hours are different on different days, you will need to create a new row for each different schedule. 
+
+At least once per week, in the RideSheet menu, select **Generate weekly runs from template** to fill in the `Runs` sheet starting with the last available date. To change the weekly schedule, simply update the `Runs` sheet by hand.
+
+### Automatic Run Creation
+
+It's possible to bypass creating runs in advance. If the `Runs` and `Run Template` sheets are hidden in your RideSheet, it's likely that you are using automatic run creation. This setting is in `Document Properties` under **createRunMode**.
+
+You won't need to create runs yourself, but you also will not be able to use the `|Run OK?|` column in `Trips` to easily see if a specific driver/vehicle combination is available. `Run Review` will be automatically populated based on your trip data whenever you run the action **Move past data to review**. You will still need to [enter run results](#entering-run-results) as usual. 
 
 ## Creating Manifests
 

@@ -469,6 +469,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Creating Runs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generating-weekly-runs-from-the-run-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generating Weekly Runs from the Run Template
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatic-run-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic Run Creation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1031,6 +1055,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Creating Runs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generating-weekly-runs-from-the-run-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generating Weekly Runs from the Run Template
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatic-run-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic Run Creation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1130,7 +1178,11 @@
 </ol>
 <p><strong>Allocating Resources</strong></p>
 <ol>
-<li><a href="#creating-runs">Assign drivers and vehicles</a> in advance in the <code>Runs</code> sheet.</li>
+<li><a href="#creating-runs">Assign drivers and vehicles</a> in advance in the <code>Runs</code> sheet.<ul>
+<li>You may <a href="#generating-weekly-runs-from-the-run-template">generate weekly runs</a> ahead of time using the <code>Run Template</code> sheet.</li>
+<li>Some agencies may choose to use <a href="#automatic-run-creation">automatic run creation</a>, in which case the <code>Runs</code> and <code>Run Template</code> sheets will be hidden, and run data will be automatically created when moving data to review.</li>
+</ul>
+</li>
 <li>Ensure that the next day's trips all have a driver and vehicle assigned, and that each is valid in the <code>|Run OK?|</code> field.</li>
 <li>At the end of the day, generate the next day's <a href="#creating-manifests">driver manifests</a>.</li>
 </ol>
@@ -1180,6 +1232,12 @@
 <h2 id="creating-runs">Creating Runs<a class="headerlink" href="#creating-runs" title="Permanent link">#</a></h2>
 <p>A run in RideSheet is simply defined as a specific combination of driver and vehicle during a specified time.</p>
 <p>You should set up runs ahead of time in the <code>Runs</code> sheet, setting a scheduled start and end time for each vehicle/driver combination for that day. The scheduled start and end time can be a best guess or planned availability. Any trips that are added for that day will automatically be assigned to the correct run. Ensuring that scheduled start and end times are filled out in <code>Runs</code> will allow <code>Trips</code> to accurately fill in the <code>|Run OK?|</code> field. </p>
+<h3 id="generating-weekly-runs-from-the-run-template">Generating Weekly Runs from the Run Template<a class="headerlink" href="#generating-weekly-runs-from-the-run-template" title="Permanent link">#</a></h3>
+<p>Rather than entering each run by hand, you can use the <code>Run Template</code> sheet to create a weekly schedule. For each Driver and Vehicle combination, enter what days of the week they are available using the multi-select field. If their hours are different on different days, you will need to create a new row for each different schedule. </p>
+<p>At least once per week, in the RideSheet menu, select <strong>Generate weekly runs from template</strong> to fill in the <code>Runs</code> sheet starting with the last available date. To change the weekly schedule, simply update the <code>Runs</code> sheet by hand.</p>
+<h3 id="automatic-run-creation">Automatic Run Creation<a class="headerlink" href="#automatic-run-creation" title="Permanent link">#</a></h3>
+<p>It's possible to bypass creating runs in advance. If the <code>Runs</code> and <code>Run Template</code> sheets are hidden in your RideSheet, it's likely that you are using automatic run creation. This setting is in <code>Document Properties</code> under <strong>createRunMode</strong>.</p>
+<p>You won't need to create runs yourself, but you also will not be able to use the <code>|Run OK?|</code> column in <code>Trips</code> to easily see if a specific driver/vehicle combination is available. <code>Run Review</code> will be automatically populated based on your trip data whenever you run the action <strong>Move past data to review</strong>. You will still need to <a href="#entering-run-results">enter run results</a> as usual. </p>
 <h2 id="creating-manifests">Creating Manifests<a class="headerlink" href="#creating-manifests" title="Permanent link">#</a></h2>
 <p>Before creating manifests, ensure that a driver and vehicle has been assigned to each of the day's trips. </p>
 <p>Select <strong>Create manifests for day</strong> from the RideSheet menu. A pop-up will appear, and you can choose to select a specific day or create manifests for the following day by default.</p>

@@ -4,6 +4,9 @@ After installing RideSheet, you'll need to configure several settings to match y
 
 ## Document Properties
 
+`createRunMode`
+: Either `default` or `auto`. Default mode uses the `Runs` and optional `Run Template` sheets, and requires the user to create runs in advance (also enabling `Run OK?` functionality). Auto mode will automatically create runs in review when running **Move past data to review**. Note that if RideSheet is set to **auto**, you should hide (but not delete) the `Runs` and `Run Template` sheets, since they are unnecessary.
+
 `defaultStayDuration`
 : The default duration in minutes that a customer will stay at their destination before a return trip; set to -1 to keep the pickup time for new trips blank
 

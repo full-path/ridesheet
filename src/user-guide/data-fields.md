@@ -179,6 +179,26 @@ A `Default Vehicle ID` can be set so the `Vehicle ID` field automatically popula
 
 If a service is no longer available, it should not be removed from this sheet or else it will invalidate past data. Instead, use the `Service End Date` field to indicate that the service is no longer available.
 
+### Run Template
+
+The `Run Template` is used to automatically generate weekly runs in the `Runs` sheet.
+
+`Driver ID`
+:   A `Driver ID` must be selected from the dropdown in order to generate manifests and run information. Driver information is entered in the [Drivers](#drivers) sheet.
+
+`Vehicle ID`
+:   A `Vehicle ID` must be selected from the dropdown in order to generate manifests and run information. Vehicle information is entered in the [Vehicles](#vehicles) sheet.
+
+`Days of Week`
+:   Multi-select for what days the selected Driver/Vehicle combination is available.
+
+`Scheduled Start Time`
+:   Used to determine if a run is valid in `Trips`.
+
+`Scheduled End Time`
+:   Used to determine if a run is valid in `Trips`.
+
+
 ### Lookups
 
 Most fields in `Lookups` are automatically generated, as indicated by the blue background.
