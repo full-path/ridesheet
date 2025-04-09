@@ -2,6 +2,9 @@
 
 This documentation will guide you through the process of getting started with RideSheet. Existing users should refer to the [User Guide](user-guide/index.md).
 
+!!! note "RideSheet User Group"
+    The RideSheet User Group meets monthly over Zoom and can provide peer support for new and existing RideSheet users. Email [ridesheet-info@fullpath.io](mailto:ridesheet-info@fullpath.io) to join. 
+
 ## What You Need to Use RideSheet
 
 Before diving into RideSheet, make sure you have the following:

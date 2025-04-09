@@ -5,7 +5,7 @@
 ### Contacting Full Path
 For questions about RideSheet, you can reach Full Path through:
 
-- Email: [ridesheet-support@fullpath.io](mailto:ridesheet-support@fullpath.io)
+- Email: [ridesheet-info@fullpath.io](mailto:ridesheet-info@fullpath.io)
 - Website: [fullpath.io](https://fullpath.io)
 
 ### GitHub
