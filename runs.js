@@ -53,11 +53,19 @@ function buildRunsFromTemplate() {
   let runTemplateSheet = ss.getSheetByName("Run Template")
   let runs = getRangeValuesAsTable(runsSheet.getDataRange())
   let runTemplates = getRangeValuesAsTable(runTemplateSheet.getDataRange())
-  let runDate = runs.reduce((latest, run) => 
+  let runDateRaw = runs.reduce((latest, run) => 
     run["Run Date"] > latest ? run["Run Date"] : latest, 
     runs[0]["Run Date"]
   )
-  runDate.setDate(runDate.getDate() + 1) // Add one day to the latest run date
+
+  let runDate
+  if (!runDateRaw) {
+    runDate = new Date()
+  } else {
+    runDate = new Date(runDateRaw)
+  }
+
+  runDate.setDate(runDate.getDate() + 1) 
   
   const ui = SpreadsheetApp.getUi()
   const response = ui.alert(
