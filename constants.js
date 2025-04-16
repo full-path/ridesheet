@@ -116,12 +116,12 @@ const defaultDocumentProperties = {
   },
   runUserReviewRequiredFields: {
     type: "array",
-    value: [],
+    value: ["Run Date","Driver ID","Vehicle ID"],
     description: "The names of run columns that must have data in them in order to for RideSheet to calculate deadhead or other run information."
   },
   runFullReviewRequiredFields: {
     type: "array",
-    value: [],
+    value: ["Run Date","Driver ID","Vehicle ID","Scheduled Start Time","Scheduled End Time","Actual Start Time","Actual End Time","Break Time in Minutes","Odometer Start","Odometer End","Starting Deadhead Miles","Ending Deadhead Miles","Starting Deadhead Hours","Ending Deadhead Hours","Vehicle Garage Address","First PU Address","Last DO Address"],
     description: "The names of run columns that must have data in them in order to be archived."
   },
   providerName: {
