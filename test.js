@@ -393,7 +393,7 @@ function generateTrips(runs, customers, poiPool) {
 
     let firstJourney = true;
     // schedule journeys
-    while (addMinutes(cursorTime, 30) <= run["Scheduled End Time"] && pool.length) {
+    while (addMinutes(cursorTime, 60) <= run["Scheduled End Time"] && pool.length) {
       // 1. pickup time
       let pu1;
       if (firstJourney) {
@@ -424,10 +424,11 @@ function generateTrips(runs, customers, poiPool) {
 
       // 5. compute dist & duration
       const dist1 = haversine(cust.homeLat, cust.homeLon, do1.lat, do1.lon);
-      const speed = dist1 > 30 ? 50 : 30; // mph
+      const speed = dist1 > 30 ? 55 : 40; // mph
       const dur1 = Math.round((dist1/speed)*60 + 5);
 
-      // 6. sample status
+      const doTime1 = addMinutes(pu1, dur1);
+      const aptTime1 = roundToNearest15(addMinutes(doTime1,2));
       const status1 = sampleStatus();
       if (status1 !== 'Completed') {
         // record a single trip
@@ -437,7 +438,8 @@ function generateTrips(runs, customers, poiPool) {
           "PU Address": `${cust.homeLat}, ${cust.homeLon}`,
           "DO Address": `${do1.lat}, ${do1.lon}`,
           "PU Time": pu1,
-          "Appt Time": addMinutes(pu1, dur1),
+          "DO Time": doTime1,
+          "Appt Time": aptTime1,
           "Vehicle ID": run["Vehicle ID"],
           "Driver ID": run["Driver ID"],
           "Trip Purpose": purpose,
@@ -445,7 +447,9 @@ function generateTrips(runs, customers, poiPool) {
           distance: dist1,
           duration: dur1,
           "Est Hours": (dur1 / 60).toFixed(2),
-          "Est Miles": dist1.toFixed(1)
+          "Est Miles": dist1.toFixed(2),
+          "Customer ID": cust["Customer ID"],
+          "Trip ID": Utilities.getUuid()
         });
         // advance cursorTime based on cancel type
         if (status1 === 'Late Cancel') {
@@ -457,9 +461,6 @@ function generateTrips(runs, customers, poiPool) {
       }
 
       // 7. record trip1
-      // const roundedDur1 = roundTo15(dur1);
-      const doTime1 = addMinutes(pu1, dur1);
-      const aptTime1 = roundToNearest15(addMinutes(doTime1,2));
       trips.push({ 
         "Trip Date": run["Run Date"],
         "Customer Name and ID": cust["Customer Name and ID"],
@@ -475,7 +476,9 @@ function generateTrips(runs, customers, poiPool) {
         distance: dist1,
         duration: dur1,
         "Est Hours": (dur1 / 60).toFixed(2),
-        "Est Miles": dist1.toFixed(1)
+        "Est Miles": dist1.toFixed(2),
+        "Customer ID": cust["Customer ID"],
+        "Trip ID": Utilities.getUuid()
       });
 
       // 8. optional intermediate stop
@@ -485,7 +488,7 @@ function generateTrips(runs, customers, poiPool) {
         const others = poiPool.Other.filter(o => o.lat !== do1.lat || o.lon !== do1.lon);
         const poiB = others[Math.floor(Math.random()*others.length)];
         const dist2 = haversine(do1.lat, do1.lon, poiB.lat, poiB.lon);
-        const speed2 = dist2 > 30 ? 50 : 30;
+        const speed2 = dist2 > 30 ? 55 : 40;
         const dur2 = Math.round((dist2/speed2)*60 + 5);
         // const roundedDur2 = roundTo15(dur2);
         const pu2 = new Date(doTime1);
@@ -506,7 +509,9 @@ function generateTrips(runs, customers, poiPool) {
           distance: dist2,
           duration: dur2,
           "Est Hours": (dur2 / 60).toFixed(2),
-          "Est Miles": dist2.toFixed(2)
+          "Est Miles": dist2.toFixed(2),
+          "Customer ID": cust["Customer ID"],
+          "Trip ID": Utilities.getUuid()
         });
         lastDropoff = doTime2;
         lastLocation = poiB;
@@ -516,7 +521,7 @@ function generateTrips(runs, customers, poiPool) {
       const bufferMins = [30, 60, 90][Math.floor(Math.random() * 3)];
       const puReturn = addMinutes(lastDropoff, bufferMins);
       const distR = haversine(lastLocation.lat, lastLocation.lon, cust.homeLat, cust.homeLon);
-      const speedR = distR > 30 ? 50 : 30;
+      const speedR = distR > 30 ? 55 : 40;
       const durR = Math.round((distR/speedR)*60 + 5);
       //const roundedDurR = roundTo15(durR);
       const doReturn = addMinutes(puReturn, durR);
@@ -535,7 +540,9 @@ function generateTrips(runs, customers, poiPool) {
         distance: distR,
         duration: durR,
         "Est Hours": (durR / 60).toFixed(2),
-        "Est Miles": distR.toFixed(2)
+        "Est Miles": distR.toFixed(2),
+        "Customer ID": cust["Customer ID"],
+        "Trip ID": Utilities.getUuid()
       });
 
       // 10. advance cursor
