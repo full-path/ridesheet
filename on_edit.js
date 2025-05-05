@@ -195,12 +195,12 @@ function setCustomerKeyOnEdit(range) {
     let newValues = {}
     if (customerValues["Customer First Name"] && customerValues["Customer Last Name"]) {
       let lastCustomerID = getDocProp("lastCustomerID_")
-      if (!Number.isFinite(lastCustomerID)) {
+      if (!Number.isFinite(lastCustomerID) || lastCustomerID === 0) {
         const sheet = range.getSheet()
         const idColumnPosition = getSheetHeaderNames(sheet).indexOf("Customer ID") + 1
         const idRange = sheet.getRange(1, idColumnPosition, sheet.getLastRow())
         let maxID = getMaxValueInRange(idRange)
-        lastCustomerID = Number.isFinite(maxID) ? maxID : 1
+        lastCustomerID = Number.isFinite(maxID) ? maxID : 0
       }
       let nextCustomerID = Math.ceil(lastCustomerID) + 1
       // There is no ID. Set one and update the lastCustomerID property
