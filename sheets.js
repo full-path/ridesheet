@@ -507,6 +507,7 @@ function getRangeHeaderFormulas(range, {forceRefresh = false, headerRowPosition 
 function getMaxValueInRange(range) {
   try {
     let values = range.getValues().flat().filter(Number.isFinite)
+    if (!values.length) return null
     return values.reduce((a, b) => Math.max(a, b))
   } catch(e) { logError(e) }
 }
