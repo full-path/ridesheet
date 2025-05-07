@@ -86,20 +86,8 @@ function createDummyData(params) {
     });
 
     // Write data to sheet
-    createRows(sheet, formattedData);
+    createRows(sheet, formattedData, null, true);
   });
-}
-
-function clearSheet(sheet) {
-  const lastRow = sheet.getLastRow();
-  if (lastRow > 1) {
-    const numRows = lastRow - 2;
-    if (numRows > 0) {
-      sheet.deleteRows(3, numRows);
-    }
-    const dataRange = sheet.getRange(2, 1, 1, sheet.getLastColumn());
-    dataRange.clearContent();
-  }
 }
 
 function toRadians(deg) {
