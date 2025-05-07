@@ -15,6 +15,7 @@ function createDummyData(params) {
   // Use existing from lookups: drivers, vehicles, services, trip purposes, trip results
   // create: customers, runs and trips
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  // Filter is just to remove empty values, there's probably a better way?
   const serviceIDs    = ss.getRangeByName("lookupServiceIds").getValues().flat().filter(v => v);
   const vehicleIDs    = ss.getRangeByName("lookupVehicleIds").getValues().flat().filter(v => v);
   const driverIDs     = ss.getRangeByName("lookupDriverIds").getValues().flat().filter(v => v);
@@ -24,7 +25,7 @@ function createDummyData(params) {
   const poiPool = generatePOIPool(params.startingLocation, params.serviceRadius)
   const customers = generateCustomers(params.startingLocation, params.numCustomers, poiPool)
   const runs = generateRuns(params.startDate, driverIDs, vehicleIDs)
-  const trips = generateTrips(runs, customers, poiPool)
+  const trips = generateTrips(runs, customers, poiPool, serviceIDs)
 
   // geocode addresses
   // Create a cache for geocoding results
@@ -62,44 +63,43 @@ function createDummyData(params) {
     }
   });
 
-  // Get sheets and their headers
-  const customerSheet = ss.getSheetByName("Customers");
-  const tripSheet = ss.getSheetByName("Trips");
-  const runSheet = ss.getSheetByName("Runs");
+  // Define sheet names and corresponding data
+  const sheetDataMap = [
+    { name: "Customers", data: customers },
+    { name: "Trips", data: trips },
+    { name: "Runs", data: runs }
+  ];
 
-  const customerHeaders = getSheetHeaderNames(customerSheet);
-  const tripHeaders = getSheetHeaderNames(tripSheet);
-  const runHeaders = getSheetHeaderNames(runSheet);
+  // Process each sheet
+  sheetDataMap.forEach(({ name, data }) => {
+    const sheet = ss.getSheetByName(name);
+    clearSheet(sheet);
+    const headers = getSheetHeaderNames(sheet);
 
-  // Format data to match sheet headers
-  const formattedCustomers = customers.map(cust => {
-    const row = {};
-    customerHeaders.forEach(header => {
-      row[header] = cust[header] || null;
+    // Format data to match sheet headers
+    const formattedData = data.map(item => {
+      const row = {};
+      headers.forEach(header => {
+        row[header] = item[header] || null;
+      });
+      return row;
     });
-    return row;
-  });
 
-  const formattedRuns = runs.map(run => {
-    const row = {};
-    runHeaders.forEach(header => {
-      row[header] = run[header] || null;
-    });
-    return row;
+    // Write data to sheet
+    createRows(sheet, formattedData);
   });
+}
 
-  const formattedTrips = trips.map(trip => {
-    const row = {};
-    tripHeaders.forEach(header => {
-      row[header] = trip[header] || null;
-    });
-    return row;
-  });
-
-  // Write data to sheets
-  createRows(customerSheet, formattedCustomers);
-  createRows(runSheet, formattedRuns);
-  createRows(tripSheet, formattedTrips);
+function clearSheet(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    const numRows = lastRow - 2;
+    if (numRows > 0) {
+      sheet.deleteRows(3, numRows);
+    }
+    const dataRange = sheet.getRange(2, 1, 1, sheet.getLastColumn());
+    dataRange.clearContent();
+  }
 }
 
 function toRadians(deg) {
@@ -304,12 +304,12 @@ function generateRuns(startDateStr, driverIDs, vehicleIDs) {
     if (dow === 6 && Math.random < 0.15) continue; // fewer drivers on Saturday
 
     // Determine schedule window
-    let startH, startM, endH, endM;
+    let startTime, endTime;
     if (dow >= 1 && dow <= 5) {
-      if (Math.random() < 0.5) { startH = 8; startM = 30; endH = 16; endM = 0; }
-      else                  { startH = 9; startM =  0; endH = 18; endM = 0; }
+      if (Math.random() < 0.5) { startTime = "8:30:00"; endTime = "16:00:00" }
+      else                  { startTime = "9:00:00"; endTime = "18:00:00" }
     } else { // Saturday
-      startH = 9; startM = 0; endH = 17; endM = 0;
+      startTime = "9:00:00"; endTime = "17:00:00"
     }
 
     // Shuffle and pair drivers/vehicles
@@ -319,9 +319,6 @@ function generateRuns(startDateStr, driverIDs, vehicleIDs) {
     shuffleArray(vhs);
     const count = Math.min(drs.length, vhs.length);
     for (let i = 0; i < count; i++) {
-      // Create Date objects for start/end
-      const startTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), startH, startM);
-      const endTime   = new Date(date.getFullYear(), date.getMonth(), date.getDate(), endH,   endM);
       runs.push({
         "Run Date": formatDate(date),
         "Driver ID": drs[i],
@@ -341,7 +338,7 @@ function generateRuns(startDateStr, driverIDs, vehicleIDs) {
  * @param {{Medical:Object[], Work:Object[], Other:Object[]}} poiPool - Pool of points of interest
  * @return {Object[]} Array of trip records with keys matching spreadsheet columns
  */
-function generateTrips(runs, customers, poiPool) {
+function generateTrips(runs, customers, poiPool, serviceIDs) {
   const trips = [];
 
   // helper: haversine distance in miles
@@ -387,13 +384,28 @@ function generateTrips(runs, customers, poiPool) {
       pool = customers.slice();
       prevRunDate = run["Run Date"];
     }
-    let cursorTime = new Date(run["Scheduled Start Time"]);
+
+    // Select a random service ID for this run
+    const serviceID = serviceIDs[Math.floor(Math.random() * serviceIDs.length)];
+
+    // Convert time strings to Date objects
+    const runDate = new Date(run["Run Date"]);
+    const [startHours, startMinutes] = run["Scheduled Start Time"].split(':').map(Number);
+    const [endHours, endMinutes] = run["Scheduled End Time"].split(':').map(Number);
+    
+    const startTime = new Date(runDate);
+    startTime.setHours(startHours, startMinutes, 0);
+    
+    const endTime = new Date(runDate);
+    endTime.setHours(endHours, endMinutes, 0);
+    
+    let cursorTime = new Date(startTime);
     // ensure buffer
-    if (addMinutes(cursorTime, 30) > run["Scheduled End Time"]) return;
+    if (addMinutes(cursorTime, 30) > endTime) return;
 
     let firstJourney = true;
     // schedule journeys
-    while (addMinutes(cursorTime, 60) <= run["Scheduled End Time"] && pool.length) {
+    while (addMinutes(cursorTime, 60) <= endTime && pool.length) {
       // 1. pickup time
       let pu1;
       if (firstJourney) {
@@ -403,7 +415,7 @@ function generateTrips(runs, customers, poiPool) {
         pu1 = addMinutes(cursorTime, randBetween(15, 45));
       }
       // if beyond end, break
-      if (addMinutes(pu1, 0) > run["Scheduled End Time"]) break;
+      if (addMinutes(pu1, 0) > endTime) break;
 
       // 2. choose customer
       const custIdx = Math.floor(Math.random() * pool.length);
@@ -430,6 +442,16 @@ function generateTrips(runs, customers, poiPool) {
       const doTime1 = addMinutes(pu1, dur1);
       const aptTime1 = roundToNearest15(addMinutes(doTime1,2));
       const status1 = sampleStatus();
+
+      // Helper function to format time as string
+      function formatTimeAsString(date) {
+        if (!date) return null;
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+      }
+
       if (status1 !== 'Completed') {
         // record a single trip
         trips.push({ 
@@ -437,11 +459,12 @@ function generateTrips(runs, customers, poiPool) {
           "Customer Name and ID": cust["Customer Name and ID"],
           "PU Address": `${cust.homeLat}, ${cust.homeLon}`,
           "DO Address": `${do1.lat}, ${do1.lon}`,
-          "PU Time": pu1,
-          "DO Time": doTime1,
-          "Appt Time": aptTime1,
+          "PU Time": formatTimeAsString(pu1),
+          "DO Time": formatTimeAsString(doTime1),
+          "Appt Time": formatTimeAsString(aptTime1),
           "Vehicle ID": run["Vehicle ID"],
           "Driver ID": run["Driver ID"],
+          "Service ID": serviceID,
           "Trip Purpose": purpose,
           "Trip Result": status1,
           distance: dist1,
@@ -466,11 +489,12 @@ function generateTrips(runs, customers, poiPool) {
         "Customer Name and ID": cust["Customer Name and ID"],
         "PU Address": `${cust.homeLat}, ${cust.homeLon}`,
         "DO Address": `${do1.lat}, ${do1.lon}`,
-        "PU Time": pu1,
-        "DO Time": doTime1,
-        "Appt Time": aptTime1,
+        "PU Time": formatTimeAsString(pu1),
+        "DO Time": formatTimeAsString(doTime1),
+        "Appt Time": formatTimeAsString(aptTime1),
         "Vehicle ID": run["Vehicle ID"],
         "Driver ID": run["Driver ID"],
+        "Service ID": serviceID,
         "Trip Purpose": purpose,
         "Trip Result": 'Completed',
         distance: dist1,
@@ -490,7 +514,6 @@ function generateTrips(runs, customers, poiPool) {
         const dist2 = haversine(do1.lat, do1.lon, poiB.lat, poiB.lon);
         const speed2 = dist2 > 30 ? 55 : 40;
         const dur2 = Math.round((dist2/speed2)*60 + 5);
-        // const roundedDur2 = roundTo15(dur2);
         const pu2 = new Date(doTime1);
         const doTime2 = addMinutes(pu2, dur2);
         const aptTime2 = roundToNearest15(addMinutes(doTime2, 2));
@@ -499,11 +522,12 @@ function generateTrips(runs, customers, poiPool) {
           "Customer Name and ID": cust["Customer Name and ID"],
           "PU Address": `${do1.lat}, ${do1.lon}`,
           "DO Address": `${poiB.lat}, ${poiB.lon}`,
-          "PU Time": pu2,
-          "DO Time": doTime2,
-          "Appt Time": aptTime2,
+          "PU Time": formatTimeAsString(pu2),
+          "DO Time": formatTimeAsString(doTime2),
+          "Appt Time": formatTimeAsString(aptTime2),
           "Vehicle ID": run["Vehicle ID"],
           "Driver ID": run["Driver ID"],
+          "Service ID": serviceID,
           "Trip Purpose": 'Other',
           "Trip Result": 'Completed',
           distance: dist2,
@@ -523,18 +547,18 @@ function generateTrips(runs, customers, poiPool) {
       const distR = haversine(lastLocation.lat, lastLocation.lon, cust.homeLat, cust.homeLon);
       const speedR = distR > 30 ? 55 : 40;
       const durR = Math.round((distR/speedR)*60 + 5);
-      //const roundedDurR = roundTo15(durR);
       const doReturn = addMinutes(puReturn, durR);
       trips.push({ 
         "Trip Date": run["Run Date"],
         "Customer Name and ID": cust["Customer Name and ID"],
         "PU Address": `${lastLocation.lat}, ${lastLocation.lon}`,
         "DO Address": `${cust.homeLat}, ${cust.homeLon}`,
-        "PU Time": puReturn,
-        "DO Time": doReturn,
+        "PU Time": formatTimeAsString(puReturn),
+        "DO Time": formatTimeAsString(doReturn),
         "Appt Time": null,
         "Vehicle ID": run["Vehicle ID"],
         "Driver ID": run["Driver ID"],
+        "Service ID": serviceID,
         "Trip Purpose": purpose,
         "Trip Result": 'Completed',
         distance: distR,
