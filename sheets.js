@@ -80,7 +80,7 @@ function findFirstRowByHeaderNames(sheet, filter) {
   } catch(e) { logError(e) }
 }
 
-function createRows(destSheet, data, timestampColName) {
+function createRows(destSheet, data, timestampColName, overwrite=false) {
   try {
     const timestamp = new Date()
     let destColumnNames = getSheetHeaderNames(destSheet)
@@ -104,7 +104,7 @@ function createRows(destSheet, data, timestampColName) {
         }
       })
     })
-    let firstRow = destSheet.getLastRow() + 1
+    let firstRow = overwrite ? 2 : destSheet.getLastRow() + 1
     let newRows = destSheet.getRange(firstRow, 1, values.length, values[0].length)
     newRows.setValues(values)
     applySheetFormatsAndValidation(destSheet, firstRow)
@@ -507,6 +507,7 @@ function getRangeHeaderFormulas(range, {forceRefresh = false, headerRowPosition 
 function getMaxValueInRange(range) {
   try {
     let values = range.getValues().flat().filter(Number.isFinite)
+    if (!values.length) return null
     return values.reduce((a, b) => Math.max(a, b))
   } catch(e) { logError(e) }
 }
@@ -538,4 +539,16 @@ function getColumnLettersFromPosition(colPosition) {
 // Numeric "0" and boolean "false" are not blank.
 function isBlankCell(value) {
   return (value === "" || value === null)
+}
+
+function clearSheet(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    const numRows = lastRow - 2;
+    if (numRows > 0) {
+      sheet.deleteRows(3, numRows);
+    }
+    const dataRange = sheet.getRange(2, 1, 1, sheet.getLastColumn());
+    dataRange.clearContent();
+  }
 }
