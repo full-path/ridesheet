@@ -179,7 +179,7 @@ function replaceElementText(element, data) {
         if (addressRange) {
           do {
             text.setLinkUrl(addressRange.getStartOffset(), addressRange.getEndOffsetInclusive(), url)
-            addressRange = text.findText(datum, addressRange)
+            addressRange = text.findText(escapeRegex(datum), addressRange)
           } while (addressRange)
         }
       } 
