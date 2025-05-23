@@ -115,7 +115,7 @@ function createRows(destSheet, data, timestampColName) {
   }
 }
 
-// ex. of format for defaultColumns
+// ex. of format for getConfiguredColumns()
 // {"Trips": {
 //     "Trip Date": {
 //       numberFormat: "M/d/yyyy",
@@ -136,14 +136,14 @@ function createRows(destSheet, data, timestampColName) {
 // }}
 
 /**
- * Applies formatting and validation rules to a sheet based on a set of default column rules.
+ * Applies formatting and validation rules to a sheet based on a set of column rules.
  * @param {Sheet} sheet - The sheet to apply the rules to.
  * @param {number} [startRow=2] - The starting row of the range to apply the rules to.
  */
 function applySheetFormatsAndValidation(sheet, startRow=2) {
   let sheetName = sheet.getName()
-  let rules = defaultColumns[sheetName]
-  let defaultHeaderNames = Object.keys(rules) // defaultColumns is a global variable
+  let rules = getConfiguredColumns()[sheetName]
+  let configuredHeaderNames = Object.keys(rules)
 
   // Get the headers of the sheet
   let headerRange = sheet.getRange(1, 1, 1, sheet.getLastColumn())
@@ -154,9 +154,9 @@ function applySheetFormatsAndValidation(sheet, startRow=2) {
   let dataRange = sheet.getRange(startRow, 1, sheet.getLastRow() - startRow + 1, sheet.getLastColumn())
   dataRange.setFontWeight('normal').setBackground(null)
 
-  // Loop through defaultHeaderNames and apply formatting and validation rules as appropriate
-  for (let i = 0; i < defaultHeaderNames.length; i++) {
-    let headerName = defaultHeaderNames[i]
+  // Loop through configuredHeaderNames and apply formatting and validation rules as appropriate
+  for (let i = 0; i < configuredHeaderNames.length; i++) {
+    let headerName = configuredHeaderNames[i]
     let rule = rules[headerName]
     if (rule.numberFormat || rule.dataValidation) {
       let index = sheetHeaders.indexOf(headerName)
