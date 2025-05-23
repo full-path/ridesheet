@@ -80,7 +80,7 @@ function findFirstRowByHeaderNames(sheet, filter) {
   } catch(e) { logError(e) }
 }
 
-function createRows(destSheet, data, timestampColName) {
+function createRows(destSheet, data, timestampColName, overwrite=false) {
   try {
     const timestamp = new Date()
     let destColumnNames = getSheetHeaderNames(destSheet)
@@ -104,7 +104,7 @@ function createRows(destSheet, data, timestampColName) {
         }
       })
     })
-    let firstRow = destSheet.getLastRow() + 1
+    let firstRow = overwrite ? 2 : destSheet.getLastRow() + 1
     let newRows = destSheet.getRange(firstRow, 1, values.length, values[0].length)
     newRows.setValues(values)
     applySheetFormatsAndValidation(destSheet, firstRow)
@@ -150,9 +150,9 @@ function applySheetFormatsAndValidation(sheet, startRow=2) {
   let sheetHeaders = headerRange.getValues()[0]
 
   // Get the range of rows beginning with startRow and ending at the last row in the sheet
-  // Set formatting on that range to ensure text is normal weight (not bold) and clear any background color on cells
+  // Set formatting on that range to ensure text is normal weight (not bold)
   let dataRange = sheet.getRange(startRow, 1, sheet.getLastRow() - startRow + 1, sheet.getLastColumn())
-  dataRange.setFontWeight('normal').setBackground(null)
+  dataRange.setFontWeight('normal')
 
   // Loop through configuredHeaderNames and apply formatting and validation rules as appropriate
   for (let i = 0; i < configuredHeaderNames.length; i++) {
@@ -175,15 +175,17 @@ function applySheetFormatsAndValidation(sheet, startRow=2) {
   }
 }
 
+// This function no longer handles formatting. If using, it is recommended
+// to call applySheetFormatsAndValidation after creating new row(s)
 function createRow(destSheet, data) {
   try {
     let columnNames = getSheetHeaderNames(destSheet)
     let dataArray = columnNames.map(colName => data[colName] ? data[colName] : null)
     destSheet.appendRow(dataArray)
-    let newRowIndex = destSheet.getLastRow()
-    let newRow = destSheet.getRange(newRowIndex + ':' + newRowIndex)
-    fixRowNumberFormatting(newRow)
-    fixRowDataValidation(newRow)
+    //let newRowIndex = destSheet.getLastRow()
+    // These row based formatting errors are broken; leaving them here as a reminder
+    // fixRowNumberFormatting(newRow)
+    // fixRowDataValidation(newRow)
     return true
   } catch(e) {
     logError(e)
@@ -505,6 +507,7 @@ function getRangeHeaderFormulas(range, {forceRefresh = false, headerRowPosition 
 function getMaxValueInRange(range) {
   try {
     let values = range.getValues().flat().filter(Number.isFinite)
+    if (!values.length) return null
     return values.reduce((a, b) => Math.max(a, b))
   } catch(e) { logError(e) }
 }
@@ -536,4 +539,16 @@ function getColumnLettersFromPosition(colPosition) {
 // Numeric "0" and boolean "false" are not blank.
 function isBlankCell(value) {
   return (value === "" || value === null)
+}
+
+function clearSheet(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    const numRows = lastRow - 2;
+    if (numRows > 0) {
+      sheet.deleteRows(3, numRows);
+    }
+    const dataRange = sheet.getRange(2, 1, 1, sheet.getLastColumn());
+    dataRange.clearContent();
+  }
 }
