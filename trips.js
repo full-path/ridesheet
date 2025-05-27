@@ -43,7 +43,7 @@ function copyTrip(sourceTripRange, isReturnTrip) {
     const sourceTripRow       = sourceTripRange.getRow()
     const sourceTripData      = getRangeValuesAsTable(sourceTripRange,{includeFormulaValues: false})[0]
     const defaultStayDuration = getDocProp("defaultStayDuration")
-    if (tripSheet.getName() !== "Trips" || !isCompleteTrip(sourceTripData)) {
+    if (!isCompleteTrip(sourceTripData)) {
       ss.toast("Select a cell in a trip to create a subsequent trip.","Trip Creation Failed")
       return
     }
