@@ -116,12 +116,12 @@ const defaultDocumentProperties = {
   },
   runUserReviewRequiredFields: {
     type: "array",
-    value: [],
+    value: ["Run Date","Driver ID","Vehicle ID"],
     description: "The names of run columns that must have data in them in order to for RideSheet to calculate deadhead or other run information."
   },
   runFullReviewRequiredFields: {
     type: "array",
-    value: [],
+    value: ["Run Date","Driver ID","Vehicle ID","Scheduled Start Time","Scheduled End Time","Actual Start Time","Actual End Time","Break Time in Minutes","Odometer Start","Odometer End","Starting Deadhead Miles","Ending Deadhead Miles","Starting Deadhead Hours","Ending Deadhead Hours","Vehicle Garage Address","First PU Address","Last DO Address"],
     description: "The names of run columns that must have data in them in order to be archived."
   },
   providerName: {
@@ -138,6 +138,11 @@ const defaultDocumentProperties = {
     type: "number",
     value: 60,
     description: "When creating a next leg or return trip, this is the length of time in minutes to set as the duration between rider dropoff or appt time and the pickup time of the next trip. Set to -1 (negative one) to keep the pickup time for the new trip blank"
+  },
+  createRunMode: {
+    type: "string",
+    value: "default",
+    description: "Options: default (user creates runs in advance in 'Runs' sheet) or auto (automatically generate run data when moving data to review)"
   }
 }
 
@@ -570,6 +575,20 @@ const defaultColumns = {
       },
     },
     "Actual End Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "First PU Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Last DO Time": {
       numberFormat: 'h":"mm am/pm',
       dataValidation: {
         criteriaType: "DATE_IS_VALID_DATE",
