@@ -4,9 +4,10 @@
  * from an onEdit or onOpen trigger, or manually if desired.
  */
 function refreshTimelineIfChanged(e) {
-  const startTime = new Date()  
+  //const startTime = new Date()
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sourceTripRange = ss.getSheetByName("Trips").getDataRange()
+  const sourceDispatchRange = ss.getSheetByName("Dispatch").getDataRange()
   const sourceRunRange = ss.getSheetByName("Runs").getDataRange()
   const tripFilter = function(row) {
     return row["Trip Date"] instanceof Date &&
@@ -38,10 +39,11 @@ function refreshTimelineIfChanged(e) {
   ]
   
   const haveTripsChanged = hasRangeChanged(sourceTripRange,"tripsDigest", tripColsToCheck, tripFilter) 
+  const haveDispatchTripsChanged = hasRangeChanged(sourceDispatchRange,"dispatchDigest", tripColsToCheck, tripFilter)
   const haveRunsChanged = hasRangeChanged(sourceRunRange,"RunsDigest", runColsToCheck, runFilter)
-  
-  if (haveTripsChanged || haveRunsChanged) {
-    buildTimelineReport(sourceTripRange, sourceRunRange)
+
+  if (haveTripsChanged || haveRunsChanged || haveDispatchTripsChanged) {
+    buildTimelineReport(sourceTripRange, sourceRunRange, sourceDispatchRange)
   }
   //Logger.log(["refreshTimelineIfChanged duration:",(new Date()) - startTime])
   //log("refreshTimelineIfChanged duration:",(new Date()) - startTime)
@@ -85,14 +87,16 @@ function timelineManualRefresh(e) {
  * @throws {Error}
  *         Throws an error if anything goes wrong while fetching or processing the data.
  */
-function buildTimelineReport(sourceTripRange, sourceRunRange) {
+function buildTimelineReport(sourceTripRange, sourceRunRange, sourceDispatchRange) {
   const startTime = new Date()  
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     if (!sourceTripRange) sourceTripRange = ss.getSheetByName("Trips").getDataRange()
     if (!sourceRunRange) sourceRunRange = ss.getSheetByName("Runs").getDataRange()
+    if (!sourceDispatchRange) sourceDispatchRange = ss.getSheetByName("Dispatch").getDataRange()
     const mainSheet = ss.getSheetByName("Timeline")
-    const sourceTripData = getRangeValuesAsTable(sourceTripRange)
+    const sourceTripData = getRangeValuesAsTable(sourceTripRange).
+            concat(getRangeValuesAsTable(sourceDispatchRange))
     const sourceRunData = getRangeValuesAsTable(sourceRunRange)
     const timeIncrement = 15
     const timeZone = getDocProp("localTimeZone")

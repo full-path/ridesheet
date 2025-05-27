@@ -6,6 +6,7 @@ const initialLocalSheetTriggers = {}
 
 const finalLocalSheetTriggers  = {
   "Timeline": localCodeTimelineManualRefresh,
+  "Dispatch": localCodeRefreshTimelineIfChanged,
   "Trips": localCodeRefreshTimelineIfChanged,
   "Runs": localCodeRefreshTimelineIfChanged
 }
