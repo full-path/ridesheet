@@ -1,4 +1,4 @@
-const tempText = "{{Temporary Text}}"
+const TEMP_TEXT = "{{Temporary Text}}"
 
 function createManifestsByRunForDate() {
   try {
@@ -191,14 +191,14 @@ function replaceElementText(element, data) {
 // since the body has to have at least one element or there will be an error
 function emptyBody(doc) {
   let body = doc.getBody()
-  let tempParagraph = body.appendParagraph(tempText)
+  let tempParagraph = body.appendParagraph(TEMP_TEXT)
   while (body.getNumChildren() > 1) body.removeChild(body.getChild(0))
 }
 
 // Remove the temporary element created by emptyBody
 function removeTempElement(doc) {
   let body = doc.getBody()
-  if (body.getChild(0).asText().getText() === tempText) body.removeChild(body.getChild(0))
+  if (body.getChild(0).asText().getText() === TEMP_TEXT) body.removeChild(body.getChild(0))
 }
 
 function getManifestData(filterFunction) {

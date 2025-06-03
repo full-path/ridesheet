@@ -1,6 +1,6 @@
 const propDescSuffix = "__description__"
-var cachedDocProps = {}
-var allDocPropsCached = false
+const cachedDocProps = {}
+let allDocPropsCached = false
 
 function getProperties(showPrivateProperties) {
   let docProps = PropertiesService.getDocumentProperties().getProperties()
