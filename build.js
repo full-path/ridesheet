@@ -95,29 +95,33 @@ function buildNamedRange(ss, rangeName, rangeConfigObj) {
   }
 }
 
-// Document properties don't pass on to copied sheets.
-// This recreates the ones put into the properties sheet.
-function buildDocumentPropertiesFromSheet() {
+function buildDocumentPropertiesIfEmpty() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const propSheet = ss.getSheetByName("Document Properties")
   let docProps = PropertiesService.getDocumentProperties().getProperties()
   if (Object.keys(docProps).length === 0 && propSheet) {
-    let propsGrid = propSheet.getDataRange().getValues()
-    propsGrid.shift() // Remove the header row from the array
-    let defaultPropNames = Object.keys(defaultDocumentProperties)
-    let newProps = []
-    propsGrid.forEach(row => {
-      if (defaultPropNames.indexOf(row[0]) !== -1) {
-        let prop = {}
-        prop.name = row[0]
-        prop.value = coerceValue(row[1], defaultDocumentProperties[row[0]].type)
-        prop.description = row[2]
-        newProps.push(prop)
-      }
-    })
-    setDocProps(newProps)
-    updatePropertiesSheet()
+    buildDocumentPropertiesFromSheet()
   }
+}
+
+function buildDocumentPropertiesFromSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const propSheet = ss.getSheetByName("Document Properties")
+  let propsGrid = propSheet.getDataRange().getValues()
+  propsGrid.shift() // Remove the header row from the array
+  let defaultPropNames = Object.keys(defaultDocumentProperties)
+  let newProps = []
+  propsGrid.forEach(row => {
+    if (defaultPropNames.indexOf(row[0]) !== -1) {
+      let prop = {}
+      prop.name = row[0]
+      prop.value = coerceValue(row[1], defaultDocumentProperties[row[0]].type)
+      prop.description = row[2]
+      newProps.push(prop)
+    }
+  })
+  setDocProps(newProps)
+  updatePropertiesSheet()
 }
 
 // If there are any default document properties that are missing from the actual
