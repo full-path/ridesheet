@@ -1,6 +1,6 @@
 const propDescSuffix = "__description__"
-var cachedDocProps = {}
-var allDocPropsCached = false
+const cachedDocProps = {}
+let allDocPropsCached = false
 
 function getProperties(showPrivateProperties) {
   let docProps = PropertiesService.getDocumentProperties().getProperties()
@@ -260,39 +260,4 @@ function deleteDeprecatedProps() {
   } catch(e) {
     logError(e)    
   }
-}
-
-function testTypes() {
-//  deleteDocProp("tripReviewRequiredFields")
-  repairProps()
-//  log(PropertiesService.getDocumentProperties().getProperty("tripReviewRequiredFields"))
-//  setDocProp("testArray",[1,2,3])
-//  setDocProp("testBigInt",BigInt(123))
-//  setDocProp("testBool", true)
-//  setDocProp("testBoolFalse", false)
-//  setDocProp("testDate",new Date())
-//  setDocProp("testMap",new Map([[1,"yes"],[2,"no"]]))
-//  setDocProp("testNull",null)
-//  setDocProp("testNumber",3.1415)
-//  setDocProp("testObject",{1:2,3:4,5:"six","seven":8})
-//  setDocProp("testSet",new Set([1,2,3]))
-//  setDocProp("testString","Test!")
-//  setDocProp("testSet",new Set([1,2,3]))
-//  setDocProp("testUndefined",undefined)
-}
-
-function cleanUpTestTypes() {
-//  deleteDocProp("testArray")
-//  deleteDocProp("testBigInt")
-//  deleteDocProp("testBool")
-//  deleteDocProp("testBoolFalse")
-//  deleteDocProp("testDate")
-//  deleteDocProp("testMap")
-//  deleteDocProp("testNull")
-//  deleteDocProp("testNumber")
-//  deleteDocProp("testObject")
-//  deleteDocProp("testSet")
-//  deleteDocProp("testString")
-//  deleteDocProp("testSet")
-//  deleteDocProp("testUndefined")
 }
