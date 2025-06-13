@@ -21,3 +21,18 @@ RideSheet is an Open Source ride scheduling application designed for small, dema
 ## Documentation
 
 [Read the complete guide](https://docs.ridesheet.org/) for detailed installation instructions, usage tutorials, and customization options.
+
+## Version Policy
+
+New version releases will be tagged on the `Main` branch. 
+
+* MAJOR (1.x.x → 2.0.0, etc.) – Breaking changes, to be accompanied by a “Migration Guide”.
+* MINOR (1.0.x → 1.1.0, etc.) – New features, no breaking changes.
+* PATCH (1.0.0 → 1.0.1, etc.) – Bug fixes, no breaking changes.
+
+Forks and custom versions may use:
+
+* 1.2.0-custom-feature – Fork with extra functionality.
+* 1.3.0-orgname – Organization-specific version.
+
+Check the CHANGELOG for updates and the Migration Guide for major changes.
