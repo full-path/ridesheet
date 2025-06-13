@@ -7,7 +7,7 @@ RideSheet is a spreadsheet-based application consisting of multiple sheets or ta
 
 ![RideSheet home](../images/ridesheet-screenshot1.png)
 
-This screenshot comes from the [RideSheet Public Sample](https://docs.google.com/spreadsheets/d/1U_rmR08qW63hEK_5IWblzVXK4ZqQElaD1ymAQNGpNiU/edit#gid=0). If you are interested in trying out RideSheet, you can simply make a copy of this sheet and test out anything you would like, or use it to follow along with this guide. Check out [Installing RideSheet](../technical-guide/installing-ridesheet.md) for more detailed information on how to create your own copy.
+This screenshot comes from the [RideSheet Public Sample](https://docs.google.com/spreadsheets/d/1PpcZfdDt7WtcIMy4Ii6E05VenQidmeyl-NVZngziNbw/edit?usp=sharing). If you are interested in trying out RideSheet, you can simply make a copy of this sheet and test out anything you would like, or use it to follow along with this guide. Check out [Installing RideSheet](../technical-guide/installing-ridesheet.md) for more detailed information on how to create your own copy.
 
 The first row of the spreadsheet, <span style="background-color: #fff2cc">in yellow</span>, is the header. Most of these fields are covered in detail in [Data Fields](data-fields.md). Some fields have <span style="background-color: #a4c2f4">blue headers</span> or backgrounds. These fields are automatically populated by the application, and should not be edited by hand.
 

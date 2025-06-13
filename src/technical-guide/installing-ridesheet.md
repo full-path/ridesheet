@@ -12,11 +12,11 @@ RideSheet requires a Google Workspace account. If you haven't already, you'll ne
 
 ## Create a Copy of RideSheet
 
-Open the [public RideSheet template](https://docs.google.com/spreadsheets/d/1U_rmR08qW63hEK_5IWblzVXK4ZqQElaD1ymAQNGpNiU/edit?gid=1631993398#gid=1631993398).
+Open the [public RideSheet template](https://docs.google.com/spreadsheets/d/1PpcZfdDt7WtcIMy4Ii6E05VenQidmeyl-NVZngziNbw/edit?usp=sharing).
 
 ### Make Your Copy
 
-1. Open [the template](https://docs.google.com/spreadsheets/d/1U_rmR08qW63hEK_5IWblzVXK4ZqQElaD1ymAQNGpNiU/edit?gid=1631993398#gid=1631993398) while logged in with your Google Workspace account
+1. Open [the template](https://docs.google.com/spreadsheets/d/1PpcZfdDt7WtcIMy4Ii6E05VenQidmeyl-NVZngziNbw/edit?usp=sharing) while logged in with your Google Workspace account
 2. Select File > Make a copy
 3. Choose a location for your copy:
     - We strongly recommend using a [Shared Drive](https://support.google.com/a/users/answer/9310351?sjid=2044455304611340116-NC) rather than My Drive
