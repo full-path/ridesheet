@@ -48,12 +48,6 @@ function importDataFromSheet(fileId = null, showWarning = true) {
 
   const requiredSheets = [
     "Customers",
-    "Trips",
-    "Runs",
-    "Trip Review",
-    "Run Review",
-    "Trip Archive",
-    "Run Archive",
     "Services",
     "Drivers",
     "Vehicles",
@@ -71,23 +65,9 @@ function importDataFromSheet(fileId = null, showWarning = true) {
     return;
   }
 
-  const tripReviewSheet = importSpreadsheet.getSheetByName("Trip Review");
-  const runReviewSheet = importSpreadsheet.getSheetByName("Run Review");
-
-  if (tripReviewSheet.getLastRow() > 1 || runReviewSheet.getLastRow() > 1) {
-    ui.alert(
-      "Can't import data. Please review and archive all data in Trip Review and Run Review before proceeding."
-    );
-    return;
-  }
-
   try {
     const sheetsToImport = [
       "Customers",
-      "Trips",
-      "Runs",
-      "Trip Archive",
-      "Run Archive",
       "Services",
       "Drivers",
       "Vehicles",
