@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = "1.0.0"
+const SCRIPT_VERSION = "1.0.0-clay-county"
 
 const debugLogging                       = false
 const allowPropDescriptionEdits          = false
