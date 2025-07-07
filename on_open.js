@@ -4,7 +4,7 @@ function onOpen(e) {
     buildMenus()
   } catch(e) { logError(e) }
   try {
-    buildDocumentPropertiesFromSheet()
+    buildDocumentPropertiesIfEmpty()
     buildDocumentPropertiesFromDefaults()
     purgeOldDocumentProperties()
   } catch(e) { logError(e) }
