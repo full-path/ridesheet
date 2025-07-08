@@ -243,6 +243,13 @@ const localColumns = {
         allowInvalid: false,
       },
     },
+    "One Way": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "ONE WAY",
+        allowInvalid: false,
+      },
+    },
     "Rider Type": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -269,18 +276,6 @@ const localColumns = {
         allowInvalid: false,
         helpText: "Value must be a valid fare type.",
       }
-    }
-  },
-  "Lookups": {
-    "Rider Types": {},
-    "Mobility Factors": {},
-    "Fare Types": {},
-    "Dispatch IDs": {},
-    "Address Short Names": {
-      headerFormula: `={"Address Short Names";QUERY(queryAddresses,"SELECT Col1 WHERE Col1 IS NOT NULL ORDER BY Col1",0)}`,
-    }
-  },
-  "Trips": {
     },
     "Dispatch ID": {
       dataValidation: {
@@ -290,6 +285,15 @@ const localColumns = {
         allowInvalid: false,
         helpText: "Value must be a valid dispatch ID.",
       }
+    }
+  },
+  "Lookups": {
+    "Rider Types": {},
+    "Mobility Factors": {},
+    "Fare Types": {},
+    "Dispatch IDs": {},
+    "Address Short Names": {
+      headerFormula: `={"Address Short Names";QUERY(queryAddresses,"SELECT Col1 WHERE Col1 IS NOT NULL ORDER BY Col1",0)}`,
     }
   },
   "Dispatch": {
@@ -463,6 +467,13 @@ const localColumns = {
         allowInvalid: false,
       },
     },
+    "One Way": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "ONE WAY",
+        allowInvalid: false,
+      },
+    },
     "Rider Type": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -538,6 +549,13 @@ const localColumns = {
         allowInvalid: false,
       },
     },
+    "One Way": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "ONE WAY",
+        allowInvalid: false,
+      },
+    },
     "Rider Type": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -588,6 +606,13 @@ const localColumns = {
         criteriaType: "CHECKBOX",
         checkedValue: "SDR",
         allowInvalid: true,
+      },
+    },
+    "One Way": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "ONE WAY",
+        allowInvalid: false,
       },
     },
     "Rider Type": {
