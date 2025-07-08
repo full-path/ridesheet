@@ -10,8 +10,11 @@ function createLocalManifestByDay() {
     let defaultDate
     let date
     let runDate
-    if (activeSheet.getName() == "Trips") {
+    let tripSheetName = "Trips"
+
+    if (activeSheet.getName() == "Trips" || activeSheet.getName() == "Dispatch") {
       runDate = getValueByHeaderName("Trip Date", getFullRows(activeSheet.getActiveCell()))
+      tripSheetName = activeSheet.getName()
     } else if (activeSheet.getName() == "Runs") {
       runDate = getValueByHeaderName("Run Date", getFullRows(activeSheet.getActiveCell()))
     } else {
@@ -44,7 +47,7 @@ function createLocalManifestByDay() {
     }
 
     const dateFilter = createDateFilterForManifestData(date)
-    const manifestData = getManifestData(dateFilter)
+    const manifestData = getManifestData(dateFilter, tripSheetName)
     const groupedManifestData = groupManifestDataByDay(manifestData)
     const manifestCount = createManifests(templateDocId, groupedManifestData, getManifestFileNameByDay)
     ss.toast(manifestCount + " created.","Manifest creation complete.")
