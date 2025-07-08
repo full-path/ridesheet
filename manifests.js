@@ -1,4 +1,4 @@
-const tempText = "{{Temporary Text}}"
+const TEMP_TEXT = "{{Temporary Text}}"
 
 function createManifestsByRunForDate() {
   try {
@@ -54,26 +54,30 @@ function createSelectedManifestsByRun() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const activeSheet = ss.getActiveSheet()
-    const activeSheetName = activeSheet.getName()
-    if (activeSheetName != "Trips" && activeSheetName != "Runs") {
-      ss.toast("Nothing selected, no manifests created.")
-      return
-    }
     const rangeList = activeSheet.getActiveRangeList().getRanges()
     const templateDocId = getDocProp("driverManifestTemplateDocId")
     let selectedRows = []
     rangeList.forEach(range => {selectedRows.push(...getRangeValuesAsTable(getFullRows(range)))})
+
+    if (!selectedRows.length ||
+        !Object.hasOwn(selectedRows[0], "Trip Date") ||
+        !Object.hasOwn(selectedRows[0], "Driver ID") ||
+        !Object.hasOwn(selectedRows[0], "Vehicle ID")) {
+      ss.toast("No trips selected, no manifests created.")
+      return
+    }
+
     let runList = []
     selectedRows.forEach(row => {
       let thisRun = {}
-      thisRun["Trip Date"] = (activeSheetName == "Trips" ? row["Trip Date"] : row["Run Date"])
+      thisRun["Trip Date"] = row["Trip Date"]
       thisRun["Driver ID"] = row["Driver ID"]
       thisRun["Vehicle ID"] = row["Vehicle ID"]
       runList.push(thisRun)
     })
 
     const runFilter = createRunFilterForManifestData(runList)
-    const manifestData = getManifestData(runFilter)
+    const manifestData = getManifestData(runFilter, activeSheet.getName())
     const groupedManifestData = groupManifestDataByRun(manifestData)
     const manifestCount = createManifests(templateDocId, groupedManifestData, getManifestFileNameByRun)
     ss.toast(manifestCount + " created.","Manifest creation complete.")
@@ -179,7 +183,7 @@ function replaceElementText(element, data) {
         if (addressRange) {
           do {
             text.setLinkUrl(addressRange.getStartOffset(), addressRange.getEndOffsetInclusive(), url)
-            addressRange = text.findText(datum, addressRange)
+            addressRange = text.findText(escapeRegex(datum), addressRange)
           } while (addressRange)
         }
       } 
@@ -191,23 +195,23 @@ function replaceElementText(element, data) {
 // since the body has to have at least one element or there will be an error
 function emptyBody(doc) {
   let body = doc.getBody()
-  let tempParagraph = body.appendParagraph(tempText)
+  let tempParagraph = body.appendParagraph(TEMP_TEXT)
   while (body.getNumChildren() > 1) body.removeChild(body.getChild(0))
 }
 
 // Remove the temporary element created by emptyBody
 function removeTempElement(doc) {
   let body = doc.getBody()
-  if (body.getChild(0).asText().getText() === tempText) body.removeChild(body.getChild(0))
+  if (body.getChild(0).asText().getText() === TEMP_TEXT) body.removeChild(body.getChild(0))
 }
 
-function getManifestData(filterFunction) {
+function getManifestData(filterFunction, tripsSheetName = "Trips") {
   // Get all the raw data
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const drivers = getRangeValuesAsTable(ss.getSheetByName("Drivers").getDataRange())
   const vehicles = getRangeValuesAsTable(ss.getSheetByName("Vehicles").getDataRange())
   const customers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
-  const trips = getRangeValuesAsTable(ss.getSheetByName("Trips").getDataRange())
+  const trips = getRangeValuesAsTable(ss.getSheetByName(tripsSheetName).getDataRange())
   let manifestTrips = trips.filter(filterFunction)
   
   // Pull in the lookup table data

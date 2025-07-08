@@ -36,7 +36,6 @@ function makeBackup(destFolderId) {
 }
 
 function rotateBackups(folderId, retentionInDays) {
-  const files = DriveApp.getFolderById(folderId).getFiles()
   let file
   let ageInDays
   for (const files = DriveApp.getFolderById(folderId).getFiles(); files.hasNext(); file = files.next()) {
@@ -60,11 +59,6 @@ function formatDate(date, timeZone, dateFormat) {
     const thisDate = new Date(date)
     if (isValidDate(thisDate)) return Utilities.formatDate(thisDate, timeZone, dateFormat)
   }
-}
-
-function formatDateFromTrip(field, dateFormat) {
-  let val = field['@time']
-  return formatDate(new Date(val), null, dateFormat)
 }
 
 function dateAdd(date, days) {
@@ -201,22 +195,4 @@ function pluralize(count, singular, plural){
   } catch (e) {
     logError(e)
   }
-}
-
-function loadConfigFile(fileName) {
-  try {
-    const configFolderId = getDocProp("configFolderId")
-    const configFolder = DriveApp.getFolderById(configFolderId)
-    const files = configFolder.getFilesByName(fileName)
-    if (files.hasNext()) {
-      const file = files.next()
-      const content = file.getBlob().getDataAsString()
-      const json = JSON.parse(content)
-      return json
-    }
-  } catch(e) { logError(e) }
-}
-
-function testLoadConfigFile() {
-  log(JSON.stringify(loadConfigFile("columns.json.txt")))
 }

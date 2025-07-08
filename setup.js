@@ -35,6 +35,11 @@ function importDataFromSheet(fileId = null, showWarning = true) {
     }
   }
 
+  const importDocProps = ui.alert(
+    "Do you want to import and overwrite Document Properties?",
+    ui.ButtonSet.YES_NO
+  );
+
   const file = DriveApp.getFileById(fileId);
   const importSpreadsheet = SpreadsheetApp.open(file);
 
@@ -91,8 +96,9 @@ function importDataFromSheet(fileId = null, showWarning = true) {
       importSheet(importSpreadsheet, sheetName);
     }
     
-    // Import document properties
-    importDocumentProperties(importSpreadsheet, SpreadsheetApp.getActiveSpreadsheet());
+    if (importDocProps === ui.Button.YES) {
+      importDocumentProperties(importSpreadsheet, SpreadsheetApp.getActiveSpreadsheet());
+    }
     
     ui.alert("Data import completed successfully.");
 
