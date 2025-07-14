@@ -66,6 +66,11 @@ const defaultDocumentProperties = {
     value: "Enter ID here",
     description: "The document ID of the Google Doc you'll be using as your manifest template."
   },
+  driverManifestAddLinksToAddresses: {
+    type: "boolean",
+    value: true,
+    description: "Adds a Google Maps driving directions link to PU and DO addresses."
+  },
   geocoderBoundNeLatitude: {
     type: "number",
     value: 46.299097,
