@@ -120,13 +120,13 @@ function createPdfFromDocFile(manifestFile, folder) {
   PdfFile.setName(manifestFile + ".pdf")
   return PdfFile
 }
-                                                  
+
 function populateManifest(manifestDoc, templateDoc, manifestGroup) {
   //templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
-  
+
   const manifestBody   = manifestDoc.getBody()
   const manifestParent = manifestBody.getParent()
-  
+
   // Replace the fields in the document header and footer sections
   // There may be up to four, if there are different headers or footers for the first page
   for (let i = 0, c = manifestParent.getNumChildren(); i < c; i++) {
@@ -135,7 +135,7 @@ function populateManifest(manifestDoc, templateDoc, manifestGroup) {
       replaceElementText(section, manifestGroup["Events"][0])
     } else if (section.getType() === DocumentApp.ElementType.FOOTER_SECTION) {
       replaceElementText(section, manifestGroup["Events"][manifestGroup["Events"].length - 1])
-    }  
+    }
   }
 
   // Add the header elements
@@ -195,7 +195,7 @@ function replaceElementText(element, data) {
             addressRange = text.findText(escapeRegex(datum), addressRange)
           } while (addressRange)
         }
-      } 
+      }
     }
   })
 }
@@ -222,7 +222,7 @@ function getManifestData(filterFunction, tripsSheetName = "Trips") {
   const customers = getRangeValuesAsTable(ss.getSheetByName("Customers").getDataRange())
   const trips = getRangeValuesAsTable(ss.getSheetByName(tripsSheetName).getDataRange())
   let manifestTrips = trips.filter(filterFunction)
-  
+
   // Pull in the lookup table data
   manifestTrips.forEach(tripRow => {
     mergeAttributes(tripRow, drivers,   "Driver ID"  )
@@ -231,7 +231,7 @@ function getManifestData(filterFunction, tripsSheetName = "Trips") {
     tripRow["Manifest Creation Time"] = new Date()
     tripRow["Manifest Creation Date"] = new Date()
   })
-  
+
   // For events, create two rows for each trip -- one for PU, and one for DO
   let pickups = manifestTrips.map(tripRow => {
     let newRow = Object.assign({},tripRow)
@@ -319,7 +319,7 @@ function createDriverManifest(manifestDate, driverId) {
 }
 
 // All these element types support the getText() and editAsText() methods
-// Element types without text: COMMENT_SECTION, DOCUMENT, EQUATION_FUNCTION_ARGUMENT_SEPARATOR, EQUATION_SYMBOL, FOOTNOTE HORIZONTAL_RULE, 
+// Element types without text: COMMENT_SECTION, DOCUMENT, EQUATION_FUNCTION_ARGUMENT_SEPARATOR, EQUATION_SYMBOL, FOOTNOTE HORIZONTAL_RULE,
 //                             INLINE_DRAWING, INLINE_IMAGE, PAGE_BREAK, UNSUPPORTED
 function elementHasText(element) {
   elementTypesWithText = [DocumentApp.ElementType.BODY_SECTION,DocumentApp.ElementType.EQUATION,DocumentApp.ElementType.EQUATION_FUNCTION,
@@ -433,7 +433,7 @@ function appendElement(body, element) {
     body.appendImage(element)
   } else if (type == DocumentApp.ElementType.PAGE_BREAK) {
     body.appendPageBreak(element)
-  } 
+  }
 }
 
 function mergeAttributes(primaryRow, secondaryTable, primaryKeyName, secondaryKeyName) {
