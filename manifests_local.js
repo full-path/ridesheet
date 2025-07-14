@@ -1,17 +1,14 @@
-// - add custom docProp for the single manifest template? Or add to constants_local?
-const LOCAL_MANIFEST_BY_DAY_TEMPLATE_ID = "16NvrVzqC1lMY0e5SQ2sPwMAa1625IigLpup8pDVTImY"
-
 function createLocalManifestByDay() {
-  try{
-    const templateDocId = LOCAL_MANIFEST_BY_DAY_TEMPLATE_ID
+  try {
+    const templateDocId = getDocProp("driverManifestTemplateDocId")
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const activeSheet = ss.getActiveSheet()
-    const ui = SpreadsheetApp.getUi()
     let defaultDate
     let date
     let runDate
     let tripSheetName = "Trips"
 
+    const ui = SpreadsheetApp.getUi()
     if (activeSheet.getName() == "Trips" || activeSheet.getName() == "Dispatch") {
       runDate = getValueByHeaderName("Trip Date", getFullRows(activeSheet.getActiveCell()))
       tripSheetName = activeSheet.getName()
@@ -85,4 +82,3 @@ function getManifestFileNameByDay(manifestGroup) {
   const manifestFileName = `${formatDate(manifestGroup["Trip Date"], null, "yyyy-MM-dd")} all trips`
   return manifestFileName
 }
-
