@@ -104,7 +104,7 @@ function createManifests(templateDocId, groupedManifestData, fileNameFunction) {
 }
 
 function createManifest(manifestGroup, templateDoc, manifestFileName, folder) {
-  const templateFileId = getDocProp("driverManifestTemplateDocId")
+  const templateFileId = templateDoc.getId()
   const manifestFile   = DriveApp.getFileById(templateFileId).makeCopy(folder).setName(manifestFileName)
   const manifestDoc    = DocumentApp.openById(manifestFile.getId())
 
@@ -139,13 +139,22 @@ function populateManifest(manifestDoc, templateDoc, manifestGroup) {
   }
 
   // Add the header elements
-  replaceTextInRange(templateDoc.getNamedRanges("HEADER")[0].getRange(), manifestBody, manifestGroup["Events"][0])
+  let headerRange = templateDoc.getNamedRanges("HEADER")[0]
+  if (headerRange) {
+    replaceTextInRange(headerRange.getRange(), manifestBody, manifestGroup["Events"][0])
+  }
   // Add all the PU and DO elements. Use the section name of each event to decide whether to add a PU or DO range.
   manifestGroup["Events"].forEach((event, i) => {
-    replaceTextInRange(templateDoc.getNamedRanges(event["Section Name"])[0].getRange(), manifestBody, event)
+    let thisNamedRange = templateDoc.getNamedRanges(event["Section Name"])[0]
+    if (thisNamedRange) {
+      replaceTextInRange(templateDoc.getNamedRanges(event["Section Name"])[0].getRange(), manifestBody, event)
+    }
   })
   // Add the footer elements
-  replaceTextInRange(templateDoc.getNamedRanges("FOOTER")[0].getRange(), manifestBody, manifestGroup["Events"][manifestGroup["Events"].length - 1])
+  let foooterRange =  templateDoc.getNamedRanges("FOOTER")[0]
+  if (foooterRange) {
+    replaceTextInRange(templateDoc.getNamedRanges("FOOTER")[0].getRange(), manifestBody, manifestGroup["Events"][manifestGroup["Events"].length - 1])
+  }
 }
 
 function replaceTextInRange(range, docSection, data) {
@@ -176,7 +185,7 @@ function replaceElementText(element, data) {
     }
     if (Object.keys(data).indexOf(field) != -1) {
       element.replaceText("{" + field + "}", datum)
-      if (field.match(/\baddress\b/i) && datum) {
+      if (field.match(/\baddress\b/i) && datum && getDocProp("driverManifestAddLinksToAddresses")) {
         let url = createGoogleMapsDirectionsURL(datum)
         let text = element.asText()
         let addressRange = text.findText(escapeRegex(datum))
@@ -256,7 +265,6 @@ function getManifestData(filterFunction, tripsSheetName = "Trips") {
 function groupManifestDataByRun(manifestData) {
   // Group the trips into runs -- A run is a collection of trips on the same day
   // with the same driver, vehicle, and run id
-  // TODO add date and run ID to code
   let manifestGroups = []
   manifestData.trips.forEach(trip => {
     let runIndex = manifestGroups.findIndex(r =>
@@ -328,41 +336,67 @@ function deleteAllNamedRanges(doc) {
   })
 }
 
+/**
+ * Processes a Google Document to find sections marked with [BEGIN ...] and [END ...]
+ * tags and converts them into named ranges.
+ *
+ * @param {GoogleAppsScript.Document.Document} [doc] - Optional. The Google Document to process.
+ * If not provided, it will open a document using the driverManifestTemplateDocId document property.
+ */
 function prepareTemplate(doc) {
-  //let doc = DocumentApp.openById(driverManifestTemplateDocId)
-  deleteAllNamedRanges(doc)
-  let body = doc.getBody()
-  for (let i = 0, c = body.getNumChildren(); i < c; i++) {
-    let element = body.getChild(i) 
-    if (elementHasText(element)) {
-      const match = element.getText().match(/^\s*\[BEGIN (?<sectionName>.+?)\]\s*$/)
-      if (match) {
-        // We're at the beginning of a section. 
-        // We want to:
-        // - Jump to the next element
-        // - Set up a named range with a name matching the section name
-        // - Begin a loop where we:
-        //   - Check each element to see if it's the closing element
-        //   - If it's not the closing element, add that element to a named range 
-        //   - If it's the closing element, complete the building of the named range and and exit the loop
-        if (i < c) { i++ }
-        let sectionName = match.groups["sectionName"]
-        let regex = new RegExp(`^\\s*\\[END ${sectionName}\\]\\s*$`)
-        let rangeBuilder = doc.newRange()
-        for (let stayInLoop = true; stayInLoop && i < c ; i++) {
-          element = body.getChild(i) 
-          if (elementHasText(element) && element.getText().match(regex)) {
-            if (rangeBuilder.getRangeElements().length > 0) {
-              doc.addNamedRange(sectionName, rangeBuilder.build())
+  try {
+    // If no document is passed as an argument, open the template from properties.
+    if (!doc) doc = DocumentApp.openById(getDocProp("driverManifestTemplateDocId"))
+
+    // Start with a clean slate by deleting all existing named ranges.
+    deleteAllNamedRanges(doc)
+
+    const body = doc.getBody()
+    const numChildren = body.getNumChildren()
+    let i = 0 // Initialize index for iterating through document elements.
+
+    while (i < numChildren) {
+      let element = body.getChild(i)
+
+      // Check if the element is one that has text content.
+      if (elementHasText(element)) {
+        const text = element.getText()
+        const beginMatch = text.match(/^\s*\[BEGIN (?<sectionName>.+?)\]\s*$/)
+
+        // Found the start of a section.
+        if (beginMatch) {
+          const sectionName = beginMatch.groups["sectionName"]
+          const endRegex = new RegExp(`^\s*\\[END ${sectionName}\\]\s*$`)
+          const rangeBuilder = doc.newRange()
+
+          // Move index to the element AFTER the [BEGIN] marker.
+          i++
+
+          // Start searching for the corresponding [END] marker.
+          let endMarkerFound = false
+          while (i < numChildren && !endMarkerFound) {
+            const innerElement = body.getChild(i)
+
+            // Check if the current element is the [END] marker.
+            if (elementHasText(innerElement) && innerElement.getText().match(endRegex)) {
+              endMarkerFound = true // Exit the inner loop.
+            } else {
+              // If it's not the end marker, add the element to our range builder.
+              rangeBuilder.addElement(innerElement)
+              i++ // Move to the next element.
             }
-            stayInLoop = false
-          } else {
-            rangeBuilder.addElement(element)
+          }
+
+          // After the inner loop, if the end marker was found and the range is not empty, create the named range.
+          if (endMarkerFound && rangeBuilder.getRangeElements().length > 0) {
+            doc.addNamedRange(sectionName, rangeBuilder.build())
           }
         }
       }
+      // Always increment the main counter to proceed through the document.
+      i++
     }
-  }
+  } catch(e) { logError(e) }
 }
 
 function copyNamedRanges(source, destination) {
