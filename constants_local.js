@@ -328,6 +328,7 @@ const localColumns = {
     "|Go|": {
       dataValidation: {
         criteriaType: "CHECKBOX",
+        checkedValue: "GO",
         allowInvalid: true,
       }
     },
