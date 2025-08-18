@@ -60,11 +60,12 @@ After creating your copy, you'll need to authorize the RideSheet Apps Script:
 
 ![Screenshot showing the Setup New Installation option](../images/ridesheet-menu-setup.png)
 
-1. From the RideSheet menu, select Settings > Setup New Installation
+1. From the RideSheet menu, select `Settings` > `Setup New Installation`
 2. This process will:
     - Create `Manifests` and `Settings` folders
     - Copy the manifest template from the public version
     - Set up required Document Properties
+3. Ensure Document Properties are correctly saved by running `Settings` > `Refresh document properties sheet`
 
 ## Next Steps
 
