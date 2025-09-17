@@ -451,36 +451,6 @@ function logMetadata() {
   } catch(e) { logError(e) }
 }
 
-// Sets up a new instance of RideSheet
-function buildRideSheetInstall(destFolderId, sourceRideSheetFileId, namePrefix) {
-  const manifestTemplateName = "Manifest Template"
-  const reportFileName = "Monthly Reporting"
-
-  const sourceRideSheetFile = DriveApp.getFileById(sourceRideSheetFileId)
-  const sourceFolder = sourceRideSheetFile.getParents().next()
-  const sourceTemplateFile = sourceFolder.getFoldersByName("Settings").next().
-    getFilesByName(manifestTemplateName).next()
-  const sourceReportFile = sourceFolder.getFoldersByName("Reports").next().
-    getFilesByName(reportFileName).next()
-
-  const destFolder = DriveApp.getFolderById(destFolderId)
-  const newManifestFolder = destFolder.createFolder("Manifests")
-  const newReportsFolder = destFolder.createFolder("Reports")
-  const newSettingsFolder = destFolder.createFolder("Settings")
-  const newRideSheetFile = sourceRideSheetFile.makeCopy(destFolder).setName(namePrefix + " RideSheet")
-  const newTemplateFile = sourceTemplateFile.makeCopy(newSettingsFolder).setName(manifestTemplateName)
-  const newReportFile = sourceReportFile.makeCopy(newReportsFolder).setName(reportFileName)
-
-  const newRideSheet = SpreadsheetApp.open(newRideSheetFile)
-  const propSheet = newRideSheet.getSheetByName("Document Properties")
-  const propSheetDataRange = propSheet.getDataRange()
-  const propSheetData = propSheetDataRange.getValues()
-  updatePropertyRange(propSheetData,"driverManifestFolderId",newManifestFolder.getId())
-  updatePropertyRange(propSheetData,"driverManifestTemplateDocId",newTemplateFile.getId())
-  updatePropertyRange(propSheetData,"configFolderId",newSettingsFolder.getId())
-  propSheetDataRange.setValues(propSheetData)
-}
-
 /**
  * Sets up a new RideSheet installation by:
  * - Building document properties from the properties sheet
@@ -497,7 +467,7 @@ function setupNewInstall() {
     const parentFolder = currentFile.getParents().next()
     const manifestsFolder = parentFolder.createFolder("Manifests")
     const templatesFolder = parentFolder.createFolder("Settings")
-    const sourceTemplateId = "1-E-gxHgS3h5gr9Fh4VfdZkAwcN5kjJ7_hqx69Cs1BmY"
+    const sourceTemplateId = "1j6eANeyJdGH8sKa5y6ZfvR_U8l3yzBOeGO-HZo7KoN8"
     const sourceTemplate = DriveApp.getFileById(sourceTemplateId)
     const newTemplate = sourceTemplate.makeCopy(templatesFolder)
     const propSheet = ss.getSheetByName("Document Properties")
@@ -507,6 +477,7 @@ function setupNewInstall() {
     updatePropertyRange(propSheetData, "driverManifestFolderId", manifestsFolder.getId())
     updatePropertyRange(propSheetData, "driverManifestTemplateDocId", newTemplate.getId())
     propSheetDataRange.setValues(propSheetData)
+    buildDocumentPropertiesFromSheet()
   } catch(e) {
     logError(e)
   }
