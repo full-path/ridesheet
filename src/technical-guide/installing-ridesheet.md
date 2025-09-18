@@ -65,7 +65,6 @@ After creating your copy, you'll need to authorize the RideSheet Apps Script:
     - Create `Manifests` and `Settings` folders
     - Copy the manifest template from the public version
     - Set up required Document Properties
-3. Ensure Document Properties are correctly saved by running `Settings` > `Refresh document properties sheet`
 
 ## Next Steps
 
