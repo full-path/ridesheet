@@ -4,7 +4,7 @@ function buildMenus() {
   menu.addItem('Add return trip', 'createReturnTrip')
   menu.addItem('Add stop', 'addStop')
   menu.addItem('Create manifests for day', 'createManifestsByRunForDate')
-  menu.addItem('Create manifests for selected items', 'createSelectedManifestsByRun')
+  menu.addItem('Create manifests for selected trips', 'createSelectedManifestsByRun')
   menu.addItem('Move past data to review', 'moveTripsToReview')
   menu.addItem('Add data to runs in review','addDataToRunsInReview')
   menu.addItem('Move reviewed data to archive', 'moveTripsToArchive')
@@ -95,29 +95,33 @@ function buildNamedRange(ss, rangeName, rangeConfigObj) {
   }
 }
 
-// Document properties don't pass on to copied sheets.
-// This recreates the ones put into the properties sheet.
-function buildDocumentPropertiesFromSheet() {
+function buildDocumentPropertiesIfEmpty() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const propSheet = ss.getSheetByName("Document Properties")
   let docProps = PropertiesService.getDocumentProperties().getProperties()
   if (Object.keys(docProps).length === 0 && propSheet) {
-    let propsGrid = propSheet.getDataRange().getValues()
-    propsGrid.shift() // Remove the header row from the array
-    let defaultPropNames = Object.keys(defaultDocumentProperties)
-    let newProps = []
-    propsGrid.forEach(row => {
-      if (defaultPropNames.indexOf(row[0]) !== -1) {
-        let prop = {}
-        prop.name = row[0]
-        prop.value = coerceValue(row[1], defaultDocumentProperties[row[0]].type)
-        prop.description = row[2]
-        newProps.push(prop)
-      }
-    })
-    setDocProps(newProps)
-    updatePropertiesSheet()
+    buildDocumentPropertiesFromSheet()
   }
+}
+
+function buildDocumentPropertiesFromSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const propSheet = ss.getSheetByName("Document Properties")
+  let propsGrid = propSheet.getDataRange().getValues()
+  propsGrid.shift() // Remove the header row from the array
+  let defaultPropNames = Object.keys(defaultDocumentProperties)
+  let newProps = []
+  propsGrid.forEach(row => {
+    if (defaultPropNames.indexOf(row[0]) !== -1) {
+      let prop = {}
+      prop.name = row[0]
+      prop.value = coerceValue(row[1], defaultDocumentProperties[row[0]].type)
+      prop.description = row[2]
+      newProps.push(prop)
+    }
+  })
+  setDocProps(newProps)
+  updatePropertiesSheet()
 }
 
 // If there are any default document properties that are missing from the actual
@@ -447,36 +451,6 @@ function logMetadata() {
   } catch(e) { logError(e) }
 }
 
-// Sets up a new instance of RideSheet
-function buildRideSheetInstall(destFolderId, sourceRideSheetFileId, namePrefix) {
-  const manifestTemplateName = "Manifest Template"
-  const reportFileName = "Monthly Reporting"
-
-  const sourceRideSheetFile = DriveApp.getFileById(sourceRideSheetFileId)
-  const sourceFolder = sourceRideSheetFile.getParents().next()
-  const sourceTemplateFile = sourceFolder.getFoldersByName("Settings").next().
-    getFilesByName(manifestTemplateName).next()
-  const sourceReportFile = sourceFolder.getFoldersByName("Reports").next().
-    getFilesByName(reportFileName).next()
-
-  const destFolder = DriveApp.getFolderById(destFolderId)
-  const newManifestFolder = destFolder.createFolder("Manifests")
-  const newReportsFolder = destFolder.createFolder("Reports")
-  const newSettingsFolder = destFolder.createFolder("Settings")
-  const newRideSheetFile = sourceRideSheetFile.makeCopy(destFolder).setName(namePrefix + " RideSheet")
-  const newTemplateFile = sourceTemplateFile.makeCopy(newSettingsFolder).setName(manifestTemplateName)
-  const newReportFile = sourceReportFile.makeCopy(newReportsFolder).setName(reportFileName)
-
-  const newRideSheet = SpreadsheetApp.open(newRideSheetFile)
-  const propSheet = newRideSheet.getSheetByName("Document Properties")
-  const propSheetDataRange = propSheet.getDataRange()
-  const propSheetData = propSheetDataRange.getValues()
-  updatePropertyRange(propSheetData,"driverManifestFolderId",newManifestFolder.getId())
-  updatePropertyRange(propSheetData,"driverManifestTemplateDocId",newTemplateFile.getId())
-  updatePropertyRange(propSheetData,"configFolderId",newSettingsFolder.getId())
-  propSheetDataRange.setValues(propSheetData)
-}
-
 /**
  * Sets up a new RideSheet installation by:
  * - Building document properties from the properties sheet
@@ -493,7 +467,7 @@ function setupNewInstall() {
     const parentFolder = currentFile.getParents().next()
     const manifestsFolder = parentFolder.createFolder("Manifests")
     const templatesFolder = parentFolder.createFolder("Settings")
-    const sourceTemplateId = "1-E-gxHgS3h5gr9Fh4VfdZkAwcN5kjJ7_hqx69Cs1BmY"
+    const sourceTemplateId = "1j6eANeyJdGH8sKa5y6ZfvR_U8l3yzBOeGO-HZo7KoN8"
     const sourceTemplate = DriveApp.getFileById(sourceTemplateId)
     const newTemplate = sourceTemplate.makeCopy(templatesFolder)
     const propSheet = ss.getSheetByName("Document Properties")
@@ -503,6 +477,7 @@ function setupNewInstall() {
     updatePropertyRange(propSheetData, "driverManifestFolderId", manifestsFolder.getId())
     updatePropertyRange(propSheetData, "driverManifestTemplateDocId", newTemplate.getId())
     propSheetDataRange.setValues(propSheetData)
+    buildDocumentPropertiesFromSheet()
   } catch(e) {
     logError(e)
   }

@@ -1,3 +1,5 @@
+const SCRIPT_VERSION = "1.0.1"
+
 const debugLogging                       = false
 const allowPropDescriptionEdits          = false
 
