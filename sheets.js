@@ -472,6 +472,13 @@ function getSheetHeaderNames(sheet, {forceRefresh = false, headerRowPosition = 1
   } catch(e) { logError(e) }
 }
 
+function setValuesForRow(newValues, rowNumber, sheet, {headerRowPosition = 1, overwriteAll = false} = {}) {
+  try {
+    const range = sheet.getRange(rowNumber + ":" + rowNumber)
+    return setValuesByHeaderNames([newValues], range, {headerRowPosition: headerRowPosition, overwriteAll: overwriteAll})
+  } catch(e) { logError(e) }
+}
+
 // Get header information for column range only, rather than the entire sheet
 // Uses getSheetHeaderNames for caching purposes.
 function getRangeHeaderNames(range, {forceRefresh = false, headerRowPosition = 1} = {}) {
