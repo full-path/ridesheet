@@ -131,7 +131,7 @@ function completeTripRunValues(e) {
     const range = e.range
     const tripRow = getFullRow(range)
     const tripValues = getRangeValuesAsTable(tripRow)[0]
-    if (tripValues["Run OK?"] === 1) {
+    if (tripValues["|Run OK?|"] === 1) {
       if (tripValues["Driver ID"] && !tripValues["Vehicle ID"]) {
         const filter = function(row) {
           return row["Run Date"].valueOf() === tripValues["Trip Date"].valueOf() &&
