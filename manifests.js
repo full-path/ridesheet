@@ -1,5 +1,20 @@
 const TEMP_TEXT = "{{Temporary Text}}"
 
+/**
+ * Gets the appropriate manifest file name function (local override or default)
+ * @returns {Function} The file name function to use
+ * Example function:
+ * function getManifestFileNameByRun_local(manifestGroup) {
+ *   return `${manifestGroup["Run ID"]}_${formatDate(manifestGroup["Trip Date"], null, "yyyy-MM-dd")}_${manifestGroup["Driver ID"]}`
+ * }
+ */
+function getManifestFileNameFunction() {
+  if (typeof getManifestFileNameByRun_local === 'function') {
+    return getManifestFileNameByRun_local
+  }
+  return getManifestFileNameByRun
+}
+
 function createManifestsByRunForDate() {
   try {
     const templateDocId = getDocProp("driverManifestTemplateDocId")
@@ -45,7 +60,7 @@ function createManifestsByRunForDate() {
     const dateFilter = createDateFilterForManifestData(date)
     const manifestData = getManifestData(dateFilter)
     const groupedManifestData = groupManifestDataByRun(manifestData)
-    const manifestCount = createManifests(templateDocId, groupedManifestData, getManifestFileNameByRun)
+    const manifestCount = createManifests(templateDocId, groupedManifestData, getManifestFileNameFunction())
     ss.toast(manifestCount + " created.","Manifest creation complete.")
   } catch(e) { logError(e) }
 }
@@ -79,7 +94,7 @@ function createSelectedManifestsByRun() {
     const runFilter = createRunFilterForManifestData(runList)
     const manifestData = getManifestData(runFilter, activeSheet.getName())
     const groupedManifestData = groupManifestDataByRun(manifestData)
-    const manifestCount = createManifests(templateDocId, groupedManifestData, getManifestFileNameByRun)
+    const manifestCount = createManifests(templateDocId, groupedManifestData, getManifestFileNameFunction())
     ss.toast(manifestCount + " created.","Manifest creation complete.")
   } catch(e) { logError(e) }
 }
@@ -89,7 +104,6 @@ function createManifests(templateDocId, groupedManifestData, fileNameFunction) {
     const templateDoc = DocumentApp.openById(templateDocId)
     const folder = DriveApp.getFolderById(getDocProp("driverManifestFolderId"))
     prepareTemplate(templateDoc)
-
     let manifestCount = 0
     groupedManifestData.forEach(manifestGroup => {
       const manifestFileName = fileNameFunction(manifestGroup)
@@ -107,7 +121,6 @@ function createManifest(manifestGroup, templateDoc, manifestFileName, folder) {
   const templateFileId = getDocProp("driverManifestTemplateDocId")
   const manifestFile   = DriveApp.getFileById(templateFileId).makeCopy(folder).setName(manifestFileName)
   const manifestDoc    = DocumentApp.openById(manifestFile.getId())
-
   emptyBody(manifestDoc)
   populateManifest(manifestDoc, templateDoc, manifestGroup)
   removeTempElement(manifestDoc)
