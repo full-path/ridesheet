@@ -18,7 +18,7 @@ function buildMenus() {
   settingsMenu.addItem('Rebuild metadata', 'rebuildAllMetadata')
   settingsMenu.addItem('Show metadata as column header notes', 'showColumnMetadata')
   settingsMenu.addItem('Clear metadata notes', 'clearHeaderNotes')
-  settingsMenu.addItem('Setup new installation', 'setupNewInstall')
+  settingsMenu.addItem('Set up new installation', 'setupNewInstall')
   menu.addSubMenu(settingsMenu)
   menu.addToUi()
   buildLocalMenus()
@@ -95,12 +95,121 @@ function buildNamedRange(ss, rangeName, rangeConfigObj) {
   }
 }
 
+function runFirstOpenTasks() {
+  try {
+    const ui = safeGetUi()
+    if (ui && isNewCopy()) {
+      const menu = ui.createMenu('⭐️NEW INSTALL⭐️')
+      menu.addItem('Set up new installation', "setupNewInstall")
+      menu.addToUi()
+      const msg = `
+        It looks like you have a fresh copy of RideSheet.
+        If you like set up its environment,
+        select "Set up new installation" from the "NEW INSTALL" menu,
+        and then grant RideSheet's permission request by clicking
+        "Select all" then scrolling down and clicking "Continue".
+      `
+      ui.alert(msg)
+    }
+  } catch(e) { logError(e) }
+}
+
+function isNewCopy() {
+  const propCount = PropertiesService.getDocumentProperties().getProperties()
+  return Object.keys(propCount).length === 0
+}
+
+function setupNewInstall() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const ui = safeGetUi()
+    buildDocumentPropertiesFromSheet()
+
+    // Instructions
+    if (ui) {
+      const alertResponse = ui.alert(
+        'Create Folders',
+        'Before continuing, create three folders in the same folder as this spreadsheet:\n\n' +
+        '1. "RideSheet Manifests" (for driver manifests)\n' +
+        '2. "RideSheet Settings" (for templates)\n' +
+        '3. "RideSheet Temp Files" (for temporary files)\n\n' +
+        'Click OK when ready to continue.',
+        ui.ButtonSet.OK_CANCEL
+      )
+      if (alertResponse !== ui.Button.OK) {
+        ss.toast("New installation cancelled.")
+        return
+      }
+    }
+
+    const currentFile = DriveApp.getFileById(ss.getId())
+    const rootRideSheetFolder = currentFile.getParents().next()
+    const manifestsFolder = findFolder("RideSheet Manifests",  rootRideSheetFolder)
+    const settingsFolder  = findFolder("RideSheet Settings",   rootRideSheetFolder)
+    const tempFolder      = findFolder("RideSheet Temp Files", rootRideSheetFolder)
+
+    let createManifestTemplate = true
+    let templateDocId
+    let file
+    const fileIterator = settingsFolder.getFiles()
+    while (fileIterator.hasNext()) {
+      file = fileIterator.next()
+      if (file.getName() === "RideSheet Manifest Template") {
+        createManifestTemplate = false
+        templateDocId = file.getId()
+        ss.toast(`Existing file named "RideSheet Manifest Template" found and will be used.`)
+      }
+    }
+
+    if (createManifestTemplate) {
+      const templateSourceHtml = HtmlService.createHtmlOutputFromFile('manifest_template').getContent()
+      templateDocId = createDoc("RideSheet Manifest Template", settingsFolder.getId(), templateSourceHtml, "text/html")
+
+      // Open up the doc and put the page header and footer into place
+      prepareTemplate(templateDocId)
+      const doc = DocumentApp.openById(templateDocId)
+      replaceTextInRange(doc.getNamedRanges("PAGE_HEADER")[0].getRange(), doc.addHeader())
+      replaceTextInRange(doc.getNamedRanges("PAGE_FOOTER")[0].getRange(), doc.addFooter())
+
+      // Now delete the body elements that held the page header and footer text
+      // This text wouldn't break anything, but it would be confusing to the user
+      const rangeNamesToRemove = ["OUTER_PAGE_HEADER","OUTER_PAGE_FOOTER"]
+      rangeNamesToRemove.forEach(namedRangeName => {
+        const namedRange = doc.getNamedRanges(namedRangeName)[0].getRange()
+        const rangeElements = namedRange.getRangeElements()
+        rangeElements.forEach(rangeElement => {
+          const element = rangeElement.getElement()
+          element.removeFromParent()
+        })
+      })
+    }
+
+    const propSheet = ss.getSheetByName("Document Properties")
+    const propSheetDataRange = propSheet.getDataRange()
+    const propSheetData = propSheetDataRange.getValues()
+    updatePropertyRange(propSheetData, "driverManifestFolderId",      manifestsFolder.getId())
+    updatePropertyRange(propSheetData, "tempFileFolderId",            tempFolder.getId())
+    updatePropertyRange(propSheetData, "driverManifestTemplateDocId", templateDocId)
+    propSheetDataRange.setValues(propSheetData)
+    buildDocumentPropertiesFromSheet()
+
+    if (ui) {
+      ui.alert("Success", "Installation complete.", ui.ButtonSet.OK)
+    } else {
+      ss.toast("Installation complete.","Success")
+    }
+  } catch(e) {
+    safeGetUi()?.alert(e.name + ': ' + e.message)
+    logError(e)
+  }
+}
+
 function buildDocumentPropertiesIfEmpty() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const propSheet = ss.getSheetByName("Document Properties")
-  let docProps = PropertiesService.getDocumentProperties().getProperties()
-  if (Object.keys(docProps).length === 0 && propSheet) {
+  if (isNewCopy() && propSheet) {
     buildDocumentPropertiesFromSheet()
+    return true
   }
 }
 
@@ -451,38 +560,6 @@ function logMetadata() {
   } catch(e) { logError(e) }
 }
 
-/**
- * Sets up a new RideSheet installation by:
- * - Building document properties from the properties sheet
- * - Creating Manifests and Templates folders in the parent directory
- * - Copying the manifest template from RideSheet Public Sample to the Templates folder
- * - Updating document properties with new folder and template IDs
- * @throws {Error} If any step of the setup process fails
- */
-function setupNewInstall() {
-  try {
-    buildDocumentPropertiesFromSheet()
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
-    const currentFile = DriveApp.getFileById(ss.getId())
-    const parentFolder = currentFile.getParents().next()
-    const manifestsFolder = parentFolder.createFolder("Manifests")
-    const templatesFolder = parentFolder.createFolder("Settings")
-    const sourceTemplateId = "1j6eANeyJdGH8sKa5y6ZfvR_U8l3yzBOeGO-HZo7KoN8"
-    const sourceTemplate = DriveApp.getFileById(sourceTemplateId)
-    const newTemplate = sourceTemplate.makeCopy(templatesFolder)
-    const propSheet = ss.getSheetByName("Document Properties")
-    const propSheetDataRange = propSheet.getDataRange()
-    const propSheetData = propSheetDataRange.getValues()
-
-    updatePropertyRange(propSheetData, "driverManifestFolderId", manifestsFolder.getId())
-    updatePropertyRange(propSheetData, "driverManifestTemplateDocId", newTemplate.getId())
-    propSheetDataRange.setValues(propSheetData)
-    buildDocumentPropertiesFromSheet()
-  } catch(e) {
-    logError(e)
-  }
-}
-
 function updatePropertyRange(dataRange, propName, newPropValue) {
   dataRange.forEach(row => {
     if (row[0] === propName) { row[1] = newPropValue }
@@ -578,4 +655,14 @@ function getInBoundsRange(range) {
   const sheetLastRow = sheet.getMaxRows()
   const newRowCount = range.getLastRow() > sheetLastRow ? sheetLastRow - range.getRow() + 1 : range.getNumRows()
   return sheet.getRange(range.getRow(),range.getColumn(), newRowCount,range.getNumColumns())
+}
+
+function findFolder(folderName, rootFolder) {
+  const folderIterator = rootFolder.getFoldersByName(folderName)
+  if (folderIterator.hasNext()) {
+    return folderIterator.next()
+  } else {
+    ss.toast(`Folder "${folderName}" not found.`)
+    return
+  }
 }

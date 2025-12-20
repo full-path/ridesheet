@@ -196,3 +196,11 @@ function pluralize(count, singular, plural){
     logError(e)
   }
 }
+
+function safeGetUi() {
+  try {
+    return SpreadsheetApp.getUi()
+  } catch (e) {
+    return null
+  }
+}

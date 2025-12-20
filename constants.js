@@ -51,10 +51,20 @@ const sheetsWithHeaders = [
 ]
 
 const defaultDocumentProperties = {
+  manifestTemplateLastUpdated_: {
+    type: "number",
+    value: 0,
+    description: "The date the driver manifest template was last updated, formatted as a numerical JavaScipt timestamp"
+  },
   lastCustomerID_: {
     type: "number",
     value: 0,
     description: "The value of the last set customer ID."
+  },
+  tempFileFolderId: {
+    type: "string",
+    value: "Enter ID here",
+    description: "The ID of the folder where RideSheet can save temporary files."
   },
   driverManifestFolderId: {
     type: "string",
@@ -65,6 +75,16 @@ const defaultDocumentProperties = {
     type: "string",
     value: "Enter ID here",
     description: "The document ID of the Google Doc you'll be using as your manifest template."
+  },
+  createManifestPdf: {
+    type: "boolean",
+    value: true,
+    description: "When creating manifests, create them as PDFs?"
+  },
+  createManifestDoc: {
+    type: "boolean",
+    value: true,
+    description: "When creating manifests, keep the Google Docs version?"
   },
   geocoderBoundNeLatitude: {
     type: "number",
