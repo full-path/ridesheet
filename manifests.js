@@ -90,19 +90,17 @@ function createSelectedManifestsByRun() {
 function createManifests(templateDocId, groupedManifestData, fileNameFunction) {
   try {
     const manifestFolderId = getDocProp("driverManifestFolderId")
-    const tempFolderId = getDocProp("tempFileFolderId")
     const templateDoc = DocumentApp.openById(templateDocId)
     prepareTemplate(templateDocId)
 
     let manifestCount = 0
     groupedManifestData.forEach(manifestGroup => {
       const manifestFileName = fileNameFunction(manifestGroup)
-      const docDestFolder = getDocProp("createManifestDoc") ? manifestFolderId : tempFolderId
-      const manifestDocId = createManifest(manifestGroup, templateDoc, manifestFileName, docDestFolder)
+      const manifestDocId = createManifest(manifestGroup, templateDoc, manifestFileName, manifestFolderId)
       if (getDocProp("createManifestPdf")) {
         createPdfFromDocFile(manifestDocId, manifestFileName, manifestFolderId)
       }
-      if (!getDocProp("createManifestDoc")) {
+      if (!getDocProp("keepManifestDoc")) {
         Drive.Files.update({ trashed: true }, manifestDocId, null, { supportsAllDrives: true })
       }
       manifestCount++
@@ -383,8 +381,8 @@ function deleteAllNamedRanges(doc) {
 }
 
 function prepareTemplate(driverManifestTemplateDocId) {
-  const templateFile = DriveApp.getFileById(driverManifestTemplateDocId)
-  const lastUpdated = templateFile.getLastUpdated().getTime()
+  lastUpdated = getFileLastUpdated(driverManifestTemplateDocId)
+
   if (lastUpdated > getDocProp("manifestTemplateLastUpdated_")) {
     const templateDoc = DocumentApp.openById(driverManifestTemplateDocId)
     deleteAllNamedRanges(templateDoc)
@@ -426,7 +424,7 @@ function prepareTemplate(driverManifestTemplateDocId) {
       }
     }
     templateDoc.saveAndClose()
-    setDocProp("manifestTemplateLastUpdated_", templateFile.getLastUpdated().getTime())
+    setDocProp("manifestTemplateLastUpdated_", getFileLastUpdated(driverManifestTemplateDocId))
   }
 }
 
@@ -502,4 +500,15 @@ function createRunFilterForManifestData(runs) {
               trip["Vehicle ID"] === run["Vehicle ID"]
     })
   }
+}
+
+function getFileLastUpdated(fileId) {
+  const fileMetadata = Drive.Files.get(
+    fileId,
+    {
+      fields: 'modifiedTime',
+      supportsAllDrives: true
+    }
+  )
+  return new Date(fileMetadata.modifiedTime).getTime()
 }

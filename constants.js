@@ -61,11 +61,6 @@ const defaultDocumentProperties = {
     value: 0,
     description: "The value of the last set customer ID."
   },
-  tempFileFolderId: {
-    type: "string",
-    value: "Enter ID here",
-    description: "The ID of the folder where RideSheet can save temporary files."
-  },
   driverManifestFolderId: {
     type: "string",
     value: "Enter ID here",
@@ -81,7 +76,7 @@ const defaultDocumentProperties = {
     value: true,
     description: "When creating manifests, create them as PDFs?"
   },
-  createManifestDoc: {
+  keepManifestDoc: {
     type: "boolean",
     value: true,
     description: "When creating manifests, keep the Google Docs version?"

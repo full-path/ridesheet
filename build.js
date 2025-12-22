@@ -126,78 +126,83 @@ function setupNewInstall() {
     buildDocumentPropertiesFromSheet()
 
     // Instructions
-    if (ui) {
-      const alertResponse = ui.alert(
-        'Create Folders',
-        'Before continuing, create three folders in the same folder as this spreadsheet:\n\n' +
-        '1. "RideSheet Manifests" (for driver manifests)\n' +
-        '2. "RideSheet Settings" (for templates)\n' +
-        '3. "RideSheet Temp Files" (for temporary files)\n\n' +
-        'Click OK when ready to continue.',
-        ui.ButtonSet.OK_CANCEL
-      )
-      if (alertResponse !== ui.Button.OK) {
+    const manifestsResponse = ui.prompt(
+      'New Install Step 1: Set Folder Where Driver Manifests Will Be Saved',
+      'RideSheet needs to know where driver manifests will be saved.\n\n' +
+      'We recommend that the folder be named "RideSheet Driver Manifests" and\n' +
+      'that it be located in the same folder as RideSheet itself.\n\n' +
+      'Create the folder now in another browser window, double-click into it, ' +
+      'copy its address from the browser address bar, and enter that address below.',
+      ui.ButtonSet.OK_CANCEL
+    )
+    if (manifestsResponse.getSelectedButton() !== ui.Button.OK) {
         ss.toast("New installation cancelled.")
         return
       }
+    const manifestsFolderId = extractFolderId(manifestsResponse.getResponseText())
+
+    // Get Settings folder ID
+    const settingsResponse = ui.prompt(
+      'New Install Step 2: Set Folder Where The Driver Manifest Template Will Be Saved',
+      'RideSheet needs to know where to save the driver manifest template.\n\n' +
+      'We recommend that the folder be named "RideSheet Settings" and\n' +
+      'that it be located in the same folder as RideSheet itself.\n\n' +
+      'Create the folder now in another browser window, double-click into it, ' +
+      'copy its address from the browser address bar, and enter that address below.',
+      ui.ButtonSet.OK_CANCEL
+    )
+    if (settingsResponse.getSelectedButton() !== ui.Button.OK) {
+      ss.toast("Setup cancelled.")
+      return
+    }
+    const settingsFolderId = extractFolderId(settingsResponse.getResponseText())
+
+    // Make sure we can actually put a file in the manifest folder
+    try {
+      const testDocId = createDoc("Test File", manifestsFolderId, "Just testing", "text/plain")
+      Drive.Files.update({ trashed: true }, testDocId, null, { supportsAllDrives: true })
+    } catch(e) {
+      safeGetUi()?.alert("Error Testing Access to Driver Manifest Folder", e.name + ': ' + e.message, ui.ButtonSet.OK)
+      return
     }
 
-    const currentFile = DriveApp.getFileById(ss.getId())
-    const rootRideSheetFolder = currentFile.getParents().next()
-    const manifestsFolder = findFolder("RideSheet Manifests",  rootRideSheetFolder)
-    const settingsFolder  = findFolder("RideSheet Settings",   rootRideSheetFolder)
-    const tempFolder      = findFolder("RideSheet Temp Files", rootRideSheetFolder)
-
-    let createManifestTemplate = true
-    let templateDocId
-    let file
-    const fileIterator = settingsFolder.getFiles()
-    while (fileIterator.hasNext()) {
-      file = fileIterator.next()
-      if (file.getName() === "RideSheet Manifest Template") {
-        createManifestTemplate = false
-        templateDocId = file.getId()
-        ss.toast(`Existing file named "RideSheet Manifest Template" found and will be used.`)
-      }
+    // Create the driver manifest template via an import from HTML
+    // Imports from HTML cannot set the page header or footer
+    const templateSourceHtml = HtmlService.createHtmlOutputFromFile('manifest_template').getContent()
+    try {
+      templateDocId = createDoc("RideSheet Manifest Template", settingsFolderId, templateSourceHtml, "text/html")
+    } catch(e) {
+      safeGetUi()?.alert("Error Saving Driver Manifest Template", e.name + ': ' + e.message, ui.ButtonSet.OK)
+      return
     }
 
-    if (createManifestTemplate) {
-      const templateSourceHtml = HtmlService.createHtmlOutputFromFile('manifest_template').getContent()
-      templateDocId = createDoc("RideSheet Manifest Template", settingsFolder.getId(), templateSourceHtml, "text/html")
+    // Open up the doc and put the page header and footer into place
+    prepareTemplate(templateDocId)
+    const doc = DocumentApp.openById(templateDocId)
+    replaceTextInRange(doc.getNamedRanges("PAGE_HEADER")[0].getRange(), doc.addHeader())
+    replaceTextInRange(doc.getNamedRanges("PAGE_FOOTER")[0].getRange(), doc.addFooter())
 
-      // Open up the doc and put the page header and footer into place
-      prepareTemplate(templateDocId)
-      const doc = DocumentApp.openById(templateDocId)
-      replaceTextInRange(doc.getNamedRanges("PAGE_HEADER")[0].getRange(), doc.addHeader())
-      replaceTextInRange(doc.getNamedRanges("PAGE_FOOTER")[0].getRange(), doc.addFooter())
-
-      // Now delete the body elements that held the page header and footer text
-      // This text wouldn't break anything, but it would be confusing to the user
-      const rangeNamesToRemove = ["OUTER_PAGE_HEADER","OUTER_PAGE_FOOTER"]
-      rangeNamesToRemove.forEach(namedRangeName => {
-        const namedRange = doc.getNamedRanges(namedRangeName)[0].getRange()
-        const rangeElements = namedRange.getRangeElements()
-        rangeElements.forEach(rangeElement => {
-          const element = rangeElement.getElement()
-          element.removeFromParent()
-        })
+    // Now delete the body elements that held the page header and footer text
+    // This text wouldn't break anything, but it would be confusing to the user
+    const rangeNamesToRemove = ["OUTER_PAGE_HEADER","OUTER_PAGE_FOOTER"]
+    rangeNamesToRemove.forEach(namedRangeName => {
+      const namedRange = doc.getNamedRanges(namedRangeName)[0].getRange()
+      const rangeElements = namedRange.getRangeElements()
+      rangeElements.forEach(rangeElement => {
+        const element = rangeElement.getElement()
+        element.removeFromParent()
       })
-    }
+    })
 
     const propSheet = ss.getSheetByName("Document Properties")
     const propSheetDataRange = propSheet.getDataRange()
     const propSheetData = propSheetDataRange.getValues()
-    updatePropertyRange(propSheetData, "driverManifestFolderId",      manifestsFolder.getId())
-    updatePropertyRange(propSheetData, "tempFileFolderId",            tempFolder.getId())
+    updatePropertyRange(propSheetData, "driverManifestFolderId",      manifestsFolderId)
     updatePropertyRange(propSheetData, "driverManifestTemplateDocId", templateDocId)
     propSheetDataRange.setValues(propSheetData)
     buildDocumentPropertiesFromSheet()
 
-    if (ui) {
-      ui.alert("Success", "Installation complete.", ui.ButtonSet.OK)
-    } else {
-      ss.toast("Installation complete.","Success")
-    }
+    ui.alert("Success", "Installation complete.\n\nYou can now generate driver manifests.", ui.ButtonSet.OK)
   } catch(e) {
     safeGetUi()?.alert(e.name + ': ' + e.message)
     logError(e)
@@ -657,12 +662,17 @@ function getInBoundsRange(range) {
   return sheet.getRange(range.getRow(),range.getColumn(), newRowCount,range.getNumColumns())
 }
 
-function findFolder(folderName, rootFolder) {
-  const folderIterator = rootFolder.getFoldersByName(folderName)
-  if (folderIterator.hasNext()) {
-    return folderIterator.next()
-  } else {
-    ss.toast(`Folder "${folderName}" not found.`)
-    return
+function extractFolderId(input) {
+  if (!input) {
+    throw new Error('No folder ID provided')
   }
+  input = input.trim()
+  // Try to extract from full URL
+  // https://drive.google.com/drive/folders/FOLDER_ID
+  const urlMatch = input.match(/\/folders\/([a-zA-Z0-9_-]+)/)
+  if (urlMatch) {
+    return urlMatch[1]
+  }
+  // Assume it's already just the ID
+  return input
 }
