@@ -83,10 +83,6 @@
 		}
 		
 		/* ===== TEXT STYLES ===== */
-		.text-bold {
-			font-weight: 700;
-		}
-		
 		.text-title {
 			font-size: 26pt;
 		}
@@ -204,7 +200,7 @@
 	<h1 class="text-center heading-spaced">{Trip Date} &mdash; {Driver Name}</h1>
 	
 	<p class="text-center">
-		<span class="text-bold">Vehicle: {Vehicle Name}</span>
+		<b>Vehicle: {Vehicle Name}</b>
 	</p>
 	
 	<p></p>
@@ -212,18 +208,18 @@
 	<table class="table-manifest">
 		<tr>
 			<td>
-				<p><span class="text-bold">Start Time:</span></p>
+				<p><b>Start Time:</b></p>
 			</td>
 			<td>
-				<p><span class="text-bold">Start Odometer:</span></p>
+				<p><b>Start Odometer:</b></p>
 			</td>
 		</tr>
 		<tr>
 			<td>
-				<p><span class="text-bold">End Time:</span></p>
+				<p><b>End Time:</b></p>
 			</td>
 			<td>
-				<p><span class="text-bold">End Odometer:</span></p>
+				<p><b>End Odometer:</b></p>
 			</td>
 		</tr>
 	</table>
@@ -234,31 +230,26 @@
 	
 	<!-- PICKUP SECTION TEMPLATE -->
 	<p><span class="highlight-marker">[BEGIN PICKUP]</span></p>
-	
 	<p>
 		<span class="text-pickup-arrow">&#11014;</span>
-		<span class="text-bold">{PU Time}:</span>
+		<b>{PU Time}:</b>
 		&nbsp;Pickup {Customer First Name} {Customer Last Name} at {PU Address} Phone: {Phone Number} {Mobility Factors}
 	</p>
 	<p>
-		<span class="text-bold">Appointment Time: </span>{Appt Time}
-		<span class="text-bold">&nbsp;Service: </span>{Default Service ID}
+		<b>Appointment Time: </b>{Appt Time}
+		<b>&nbsp;Service: </b>{Default Service ID}
 	</p>
 	<p>Notes: {Notes}</p>
-	
 	<p><span class="highlight-marker">[END PICKUP]</span></p>
 	<p></p>
 	
 	<!-- DROP OFF SECTION TEMPLATE -->
 	<p><span class="highlight-marker">[BEGIN DROP OFF]</span></p>
-	
 	<p>
 		<span class="text-dropoff-arrow">&#11015;</span>
-		<span class="text-bold">{DO Time}:</span>
+		<b>{DO Time}:</b>
 		&nbsp;Drop off {Customer First Name} {Customer Last Name} at {DO Address}
 	</p>
-	<p>{Notes}</p>
-	
 	<p><span class="highlight-marker">[END DROP OFF]</span></p>
 	<p></p>
 	

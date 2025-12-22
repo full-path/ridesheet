@@ -203,13 +203,11 @@ function createDoc(fileName, folderId, content, contentType) {
 }
 
 function replaceTextInRange(range, docSection, data) {
-  let rangeElements = range.getRangeElements()
+  const rangeElements = range.getRangeElements()
   rangeElements.forEach(rangeElement => {
     const newElement = rangeElement.getElement().copy()
     appendElement(docSection, newElement)
-    if (data) {
-      replaceElementText(newElement, data)
-    }
+    if (data) replaceElementText(newElement, data)
   })
 }
 

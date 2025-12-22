@@ -141,6 +141,17 @@ function setupNewInstall() {
       }
     const manifestsFolderId = extractFolderId(manifestsResponse.getResponseText())
 
+    // Make sure we can truly put a file in the manifest folder
+    try {
+      const testDocId = createDoc("Test File", manifestsFolderId, "Just testing", "text/plain")
+      Drive.Files.update({ trashed: true }, testDocId, null, { supportsAllDrives: true })
+    } catch(e) {
+      ui.alert("Error Testing Access to Driver Manifest Folder",
+        'Check that the folder location is correct.\n\n' +
+        'New installation cancelled.', ui.ButtonSet.OK)
+      return
+    }
+
     // Get Settings folder ID
     const settingsResponse = ui.prompt(
       'New Install Step 2: Set Folder Where The Driver Manifest Template Will Be Saved',
@@ -157,24 +168,21 @@ function setupNewInstall() {
     }
     const settingsFolderId = extractFolderId(settingsResponse.getResponseText())
 
-    // Make sure we can actually put a file in the manifest folder
+    // Do the same testing with the settings folder
     try {
-      const testDocId = createDoc("Test File", manifestsFolderId, "Just testing", "text/plain")
+      const testDocId = createDoc("Test File", settingsFolderId, "Just testing", "text/plain")
       Drive.Files.update({ trashed: true }, testDocId, null, { supportsAllDrives: true })
     } catch(e) {
-      safeGetUi()?.alert("Error Testing Access to Driver Manifest Folder", e.name + ': ' + e.message, ui.ButtonSet.OK)
+      ui.alert("Error Testing Access to Settings Folder",
+        'Check that the folder location is correct.\n\n' +
+        'New installation cancelled.', ui.ButtonSet.OK)
       return
     }
 
     // Create the driver manifest template via an import from HTML
     // Imports from HTML cannot set the page header or footer
     const templateSourceHtml = HtmlService.createHtmlOutputFromFile('manifest_template').getContent()
-    try {
-      templateDocId = createDoc("RideSheet Manifest Template", settingsFolderId, templateSourceHtml, "text/html")
-    } catch(e) {
-      safeGetUi()?.alert("Error Saving Driver Manifest Template", e.name + ': ' + e.message, ui.ButtonSet.OK)
-      return
-    }
+    templateDocId = createDoc("RideSheet Manifest Template", settingsFolderId, templateSourceHtml, "text/html")
 
     // Open up the doc and put the page header and footer into place
     prepareTemplate(templateDocId)
