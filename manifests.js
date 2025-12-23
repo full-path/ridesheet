@@ -199,7 +199,11 @@ function createDoc(fileName, folderId, content, contentType) {
       }
     )
     return file.id
-  } catch(e) {logError(e)}
+  } catch(e) {
+    logError(e)
+    // Re-throw to allow callers to handle it
+    throw e
+  }
 }
 
 function replaceTextInRange(range, docSection, data) {
