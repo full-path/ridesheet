@@ -187,8 +187,8 @@ function setupNewInstall() {
     // Open up the doc and put the page header and footer into place
     prepareTemplate(templateDocId)
     const doc = DocumentApp.openById(templateDocId)
-    replaceTextInRange(doc.getNamedRanges("PAGE_HEADER")[0].getRange(), doc.addHeader())
-    replaceTextInRange(doc.getNamedRanges("PAGE_FOOTER")[0].getRange(), doc.addFooter())
+    appendTemplateRange(doc.getNamedRanges("PAGE_HEADER")[0].getRange(), doc.addHeader())
+    appendTemplateRange(doc.getNamedRanges("PAGE_FOOTER")[0].getRange(), doc.addFooter())
 
     // Now delete the body elements that held the page header and footer text
     // This text wouldn't break anything, but it would be confusing to the user

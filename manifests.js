@@ -145,15 +145,15 @@ function createManifest(manifestGroup, templateDoc, manifestFileName, folderId) 
   }
 
   // Add the document header elements
-  replaceTextInRange(templateDoc.getNamedRanges("HEADER")[0].getRange(), manifestBody, manifestGroup["Events"][0])
+  appendTemplateRange(templateDoc.getNamedRanges("HEADER")[0].getRange(), manifestBody, manifestGroup["Events"][0])
 
   // Add all the PU and DO elements. Use the section name of each event to decide whether to add a PU or DO range.
   manifestGroup["Events"].forEach((event, i) => {
-    replaceTextInRange(templateDoc.getNamedRanges(event["Section Name"])[0].getRange(), manifestBody, event)
+    appendTemplateRange(templateDoc.getNamedRanges(event["Section Name"])[0].getRange(), manifestBody, event)
   })
 
   // Add the footer elements
-  replaceTextInRange(templateDoc.getNamedRanges("FOOTER")[0].getRange(), manifestBody, manifestGroup["Events"][manifestGroup["Events"].length - 1])
+  appendTemplateRange(templateDoc.getNamedRanges("FOOTER")[0].getRange(), manifestBody, manifestGroup["Events"][manifestGroup["Events"].length - 1])
 
   // Remove the tempText needed to create the file
   manifestBody.removeChild(manifestBody.getChild(0))
@@ -206,20 +206,30 @@ function createDoc(fileName, folderId, content, contentType) {
   }
 }
 
-function replaceTextInRange(range, docSection, data) {
+function appendTemplateRange(range, docSection, data) {
   const rangeElements = range.getRangeElements()
   rangeElements.forEach(rangeElement => {
-    const newElement = rangeElement.getElement().copy()
-    appendElement(docSection, newElement)
-    if (data) replaceElementText(newElement, data)
+    const templateElement = rangeElement.getElement()
+    const newElement = templateElement.copy()
+    if (data) {
+      const tempText = replaceText(templateElement.getText(), data)
+      // Append the element if it will ultimately have text or
+      // if the element has no fields to populate (e.g., it's just a blank line)
+      if (tempText.trim() || !elementFieldCount(templateElement)) {
+        appendElement(docSection, newElement)
+        replaceElementText(newElement, data)
+      }
+    } else {
+      appendElement(docSection, newElement)
+    }
   })
 }
 
 function replaceElementText(element, data) {
-  let elementText = element.getText()
+  const elementText = element.getText()
   //text = "This is {a} test {with} words in {braces]"
-  let pattern = /{(.*?)}/g
-  let innerMatches = [...elementText.matchAll(pattern)].map(match => match[1])
+  const pattern = /{(.*?)}/g
+  const innerMatches = [...elementText.matchAll(pattern)].map(match => match[1])
   let datum
   innerMatches.forEach(field => {
     if (isValidDate(data[field])) {
@@ -235,10 +245,9 @@ function replaceElementText(element, data) {
     }
     if (Object.keys(data).indexOf(field) != -1) {
       element.replaceText("{" + field + "}", datum)
-      let temp = element.getText()
       if (field.match(/\baddress\b/i) && datum) {
-        let url = createGoogleMapsDirectionsURL(datum)
-        let text = element.asText()
+        const url = createGoogleMapsDirectionsURL(datum)
+        const text = element.asText()
         let addressRange = text.findText(escapeRegex(datum))
         if (addressRange) {
           do {
@@ -249,6 +258,13 @@ function replaceElementText(element, data) {
       } 
     }
   })
+}
+
+function elementFieldCount(element) {
+  const elementText = element.getText()
+  const pattern = /{(.*?)}/g
+  const matches = [...elementText.matchAll(pattern)]
+  return matches.length
 }
 
 function getManifestData(filterFunction, tripsSheetName = "Trips") {

@@ -162,7 +162,7 @@ function replaceText(templateString, data) {
           datum = formatDate(data[field], null, "h:mm aa M/d/yy")
         }
       } else {
-        datum = data[field]
+        datum = data[field] || ''
       }
       if (Object.keys(data).includes(field)) {
         result = result.replace("{" + field + "}", datum)
