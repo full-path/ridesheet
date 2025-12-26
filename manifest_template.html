@@ -1,261 +1,258 @@
 <html>
 <head>
-	<meta content="text/html; charset=UTF-8" http-equiv="content-type">
-	<style type="text/css">
-		/* ===== BASE STYLES ===== */
-		body {
-			font-family: "Arial";
-			font-size: 11pt;
-		}
-		
-		ol, ul {
-			margin: 0;
-			padding: 0;
-		}
-		
-		table td, table th {
-			padding: 0;
-		}
-		
-		p {
-			margin: 0;
-		}
-		
-		/* ===== COMMON PROPERTIES ===== */
-		h1, h2, h3, h4, h5, h6, p, li {
-			line-height: 1.15;
-			orphans: 2;
-			widows: 2;
-		}
-		
-		/* ===== HEADING STYLES ===== */
-		h1 {
-			padding-top: 20pt;
-			font-size: 20pt;
-			padding-bottom: 6pt;
-			page-break-after: avoid;
-			text-align: left;
-		}
-		
-		h2 {
-			padding-top: 18pt;
-			font-size: 16pt;
-			padding-bottom: 6pt;
-			page-break-after: avoid;
-			text-align: left;
-		}
-		
-		h3 {
-			padding-top: 16pt;
-			color: #434343;
-			font-size: 14pt;
-			padding-bottom: 4pt;
-			page-break-after: avoid;
-			text-align: left;
-		}
-		
-		h4 {
-			padding-top: 14pt;
-			color: #666666;
-			font-size: 12pt;
-			padding-bottom: 4pt;
-			page-break-after: avoid;
-			text-align: left;
-		}
-		
-		h5, h6 {
-			padding-top: 12pt;
-			color: #666666;
-			padding-bottom: 4pt;
-			page-break-after: avoid;
-			text-align: left;
-		}
-		
-		h6 {
-			font-style: italic;
-		}
-		
-		/* ===== DOCUMENT LAYOUT ===== */
-		.doc-content {
-			background-color: #ffffff;
-			max-width: 468pt;
-			padding: 72pt;
-		}
-		
-		/* ===== TEXT STYLES ===== */
-		.text-title {
-			font-size: 26pt;
-		}
-		
-		.text-pickup-arrow {
-			color: #00ff00;
-		}
-		
-		.text-dropoff-arrow {
-			color: #ff0000;
-		}
-		
-		.highlight-marker {
-			background-color: #ffff00;
-		}
-		
-		/* ===== LAYOUT UTILITIES ===== */
-		.text-center {
-			text-align: center;
-		}
-		
-		.title {
-			padding-bottom: 3pt;
-			page-break-after: avoid;
-		}
-		
-		.heading-spaced {
-			padding-top: 20pt;
-			padding-bottom: 6pt;
-			page-break-after: avoid;
-		}
-		
-		/* ===== LIST STYLES ===== */
-		li {
-			margin-left: 36pt;
-			text-align: left;
-		}
-		
-		ul ul li {
-			margin-left: 72pt;
-		}
-		
-		/* ===== TABLE STYLES ===== */
-		.table-manifest {
-			margin-left: auto;
-			margin-right: auto;
-			border-spacing: 0;
-			border-collapse: collapse;
-		}
-		
-		.table-manifest td {
-			border: 1pt solid #000000;
-			padding: 5pt;
-			vertical-align: top;
-			width: 234pt;
-		}
-		
-		.table-manifest p {
-			line-height: 1.0;
-			text-align: left;
-		}
-	</style>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <style type="text/css">
+    /* ===== BASE STYLES ===== */
+    body {
+      font-family: "Arial";
+      font-size: 11pt;
+    }
+
+    ol, ul {
+      margin: 0;
+      padding: 0;
+    }
+
+    table td, table th {
+      padding: 0;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    /* ===== COMMON PROPERTIES ===== */
+    h1, h2, h3, h4, h5, h6, p, li {
+      line-height: 1.15;
+      orphans: 2;
+      widows: 2;
+    }
+
+    /* ===== HEADING STYLES ===== */
+    h1 {
+      padding-top: 20pt;
+      font-size: 20pt;
+      padding-bottom: 6pt;
+      page-break-after: avoid;
+      text-align: left;
+    }
+
+    h2 {
+      padding-top: 18pt;
+      font-size: 16pt;
+      padding-bottom: 6pt;
+      page-break-after: avoid;
+      text-align: left;
+    }
+
+    h3 {
+      padding-top: 16pt;
+      color: #434343;
+      font-size: 14pt;
+      padding-bottom: 4pt;
+      page-break-after: avoid;
+      text-align: left;
+    }
+
+    h4 {
+      padding-top: 14pt;
+      color: #666666;
+      font-size: 12pt;
+      padding-bottom: 4pt;
+      page-break-after: avoid;
+      text-align: left;
+    }
+
+    h5, h6 {
+      padding-top: 12pt;
+      color: #666666;
+      padding-bottom: 4pt;
+      page-break-after: avoid;
+      text-align: left;
+    }
+
+    h6 {
+      font-style: italic;
+    }
+
+    /* ===== DOCUMENT LAYOUT ===== */
+    .doc-content {
+      background-color: #ffffff;
+      max-width: 468pt;
+      padding: 72pt;
+    }
+
+    /* ===== TEXT STYLES ===== */
+    .text-title {
+      font-size: 26pt;
+    }
+
+    .text-pickup-arrow {
+      color: #00ff00;
+    }
+
+    .text-dropoff-arrow {
+      color: #ff0000;
+    }
+
+    .highlight-marker {
+      background-color: #ffff00;
+    }
+
+    /* ===== LAYOUT UTILITIES ===== */
+    .text-center {
+      text-align: center;
+    }
+
+    .title {
+      padding-bottom: 3pt;
+      page-break-after: avoid;
+    }
+
+    .heading-spaced {
+      padding-top: 20pt;
+      padding-bottom: 6pt;
+      page-break-after: avoid;
+    }
+
+    /* ===== LIST STYLES ===== */
+    li {
+      margin-left: 36pt;
+      text-align: left;
+    }
+
+    ul ul li {
+      margin-left: 72pt;
+    }
+
+    /* ===== TABLE STYLES ===== */
+    .table-manifest {
+      margin-left: auto;
+      margin-right: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+    }
+
+    .table-manifest td {
+      border: 1pt solid #000000;
+      padding: 5pt;
+      vertical-align: top;
+      width: 234pt;
+    }
+
+    .table-manifest p {
+      line-height: 1.0;
+      text-align: left;
+    }
+  </style>
 </head>
 <body class="doc-content">
-	<!-- Document Title -->
-	<p class="title">
-		<span class="text-title">Manifest Template</span>
-	</p>
-	
-	<!-- Instructions Section -->
-	<h2>How to Use This Template</h2>
-	
-	<ul>
-		<li>This document has four types of sections:</li>
-		<ul>
-			<li>Document header (&ldquo;HEADER&rdquo;)</li>
-			<li>Document footer (&ldquo;FOOTER&rdquo;)</li>
-			<li>Trip pickup (&ldquo;PICKUP&rdquo;)</li>
-			<li>Trip drop-off (&ldquo;DROP OFF&rdquo;)</li>
-		</ul>
-		<li>Section templates are all the text between statements that are in brackets that start with &ldquo;BEGIN&rdquo; or &ldquo;END&rdquo;, followed by the name of the section type, like so: &ldquo;[BEGIN HEADER]&rdquo; and &ldquo;[END HEADER]&rdquo; (without the quotes). Each begin and end statement must be by itself on a line.</li>
-		<li>Except for page headers and footers, anything in this template document that is not between begin and end statements (like this how-to) will not appear on a final manifest.</li>
-		<li>Any trip value or associated run value can be added to an element as a field within a section. Just put the value&rsquo;s column header name in braces, like so: {PU Address}</li>
-		<li>The document sections each appear once only &mdash; the header at the beginning of the document and the footer at the end of the document. The values used for the header will be from the trip that has the first pickup, and the values used for the footer will come from the trip that has the last drop-off.</li>
-		<li>You can also put values in page headers and footers. Like document headers and footers, the values used for the page header will be from the first pickup, and the values used for the page footer will come from the last drop-off. While it's possible to edit the template so that the page header and footer for the first page are different from the default page header and footer, due to limitations in Google's programming interfaces, only the default page header and footer will be applied, and they will be applied to all pages.</li>
-		<li>Each trip can appear twice &mdash; &nbsp;once for pickup and once for drop-off. Trip pickup and drop-off elements appear in the chronological order of their respective event (pickup time for pick elements, drop-off time for drop-off elements). If the drop-off of one trip is at the same time as the pickup of another trip, the drop-off will appear first. If you prefer that each trip appear only once, then simply omit the trip drop-off element from the template.</li>
-		<li>Behind the scenes, Sheets stores both date and time fields the same way. To figure out whether a date/time field should be formatted as a date or as a time, the column name is used. If the column name of a date/time field contains the word &ldquo;date&rdquo;, then the field will be formatted as a date only. If the column name of a date/time field contains the word &ldquo;time&rdquo;, then the field will be formatted as a time only. If neither word is present, the field will show both the time and date.</li>
-		<li>The following fields that aren&rsquo;t associated with any trip can also be used:</li>
-		<ul>
-			<li>{Manifest Creation Date}</li>
-			<li>{Manifest Creation Time}</li>
-		</ul>
-	</ul>
-	
-	<p></p>
-	<p></p>
-	
-	<!-- PAGE HEADER SECTION TEMPLATE -->
-	<p><span class="highlight-marker">[BEGIN PAGE_HEADER]</span></p>
-	<p class="text-center">{Trip Date} &mdash; {Driver Name}</p>
-	<p><span class="highlight-marker">[END PAGE_HEADER]</span></p>
-	
-	<p></p>
-	
-	<!-- PAGE FOOTER SECTION TEMPLATE -->
-	<p><span class="highlight-marker">[BEGIN PAGE_FOOTER]</span></p>
-	<p class="text-center">Generated {Manifest Creation Date} {Manifest Creation Time}</p>
-	<p><span class="highlight-marker">[END PAGE_FOOTER]</span></p>
-	
-	<p></p>
-	
-	<!-- HEADER SECTION TEMPLATE -->
-	<p><span class="highlight-marker">[BEGIN HEADER]</span></p>
-	
-	<h1 class="text-center heading-spaced">{Trip Date} &mdash; {Driver Name}</h1>
-	
-	<p class="text-center">
-		<b>Vehicle: {Vehicle Name}</b>
-	</p>
-	
-	<p></p>
-	
-	<table class="table-manifest">
-		<tr>
-			<td>
-				<p><b>Start Time:</b></p>
-			</td>
-			<td>
-				<p><b>Start Odometer:</b></p>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<p><b>End Time:</b></p>
-			</td>
-			<td>
-				<p><b>End Odometer:</b></p>
-			</td>
-		</tr>
-	</table>
-	
-	<p></p>
-	<p><span class="highlight-marker">[END HEADER]</span></p>
-	<p></p>
-	
-	<!-- PICKUP SECTION TEMPLATE -->
-	<p><span class="highlight-marker">[BEGIN PICKUP]</span></p>
-	<p>
-		<span class="text-pickup-arrow">&#11014;</span>
-		<b>{PU Time}:</b>
-		&nbsp;Pickup {Customer First Name} {Customer Last Name} at {PU Address} Phone: {Phone Number} {Mobility Factors}
-	</p>
-	<p>
-		<b>Appointment Time: </b>{Appt Time}
-		<b>&nbsp;Service: </b>{Default Service ID}
-	</p>
-	<p>Notes: {Notes}</p>
-	<p><span class="highlight-marker">[END PICKUP]</span></p>
-	<p></p>
-	
-	<!-- DROP OFF SECTION TEMPLATE -->
-	<p><span class="highlight-marker">[BEGIN DROP OFF]</span></p>
-	<p>
-		<span class="text-dropoff-arrow">&#11015;</span>
-		<b>{DO Time}:</b>
-		&nbsp;Drop off {Customer First Name} {Customer Last Name} at {DO Address}
-	</p>
-	<p><span class="highlight-marker">[END DROP OFF]</span></p>
-	<p></p>
-	
-	<!-- FOOTER SECTION TEMPLATE -->
-	<p><span class="highlight-marker">[BEGIN FOOTER]</span></p>
-	<p>Return to the garage after dropping off {Customer First Name} {Customer Last Name}.</p>
-	<p><span class="highlight-marker">[END FOOTER]</span></p>
+  <!-- Document Title -->
+  <p class="title">
+    <span class="text-title">Manifest Template</span>
+  </p>
+
+  <!-- Instructions Section -->
+  <h2>How to Use This Template</h2>
+
+  <ul>
+    <li>This document has four types of sections:</li>
+    <ul>
+      <li>Document header (&ldquo;HEADER&rdquo;)</li>
+      <li>Document footer (&ldquo;FOOTER&rdquo;)</li>
+      <li>Trip pickup (&ldquo;PICKUP&rdquo;)</li>
+      <li>Trip drop-off (&ldquo;DROP OFF&rdquo;)</li>
+    </ul>
+    <li>Section templates are all the text between statements that are in brackets that start with &ldquo;BEGIN&rdquo; or &ldquo;END&rdquo;, followed by the name of the section type, like so: &ldquo;[BEGIN HEADER]&rdquo; and &ldquo;[END HEADER]&rdquo; (without the quotes). Each begin and end statement must be by itself on a line.</li>
+    <li>Except for page headers and footers, anything in this template document that is not between begin and end statements (like this how-to) will not appear on a final manifest.</li>
+    <li>Any trip value or associated run value can be added to an element as a field within a section. Just put the value&rsquo;s column header name in braces, like so: {PU Address}</li>
+    <li>If you have a label that you want to appear only when the associated field has data, you can use this pattern: &ldquo;{?Notes}Notes: {Notes}&rdquo;. All parts of this pattern must appear in the same paragraph. This pattern cannot be nested.</li>
+    <li>The document sections each appear once only &mdash; the header at the beginning of the document and the footer at the end of the document. The values used for the header will be from the trip that has the first pickup, and the values used for the footer will come from the trip that has the last drop-off.</li>
+    <li>You can also put values in page headers and footers. Like document headers and footers, the values used for the page header will be from the first pickup, and the values used for the page footer will come from the last drop-off. While it's possible to edit the template so that the page header and footer for the first page are different from the default page header and footer, due to limitations in Google's programming interfaces, only the default page header and footer will be applied, and they will be applied to all pages.</li>
+    <li>Each trip can appear twice &mdash; &nbsp;once for pickup and once for drop-off. Trip pickup and drop-off elements appear in the chronological order of their respective event (pickup time for pick elements, drop-off time for drop-off elements). If the drop-off of one trip is at the same time as the pickup of another trip, the drop-off will appear first. If you prefer that each trip appear only once, then simply omit the trip drop-off element from the template.</li>
+    <li>Behind the scenes, Sheets stores both date and time fields the same way. To figure out whether a date/time field should be formatted as a date or as a time, the column name is used. If the column name of a date/time field contains the word &ldquo;date&rdquo;, then the field will be formatted as a date only. If the column name of a date/time field contains the word &ldquo;time&rdquo;, then the field will be formatted as a time only. If neither word is present, the field will show both the time and date.</li>
+    <li>The following fields that aren&rsquo;t associated with any trip can also be used:</li>
+    <ul>
+      <li>{Manifest Creation Date}</li>
+      <li>{Manifest Creation Time}</li>
+    </ul>
+    <li>You can find additional information about using RideSheet at <a href="https://docs.ridesheet.org/">docs.ridesheet.org</a>.</li>
+  </ul>
+  <p></p>
+
+  <!-- PAGE HEADER SECTION TEMPLATE -->
+  <p><span class="highlight-marker">[BEGIN PAGE_HEADER]</span></p>
+  <p class="text-center">{Trip Date} &mdash; {Driver Name}</p>
+  <p><span class="highlight-marker">[END PAGE_HEADER]</span></p>
+  <p></p>
+
+  <!-- PAGE FOOTER SECTION TEMPLATE -->
+  <p><span class="highlight-marker">[BEGIN PAGE_FOOTER]</span></p>
+  <p class="text-center">Generated {Manifest Creation Date} {Manifest Creation Time}</p>
+  <p><span class="highlight-marker">[END PAGE_FOOTER]</span></p>
+  <p></p>
+
+  <!-- HEADER SECTION TEMPLATE -->
+  <p><span class="highlight-marker">[BEGIN HEADER]</span></p>
+
+  <h1 class="text-center heading-spaced">{Trip Date} &mdash; {Driver Name}</h1>
+
+  <p class="text-center">
+    <b>Vehicle: {Vehicle Name}</b>
+  </p>
+
+  <p></p>
+
+  <table class="table-manifest">
+    <tr>
+      <td>
+        <p><b>Start Time:</b></p>
+      </td>
+      <td>
+        <p><b>Start Odometer:</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p><b>End Time:</b></p>
+      </td>
+      <td>
+        <p><b>End Odometer:</b></p>
+      </td>
+    </tr>
+  </table>
+
+  <p></p>
+  <p><span class="highlight-marker">[END HEADER]</span></p>
+  <p></p>
+
+  <!-- PICKUP SECTION TEMPLATE -->
+  <p><span class="highlight-marker">[BEGIN PICKUP]</span></p>
+  <p>
+    <span class="text-pickup-arrow">&#11014;</span>
+    <b>{PU Time}:</b>
+    &nbsp;Pickup {Customer First Name} {Customer Last Name} at {PU Address} Phone: {Phone Number} <b>{Mobility Factors}</b>
+  </p>
+  <p>
+    <b>{?Appt Time}Appointment Time: {Appt Time}</b>
+    <b>{?Notes}Notes: {Notes}</b>
+  </p>
+  <p><span class="highlight-marker">[END PICKUP]</span></p>
+  <p></p>
+
+  <!-- DROP OFF SECTION TEMPLATE -->
+  <p><span class="highlight-marker">[BEGIN DROP OFF]</span></p>
+  <p>
+    <span class="text-dropoff-arrow">&#11015;</span>
+    <b>{DO Time}:</b>
+    &nbsp;Drop off {Customer First Name} {Customer Last Name} at {DO Address}
+  </p>
+  <p><span class="highlight-marker">[END DROP OFF]</span></p>
+  <p></p>
+
+  <!-- FOOTER SECTION TEMPLATE -->
+  <p><span class="highlight-marker">[BEGIN FOOTER]</span></p>
+  <p>Return to the garage after dropping off {Customer First Name} {Customer Last Name}.</p>
+  <p><span class="highlight-marker">[END FOOTER]</span></p>
 </body>
 </html>

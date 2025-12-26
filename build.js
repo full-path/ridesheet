@@ -210,7 +210,10 @@ function setupNewInstall() {
     propSheetDataRange.setValues(propSheetData)
     buildDocumentPropertiesFromSheet()
 
-    ui.alert("Success", "Installation complete.\n\nYou can now generate driver manifests.", ui.ButtonSet.OK)
+    ui.alert("Installation Complete",
+      "You can now generate driver manifests. Go to the settings folder you entered to view the manifest template and tailor it to your needs.\n\n" +
+      "For more details about using RideSheet, visit https://docs.ridesheet.org.", ui.ButtonSet.OK
+    )
   } catch(e) {
     safeGetUi()?.alert(e.name + ': ' + e.message)
     logError(e)

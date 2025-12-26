@@ -215,7 +215,7 @@ function appendTemplateRange(range, docSection, data) {
       const tempText = replaceText(templateElement.getText(), data)
       // Append the element if it will ultimately have text or
       // if the element has no fields to populate (e.g., it's just a blank line)
-      if (tempText.trim() || !elementFieldCount(templateElement)) {
+      if (tempText.trim() || elementFieldCount(templateElement) === 0) {
         appendElement(docSection, newElement)
         replaceElementText(newElement, data)
       }
@@ -226,26 +226,49 @@ function appendTemplateRange(range, docSection, data) {
 }
 
 function replaceElementText(element, data) {
-  const elementText = element.getText()
-  //text = "This is {a} test {with} words in {braces]"
+  let elementText = element.getText()
+
+  // First pass: Process conditional fields {?field}...{field}
+  const conditionalPattern = /\{\?([^}]+)\}(.*?)\{\1\}/g
+  const conditionalMatches = [...elementText.matchAll(conditionalPattern)]
+
+  conditionalMatches.forEach(match => {
+    const fullMatch = match[0]
+    const fieldName = match[1]
+    if (Object.keys(data).indexOf(fieldName) != -1) {
+      const hasValue = data[fieldName] !== null &&
+                       data[fieldName] !== undefined &&
+                       data[fieldName] !== ''
+      if (hasValue) {
+        // Field has value - remove just the conditional marker {?field}
+        element.replaceText(escapeRegex('{?' + fieldName + '}'), '')
+      } else {
+        // Field is empty - remove the entire conditional block
+        element.replaceText(escapeRegex(fullMatch), '')
+      }
+    }
+  })
+
+  // Second pass: Process regular fields {field}
+  elementText = element.getText()
   const pattern = /{(.*?)}/g
   const innerMatches = [...elementText.matchAll(pattern)].map(match => match[1])
   let datum
-  innerMatches.forEach(field => {
-    if (isValidDate(data[field])) {
-      if (field.match(/\bdate\b/i)) {
-        datum = formatDate(data[field])
-      } else if (field.match(/\btime\b/i)) {
-        datum = formatDate(data[field], null, "hh:mm aa")
+  innerMatches.forEach(fieldName => {
+    if (isValidDate(data[fieldName])) {
+      if (fieldName.match(/\bdate\b/i)) {
+        datum = formatDate(data[fieldName])
+      } else if (fieldName.match(/\btime\b/i)) {
+        datum = formatDate(data[fieldName], null, "hh:mm aa")
       } else {
-        datum = formatDate(data[field], null, "hh:mm aa M/d/yy")
+        datum = formatDate(data[fieldName], null, "hh:mm aa M/d/yy")
       }
     } else {
-      datum = data[field]
+      datum = data[fieldName]
     }
-    if (Object.keys(data).indexOf(field) != -1) {
-      element.replaceText("{" + field + "}", datum)
-      if (field.match(/\baddress\b/i) && datum) {
+    if (Object.keys(data).indexOf(fieldName) != -1) {
+      element.replaceText("{" + fieldName + "}", datum)
+      if (fieldName.match(/\baddress\b/i) && datum) {
         const url = createGoogleMapsDirectionsURL(datum)
         const text = element.asText()
         let addressRange = text.findText(escapeRegex(datum))
