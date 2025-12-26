@@ -173,7 +173,7 @@ function replaceText(templateString, data) {
 
     // Second pass: Process regular fields {field}
     const pattern = /{(.*?)}/g
-    const innerMatches = [...templateString.matchAll(pattern)].map(match => match[1])
+    const innerMatches = [...result.matchAll(pattern)].map(match => match[1])
     innerMatches.forEach(fieldName => {
       if (isValidDate(data[fieldName])) {
         if (fieldName.match(/\bdate\b/i)) {
