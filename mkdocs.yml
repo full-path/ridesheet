@@ -23,6 +23,7 @@ nav:
   - Technical Guide: 
     - technical-guide/index.md
     - Installing RideSheet: technical-guide/installing-ridesheet.md
+    - RideSheet Permissions: technical-guide/permissions.md
     - Configuration: technical-guide/configuration.md
     - Importing data: technical-guide/importing-data.md
     - Apps Script: technical-guide/apps-script.md
