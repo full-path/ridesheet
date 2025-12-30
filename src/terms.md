@@ -1,14 +1,12 @@
 # RideSheet Terms of Service
 
 **Service Provider:** Full Path LLC
-**Last Updated:** December 26, 2025
+
+**Last Updated:** [TODO]
 
 ## 1. Acceptance of Terms
 
 By using RideSheet, you agree to these Terms of Service between you and Full Path LLC ("we," "us," "our"). If you do not agree, do not install or use RideSheet.
-
-**About RideSheet:**
-RideSheet is developed and maintained by Full Path LLC, an Oregon limited liability company.
 
 **Who these terms apply to:**
 
@@ -24,6 +22,7 @@ RideSheet is a free, open-source transportation management tool provided by Full
 - Create driver manifests
 - Calculate trip distances and times
 - Organize transportation schedules
+- Generate high-quality operations data for reporting and analysis
 
 **RideSheet is provided "AS IS" without any warranties or guarantees.**
 
@@ -92,9 +91,11 @@ You are responsible for:
 
 - The accuracy of data you enter
 - Compliance with privacy laws (GDPR, CCPA, etc.)
-- Obtaining necessary consents from individuals whose data you process
+- Obtaining necessary consents from individuals whose data you store and process
 - Protecting sensitive information appropriately
 - Creating backups of important data
+
+For maximum data control and security, we **strongly** recommend you only store sensitive data in organizational Google Workspace accounts.
 
 ### Privacy Policy
 
@@ -234,7 +235,7 @@ We reserve the right to modify these Terms at any time.
 
 ### Where to Get Help
 
-- GitHub Issues: [https://github.com/full-path/ridesheet/issues](https://github.com/full-path/ridesheet/issues) 
+- GitHub Issues: [https://github.com/full-path/ridesheet/issues](https://github.com/full-path/ridesheet/issues)
 - Community forums (if available)
 - [Documentation and guides](https://docs.ridesheet.org)
 - Self-help through open-source code review
@@ -245,7 +246,7 @@ We reserve the right to modify these Terms at any time.
 
 You can stop using RideSheet at any time by:
 
-- Revoking permissions at [https://myaccount.google.com/connections](https://github.com/full-path/ridesheet/issues)
+- Revoking permissions on a per-user basis at [https://myaccount.google.com/connections](https://github.com/full-path/ridesheet/issues)
 - Deleting your RideSheet spreadsheet
 - Uninstalling the Apps Script
 
@@ -312,7 +313,7 @@ We are not liable for failures caused by circumstances beyond our reasonable con
 
 ### Commercial Use
 
-You may use RideSheet for commercial transportation operations. All terms still apply.
+You may use RideSheet for commercial transportation operations. All terms still apply. We **strongly** recommend you only store sensitive information in organizational Google Workspace accounts.
 
 ### Government/Public Sector Use
 
@@ -373,7 +374,7 @@ Full Path LLC
 - Use it at your own risk (no warranties)
 - We're not liable if something goes wrong
 - Your data stays in your Google account
-- You own your data
+- You own your data and are directly responsible for how you share it
 - Follow the law and Google's rules
 - You can modify and share RideSheet
 - We can change or discontinue RideSheet

@@ -1,7 +1,7 @@
 # RideSheet Privacy Policy
 
 **Service Provider:** Full Path LLC
-**Last Updated:** December 26, 2025
+**Last Updated:** [TODO]
 
 ## Overview
 
@@ -29,22 +29,23 @@ When you grant permissions, RideSheet can access:
 - Trip details (pickup/dropoff locations, times, dates)
 - Driver and vehicle information
 - Run schedules and assignments
+- Post-service data for reporting and analysis of operations
 - Any other data you enter into the spreadsheet
 
 ### 2. Google Docs You Specify
 
 - Your manifest template document (the specific document you configure in settings)
-- Manifest documents that RideSheet creates
+- Driver manifest documents that RideSheet creates
 
 ### 3. Files RideSheet Creates
 
-- Driver manifests (Google Docs and PDFs)
+- Driver manifest documents (Google Docs and PDFs)
 
 ### 4. Google Maps Data
 
-- Address coordinates when you enter addresses
+- Address validation when you enter addresses
 - Driving directions and distance calculations
-- Plus Code validation
+- [Plus Code](https://maps.google.com/pluscodes/) validation
 
 ## How RideSheet Uses Your Information
 
@@ -75,7 +76,7 @@ RideSheet uses your information solely to provide transportation management func
 - Generated manifests are stored in your Google Drive folders
 - Nothing is stored outside your Google account
 
-**Exception:** When you use address validation or distance calculation features, addresses are sent to Google Maps API. This is Google's own service, and the interaction is the same as if you searched for those addresses in Google Maps directly.
+**Exception:** When you use address validation or distance calculation features, addresses are sent to Google Maps API. This is Google's own service, and the interaction is the same as if you searched for those addresses and trips in Google Maps directly.
 
 ## Data Sharing and Third Parties
 
@@ -102,7 +103,7 @@ RideSheet does not:
 ### Permission Control
 
 - You choose which permissions to grant individually
-- You can revoke permissions at any time at https://myaccount.google.com/connections
+- You can revoke permissions at any time on per-user basis at [https://myaccount.google.com/connections](https://myaccount.google.com/connections)
 - Revoking permissions immediately removes RideSheet's access for your individual user account
 
 ### Data Control
@@ -120,7 +121,7 @@ RideSheet doesn't require creating a separate account. It uses your existing Goo
 
 ### Code Visibility
 
-- All RideSheet code is publicly available on GitHub
+- All RideSheet code is publicly available on GitHub at [https://github.com/full-path/ridesheet](https://github.com/full-path/ridesheet)
 - You can review exactly what the code does
 - You can verify that it follows this privacy policy
 - Community members can audit the code for security and privacy
@@ -137,6 +138,8 @@ Because the code is open-source, there are no hidden data collection mechanisms 
 - Follow Google's security best practices (strong passwords, 2FA)
 - Limit spreadsheet sharing to authorized personnel only
 - Review who has access to your Drive folders
+
+For maximum data control and security, we **strongly** recommend you only store sensitive data in organizational Google Workspace accounts.
 
 ### RideSheet's Security Practices
 
