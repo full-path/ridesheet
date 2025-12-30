@@ -1,10 +1,14 @@
 # RideSheet Terms of Service
 
+**Service Provider:** Full Path LLC
 **Last Updated:** December 26, 2025
 
 ## 1. Acceptance of Terms
 
-By using RideSheet, you agree to these Terms of Service. If you do not agree, do not install or use RideSheet.
+By using RideSheet, you agree to these Terms of Service between you and Full Path LLC ("we," "us," "our"). If you do not agree, do not install or use RideSheet.
+
+**About RideSheet:**
+RideSheet is developed and maintained by Full Path LLC, an Oregon limited liability company.
 
 **Who these terms apply to:**
 
@@ -14,7 +18,7 @@ By using RideSheet, you agree to these Terms of Service. If you do not agree, do
 
 ## 2. Description of Service
 
-RideSheet is a free, open-source transportation management tool that operates as a Google Apps Script within Google Sheets. RideSheet helps you:
+RideSheet is a free, open-source transportation management tool provided by Full Path LLC that operates as a Google Apps Script within Google Sheets. No data is transmitted to or hosted on servers controlled by the RideSheet developers. RideSheet helps you:
 
 - Manage customer and trip information
 - Create driver manifests
@@ -37,7 +41,7 @@ RideSheet is open-source software. All code is released under the [MIT license](
 **Requirements:**
 
 - Include appropriate license notices when distributing
-- Acknowledge that modified versions are not official RideSheet releases
+- Acknowledge that modified versions are not official RideSheet releases. Your modified version must be governed by your own terms of service.
 - Comply with the terms of the open-source license
 
 ## 4. Google Account Requirements
@@ -145,7 +149,7 @@ If we are found liable despite these limitations, our total liability shall not 
 
 ## 9. Indemnification
 
-You agree to indemnify and hold harmless RideSheet developers, contributors, and maintainers from any claims, damages, losses, liabilities, and expenses (including legal fees) arising from:
+You agree to indemnify and hold harmless Full Path LLC, its members, employees, contractors, and RideSheet project contributors from any claims, damages, losses, liabilities, and expenses (including legal fees) arising from:
 
 - Your use or misuse of RideSheet
 - Your violation of these Terms
@@ -264,7 +268,7 @@ We may discontinue RideSheet or restrict access if:
 
 ### Informal Resolution
 
-Before filing any formal dispute, please contact us to attempt informal resolution.
+Before filing any formal dispute, please contact Full Path LLC to attempt informal resolution.
 
 ### Governing Law
 
@@ -272,7 +276,7 @@ These Terms are governed by the laws of the State of Oregon, without regard to c
 
 ### Jurisdiction
 
-Any disputes shall be resolved in the courts of the State of Oregon.
+Any disputes shall be resolved in the courts of Multnomah County, Oregon.
 
 ### Limitation Period
 
@@ -316,7 +320,7 @@ Government entities may use RideSheet subject to these Terms and applicable proc
 
 ### Healthcare Transportation (NEMT)
 
-**Important:** RideSheet is not HIPAA-compliant. Do not use RideSheet to store Protected Health Information (PHI) unless:
+**Important:** RideSheet is NOT inherently HIPAA-compliant out of the box. The developers of RideSheet are not 'Business Associates' as defined by HIPAA, as we never have access to your data. Users are solely responsible for ensuring their Google Workspace environment is configured for HIPAA compliance and for executing a BAA with Google. Do not use RideSheet to store Protected Health Information (PHI) unless:
 
 - You have proper Business Associate Agreements
 - You have configured Google Workspace for HIPAA compliance
@@ -354,6 +358,7 @@ You agree to comply with all applicable export and import laws and regulations. 
 
 **For questions about these Terms:**
 
+Full Path LLC
 - Email: info@ridesheet.org
 - GitHub: [https://github.com/full-path/ridesheet](https://github.com/full-path/ridesheet)
 - Response time: Best effort, no guarantee

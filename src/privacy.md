@@ -1,10 +1,15 @@
 # RideSheet Privacy Policy
 
+**Service Provider:** Full Path LLC
 **Last Updated:** December 26, 2025
 
 ## Overview
 
-RideSheet is an open-source transportation management tool that operates entirely within your Google account. This privacy policy explains what data RideSheet accesses, how it's used, and where it's stored.
+RideSheet is an open-source transportation management tool developed and maintained by Full Path LLC. This tool operates entirely within your Google account. This privacy policy explains what data RideSheet accesses, how it's used, and where it's stored.
+
+## Who Provides RideSheet
+
+In this privacy policy, "we," "us," and "our" refer to Full Path LLC, the developer and maintainer of RideSheet.
 
 **Key Points:**
 
@@ -34,7 +39,6 @@ When you grant permissions, RideSheet can access:
 ### 3. Files RideSheet Creates
 
 - Driver manifests (Google Docs and PDFs)
-- Backup copies of your spreadsheet (if enabled)
 
 ### 4. Google Maps Data
 
@@ -80,7 +84,7 @@ RideSheet uses your information solely to provide transportation management func
 1. **Google Maps API**
 
     - Purpose: Geocode addresses, calculate distances
-    - Data sent: Addresses you enter in the spreadsheet
+    - Data sent: Addresses you enter in the spreadsheet. Only address strings are sent to the Google Maps API for geocoding and distance calculation. No personally identifiable information (PII) such as passenger names or phone numbers is shared with the Maps service.
     - Privacy: Covered by Google's privacy policy
 
 ### No Other Third Parties
@@ -181,11 +185,11 @@ If you're in California, you have rights to:
 
 ### HIPAA
 
-**Important:** RideSheet is not HIPAA-compliant. Do not use RideSheet to store Protected Health Information (PHI) unless you have proper Business Associate Agreements in place with Google and have configured Google Workspace for HIPAA compliance.
+**Important:** RideSheet is not HIPAA-compliant out of the box. Do not use RideSheet to store Protected Health Information (PHI) unless you have proper Business Associate Agreements in place with Google and have configured Google Workspace for HIPAA compliance.
 
 ## Contact Information
 
-**For privacy questions or concerns:**
+**For privacy questions or concerns, contact Full Path LLC:**
 
 - Email: info@ridesheet.org
 - GitHub Issues: https://github.com/full-path/ridesheet/issues
@@ -204,7 +208,7 @@ RideSheet operates within Google Workspace. Your use of Google services is also 
 
 ## Disclaimer
 
-This privacy policy applies to RideSheet itself. If you modify the code or create a derivative work, you are responsible for your own privacy policy.
+This privacy policy applies to the official RideSheet project maintained by Full Path LLC. If you modify the code or create a derivative work, you are responsible for your own privacy policy.
 
 ---
 
