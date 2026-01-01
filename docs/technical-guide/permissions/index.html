@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://full-path.github.io/ridesheet/technical-guide/updating-the-code/">
+        <link rel="canonical" href="https://full-path.github.io/ridesheet/technical-guide/permissions/">
       
       
-        <link rel="prev" href="../apps-script/">
+        <link rel="prev" href="../installing-ridesheet/">
       
       
-        <link rel="next" href="../troubleshooting/">
+        <link rel="next" href="../configuration/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Updating the Code - RideSheet</title>
+        <title>RideSheet Permissions - RideSheet</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#updating-the-code" class="md-skip">
+        <a href="#ridesheet-and-google-workspace-permissions" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Updating the Code
+              RideSheet Permissions
             
           </span>
         </div>
@@ -697,10 +697,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../permissions/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RideSheet Permissions
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -716,6 +743,120 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-google-asks-for-permission" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Google Asks for Permission
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-of-ridesheet-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary of RideSheet Permissions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#customizing-your-permission-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Customizing Your Permission Selection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Customizing Your Permission Selection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#revoking-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Revoking Permissions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reviewing-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reviewing Permissions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#your-data-stays-private" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your Data Stays Private
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -809,37 +950,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Updating the Code
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../updating-the-code/" class="md-nav__link">
         
   
   
@@ -855,70 +969,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#required-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Required Tools
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#setting-up-your-development-environment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Setting Up Your Development Environment
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#making-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Making Changes
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#contributing-back" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contributing Back
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1120,10 +1170,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#required-tools" class="md-nav__link">
+  <a href="#why-google-asks-for-permission" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Required Tools
+        Why Google Asks for Permission
       
     </span>
   </a>
@@ -1131,10 +1181,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#setting-up-your-development-environment" class="md-nav__link">
+  <a href="#summary-of-ridesheet-permissions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Setting Up Your Development Environment
+        Summary of RideSheet Permissions
       
     </span>
   </a>
@@ -1142,10 +1192,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#making-changes" class="md-nav__link">
+  <a href="#customizing-your-permission-selection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Making Changes
+        Customizing Your Permission Selection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Customizing Your Permission Selection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#revoking-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Revoking Permissions
       
     </span>
   </a>
@@ -1153,10 +1242,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#contributing-back" class="md-nav__link">
+  <a href="#reviewing-permissions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contributing Back
+        Reviewing Permissions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#your-data-stays-private" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your Data Stays Private
       
     </span>
   </a>
@@ -1231,77 +1331,107 @@
   
 
 
-<h1 id="updating-the-code">Updating the Code<a class="headerlink" href="#updating-the-code" title="Permanent link">#</a></h1>
-<p>This page covers setting up a local development environment using GitHub and Clasp, how to update the code when new RideSheet versions are released, and how to contribute back to the main codebase.</p>
-<h2 id="required-tools">Required Tools<a class="headerlink" href="#required-tools" title="Permanent link">#</a></h2>
-<p>Before getting started, you'll need to install and configure these tools:</p>
+<h1 id="ridesheet-and-google-workspace-permissions">RideSheet and Google Workspace Permissions<a class="headerlink" href="#ridesheet-and-google-workspace-permissions" title="Permanent link">#</a></h1>
+<h2 id="why-google-asks-for-permission">Why Google Asks for Permission<a class="headerlink" href="#why-google-asks-for-permission" title="Permanent link">#</a></h2>
+<p>When you use RideSheet, Google asks you to approve what RideSheet can access in your account. This protects your data - apps can't access anything unless you explicitly allow it. </p>
+<hr />
+<h2 id="summary-of-ridesheet-permissions">Summary of RideSheet Permissions<a class="headerlink" href="#summary-of-ridesheet-permissions" title="Permanent link">#</a></h2>
+<p>RideSheet uses the most restrictive permissions possible to accomplish its mission. Your data always stays in your Google account. RideSheet cannot access your Gmail, Calendar, Contacts, or other Google services. Here is a list of what permissions RideSheet requests and why:</p>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Used For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Access your RideSheet spreadsheet only</td>
+<td>Managing trips, customers, and runs</td>
+</tr>
+<tr>
+<td>Show menus and dialogs</td>
+<td>User interface</td>
+</tr>
+<tr>
+<td>Connect to Google services</td>
+<td>Integration with Google Maps</td>
+</tr>
+<tr>
+<td>Access files RideSheet creates</td>
+<td>Saving manifests to your Google Drive</td>
+</tr>
+<tr>
+<td>Access Google Docs</td>
+<td>Reading your manifest template, creating formatted manifests</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="customizing-your-permission-selection">Customizing Your Permission Selection<a class="headerlink" href="#customizing-your-permission-selection" title="Permanent link">#</a></h2>
+<p>You can grant permissions individually to match how you'll use RideSheet.</p>
+<h3 id="required-permissions">Required Permissions<a class="headerlink" href="#required-permissions" title="Permanent link">#</a></h3>
+<p>If you deny these permissions, you'll lose basic RideSheet functionality.</p>
 <ul>
-<li><a href="https://git-scm.com/">Git</a> - Version control system for tracking code changes</li>
-<li><a href="https://github.com/">GitHub Account</a> - For hosting your code and collaborating with others</li>
-<li><a href="https://github.com/google/clasp">Clasp</a> - Google's Command Line Apps Script Projects tool for developing Apps Script locally</li>
+<li><strong>Spreadsheet access</strong> - RideSheet cannot perform its most basic functions without access to the spreadsheet it is installed on.</li>
+<li><strong>Menus and dialogs</strong> - RideSheet needs this to provide messages about the results of the tasks it is performing.</li>
+<li><strong>External connections</strong> - Needed for integration with Google Maps for address validation, distance estimation, and deadhead calculation.</li>
 </ul>
-<h2 id="setting-up-your-development-environment">Setting Up Your Development Environment<a class="headerlink" href="#setting-up-your-development-environment" title="Permanent link">#</a></h2>
-<p>Follow these steps to set up a local development environment:</p>
-<ol>
-<li>Fork the <a href="https://github.com/full-path/ridesheet">RideSheet repository</a> on GitHub to create your own copy</li>
-<li>Get your Apps Script project ID:<ul>
-<li>Open your RideSheet spreadsheet</li>
-<li>Go to <code>Extensions &gt; Apps Script</code></li>
-<li>Click Project Settings</li>
-<li>Copy the Script ID</li>
+<h3 id="optional-permissions">Optional Permissions<a class="headerlink" href="#optional-permissions" title="Permanent link">#</a></h3>
+<p>These permissions are needed only for generating driver manifests. If you don't need driver manifests, you can decline to authorize access to them.</p>
+<ul>
+<li><strong>Files RideSheet creates</strong></li>
+<li><strong>Google Docs access</strong></li>
 </ul>
-</li>
-<li>Clone your Apps Script project locally (this will create a new folder):
-    <div class="highlight"><pre><span></span><code>clasp<span class="w"> </span>clone<span class="w"> </span>&lt;your-script-id&gt;
-</code></pre></div></li>
-<li>Initialize Git in the folder created by clasp:
-    <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>&lt;project-folder&gt;
-git<span class="w"> </span>init
-</code></pre></div></li>
-<li>Connect to your forked repository:
-    <div class="highlight"><pre><span></span><code>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>origin<span class="w"> </span>&lt;your-fork-url&gt;
-git<span class="w"> </span>fetch<span class="w"> </span>origin
-git<span class="w"> </span>reset<span class="w"> </span>--hard<span class="w"> </span>origin/main
-</code></pre></div></li>
-<li>Push the main branch code to your RideSheet instance:
-    <div class="highlight"><pre><span></span><code>clasp<span class="w"> </span>push
-</code></pre></div></li>
-</ol>
-<h2 id="making-changes">Making Changes<a class="headerlink" href="#making-changes" title="Permanent link">#</a></h2>
-<p>When making your own customizations on your forked repository:</p>
+<hr />
+<h2 id="revoking-permissions">Revoking Permissions<a class="headerlink" href="#revoking-permissions" title="Permanent link">#</a></h2>
+<p><strong>You can revoke RideSheet's permissions at any time:</strong></p>
 <ol>
-<li>Create a new branch for your changes:
-    <div class="highlight"><pre><span></span><code>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>my-custom-feature
-</code></pre></div></li>
-<li>Make changes to the code locally</li>
-<li>Push changes to Apps Script to test them:
-    <div class="highlight"><pre><span></span><code>clasp<span class="w"> </span>push
-</code></pre></div></li>
-<li>Test your changes in the Apps Script editor and RideSheet spreadsheet</li>
-<li>Once satisfied, commit and push to GitHub:
-    <div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>.
-git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Description of changes&quot;</span>
-git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>my-custom-feature
-</code></pre></div></li>
+<li>Visit <a href="https://myaccount.google.com/connections">https://myaccount.google.com/connections</a></li>
+<li>Find RideSheet in the list</li>
+<li>Click to view details</li>
+<li>Click "Remove access" or "Disconnect"</li>
 </ol>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If you're only planning to receive updates from the main RideSheet repository, you don't need to create feature branches.</p>
+<p><strong>What happens when you revoke:</strong></p>
+<ul>
+<li>RideSheet immediately loses all access to your account</li>
+<li>RideSheet cannot read or modify any data</li>
+<li>Any features you were using will stop working</li>
+<li>All your data remains safe in your Google account</li>
+</ul>
+<p>The next time you attempt to use RideSheet features, you will be prompted to authorize access, at which time you can select only the permissions you want to grant.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Revoking access only affects <strong>your</strong> individual user account. It will not affect the permissions that other users have granted when they use RideSheet. To reset access for the entire organization, each individual user will need to go through the steps above.</p>
+<p>To remove access for your organization as a whole, remove shared access to RideSheet or delete it from Google Drive entirely. </p>
+<p>You can retain all of RideSheet's data by exporting it to Excel. Exporting to Excel keeps all your data and removes all of RideSheet's programming scripts.</p>
 </div>
-<h2 id="contributing-back">Contributing Back<a class="headerlink" href="#contributing-back" title="Permanent link">#</a></h2>
-<p>RideSheet welcomes contributions from the community! We accept pull requests for:</p>
-<ul>
-<li>Bug fixes</li>
-<li>New features with broad applicability</li>
-<li>Improvements to existing functionality</li>
-</ul>
-<p>Before starting work on a major feature, please:</p>
+<hr />
+<h2 id="reviewing-permissions">Reviewing Permissions<a class="headerlink" href="#reviewing-permissions" title="Permanent link">#</a></h2>
+<p><strong>When you first use RideSheet:</strong></p>
+<p>Google shows you exactly what permissions RideSheet requests. Review this screen before clicking "Allow."</p>
+<p><strong>After you have granted access:</strong></p>
 <ol>
-<li><a href="https://github.com/full-path/ridesheet/issues/new">Open an issue</a> to discuss the proposed changes</li>
-<li>Contact the RideSheet team for guidance</li>
-<li>Ensure your contribution would benefit multiple agencies</li>
+<li>Visit <a href="https://myaccount.google.com/connections">https://myaccount.google.com/connections</a></li>
+<li>Find "RideSheet" in the list</li>
+<li>Click to see what RideSheet can access from your user account</li>
 </ol>
-<p>This helps ensure your time is well spent and the feature aligns with RideSheet's goals.</p>
+<hr />
+<h2 id="your-data-stays-private">Your Data Stays Private<a class="headerlink" href="#your-data-stays-private" title="Permanent link">#</a></h2>
+<p><strong>Where your data is stored:</strong></p>
+<ul>
+<li>In your RideSheet spreadsheet (in your Google account)</li>
+<li>In the manifests RideSheet creates (in your Google Drive)</li>
+<li>Nowhere else</li>
+</ul>
+<p><strong>What RideSheet doesn't do:</strong></p>
+<ul>
+<li>Upload your data to external servers</li>
+<li>Share your data with third parties</li>
+<li>Access your data when you're not using it</li>
+<li>Store copies outside your Google account</li>
+</ul>
+<p><strong>The only external connection</strong> is to Google Maps when looking up addresses or calculating trip distances. This uses the same Google Maps service you use when you open Google Maps directly.</p>
 
 
 

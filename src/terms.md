@@ -99,7 +99,7 @@ For maximum data control and security, we **strongly** recommend you only store 
 
 ### Privacy Policy
 
-Our [Privacy Policy](../privacy) explains how RideSheet accesses and uses your data. By using RideSheet, you also agree to our Privacy Policy.
+Our [Privacy Policy](privacy.md) explains how RideSheet accesses and uses your data. By using RideSheet, you also agree to our Privacy Policy.
 
 ## 7. No Warranties
 
@@ -383,7 +383,7 @@ Full Path LLC
 **What we're promising:**
 
 - To keep RideSheet open-source
-- To respect your privacy (see [Privacy Policy](../privacy))
+- To respect your privacy (see [Privacy Policy](privacy.md))
 - To not claim ownership of your data
 
 **What we're NOT promising:**
