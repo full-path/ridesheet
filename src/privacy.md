@@ -1,7 +1,8 @@
 # RideSheet Privacy Policy
 
 **Service Provider:** Full Path LLC
-**Last Updated:** [TODO]
+
+**Last Updated:** December 31, 2025
 
 ## Overview
 
@@ -188,7 +189,7 @@ If you're in California, you have rights to:
 
 ### HIPAA
 
-**Important:** RideSheet is not HIPAA-compliant out of the box. Do not use RideSheet to store Protected Health Information (PHI) unless you have proper Business Associate Agreements in place with Google and have configured Google Workspace for HIPAA compliance.
+**Important:** RideSheet is not HIPAA-compliant out of the box. Do not use RideSheet to store Protected Health Information (PHI) unless you have adequate measures in place for HIPAA compliance.
 
 ## Contact Information
 

@@ -2,7 +2,7 @@
 
 **Service Provider:** Full Path LLC
 
-**Last Updated:** [TODO]
+**Last Updated:** December 31, 2025
 
 ## 1. Acceptance of Terms
 
