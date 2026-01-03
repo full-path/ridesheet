@@ -21,4 +21,4 @@ For developers and technical users, see our [Technical Guide](technical-guide/in
 
 ---
 
-RideSheet © 2024 Full Path LLC is Open Source software available under the [MIT License](https://github.com/full-path/ridesheet/blob/main/LICENSE).
+RideSheet © 2026 Full Path LLC is Open Source software available under the [MIT License](https://github.com/full-path/ridesheet/blob/main/LICENSE).
