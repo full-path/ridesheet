@@ -268,7 +268,7 @@ function replaceElementText(element, data) {
     }
     if (Object.keys(data).indexOf(fieldName) != -1) {
       element.replaceText("{" + fieldName + "}", datum)
-      if (fieldName.match(/\baddress\b/i) && datum) {
+      if (fieldName.match(/\baddress\b/i) && datum && getDocProp("addManifestAddressLinks")) {
         const url = createGoogleMapsDirectionsURL(datum)
         const text = element.asText()
         let addressRange = text.findText(escapeRegex(datum))

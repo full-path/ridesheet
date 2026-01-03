@@ -61,6 +61,11 @@ const defaultDocumentProperties = {
     value: 0,
     description: "The value of the last set customer ID."
   },
+  showNewInstallMenu: {
+    type: "boolean",
+    value: false,
+    description: "Show the new install menu? This keeps the menu in place until a new install is fully complete."
+  },
   driverManifestFolderId: {
     type: "string",
     value: "Enter ID here",
@@ -80,6 +85,11 @@ const defaultDocumentProperties = {
     type: "boolean",
     value: true,
     description: "When creating manifests, keep the Google Docs version?"
+  },
+  addManifestAddressLinks: {
+    type: "boolean",
+    value: true,
+    description: "When creating manifests, add Google Maps links to addresses?"
   },
   geocoderBoundNeLatitude: {
     type: "number",

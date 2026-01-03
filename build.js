@@ -98,18 +98,30 @@ function buildNamedRange(ss, rangeName, rangeConfigObj) {
 function runFirstOpenTasks() {
   try {
     const ui = safeGetUi()
-    if (ui && isNewCopy()) {
-      const menu = ui.createMenu('⭐️NEW INSTALL⭐️')
-      menu.addItem('Set up new installation', "setupNewInstall")
-      menu.addToUi()
-      const msg = `
-        It looks like you have a fresh copy of RideSheet.
-        If you like set up its environment,
-        select "Set up new installation" from the "NEW INSTALL" menu,
-        and then grant RideSheet's permission request by clicking
-        "Select all" then scrolling down and clicking "Continue".
-      `
-      ui.alert(msg)
+    if (ui) {
+      if (isNewCopy() || getDocProp("showNewInstallMenu")) {
+        const menu = ui.createMenu('⭐️NEW INSTALL⭐️')
+        menu.addItem('Set up new installation', "setupNewInstall")
+        menu.addToUi()
+      }
+      if (isNewCopy()) {
+        const ss = SpreadsheetApp.getActiveSpreadsheet()
+        const ui = safeGetUi()
+        const propSheet = ss.getSheetByName("Document Properties")
+        const propSheetDataRange = propSheet.getDataRange()
+        const propSheetData = propSheetDataRange.getValues()
+        updatePropertyRange(propSheetData, "showNewInstallMenu", "TRUE")
+        propSheetDataRange.setValues(propSheetData)
+        buildDocumentPropertiesFromSheet()
+        const msg = `
+          It looks like you have a fresh copy of RideSheet.\n
+          If you would like to set up its environment,
+          select "Set up new installation" from the "NEW INSTALL" menu,
+          and then grant RideSheet's permission request by clicking
+          "Select all" then scrolling down and clicking "Continue".
+        `
+        ui.alert("Welcome to RideSheet!", msg, ui.ButtonSet.OK)
+      }
     }
   } catch(e) { logError(e) }
 }
@@ -123,7 +135,6 @@ function setupNewInstall() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
     const ui = safeGetUi()
-    buildDocumentPropertiesFromSheet()
 
     // Instructions
     const manifestsResponse = ui.prompt(
@@ -207,6 +218,7 @@ function setupNewInstall() {
     const propSheetData = propSheetDataRange.getValues()
     updatePropertyRange(propSheetData, "driverManifestFolderId",      manifestsFolderId)
     updatePropertyRange(propSheetData, "driverManifestTemplateDocId", templateDocId)
+    updatePropertyRange(propSheetData, "showNewInstallMenu",          "FALSE")
     propSheetDataRange.setValues(propSheetData)
     buildDocumentPropertiesFromSheet()
 
