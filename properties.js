@@ -176,17 +176,17 @@ function getDocProps(props) {
 function serializeProp(value) {
   const type = getType(value)
   
-  if      (type === "array")     { return '{{array    }}' + JSON.stringify(value) } 
+  if      (type === "array")     { return '{{array    }}' + JSON.stringify(value, null, 2) }
   else if (type === "bigint")    { return '{{bigint   }}' + value }
-  else if (type === "boolean")   { return '{{boolean  }}' + JSON.stringify(value) } 
-  else if (type === "date")      { return '{{date     }}' + JSON.stringify(value) } 
-  else if (type === "map")       { return '{{map      }}' + JSON.stringify(Array.from(value.entries())) }
+  else if (type === "boolean")   { return '{{boolean  }}' + JSON.stringify(value) }
+  else if (type === "date")      { return '{{date     }}' + JSON.stringify(value) }
+  else if (type === "map")       { return '{{map      }}' + JSON.stringify(Array.from(value.entries()), null, 2) }
   else if (type === "null")      { return '{{null     }}' }
   else if (type === "number")    { return '{{number   }}' + value}
-  else if (type === "object")    { return '{{object   }}' + JSON.stringify(value) } 
-  else if (type === "set")       { return '{{set      }}' + JSON.stringify(Array.from(value.keys())) } 
+  else if (type === "object")    { return '{{object   }}' + JSON.stringify(value, null, 2) }
+  else if (type === "set")       { return '{{set      }}' + JSON.stringify(Array.from(value.keys()), null, 2) }
   else if (type === "string")    { return '{{string   }}' + value }
-  else if (type === "undefined") { return '{{undefined}}' }  
+  else if (type === "undefined") { return '{{undefined}}' }
   else                           { return '{{string   }}' + value }
 }
 
