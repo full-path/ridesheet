@@ -118,7 +118,8 @@ function runFirstOpenTasks() {
           If you would like to set up its environment,
           select "Set up new installation" from the "NEW INSTALL" menu,
           and then grant RideSheet's permission request by clicking
-          "Select all" then scrolling down and clicking "Continue".
+          "Select all" then scrolling down and clicking "Continue".\n
+          To learn more about installing RideSheet, visit https://docs.ridesheet.org/technical-guide/installing-ridesheet/
         `
         ui.alert("Welcome to RideSheet!", msg, ui.ButtonSet.OK)
       }
