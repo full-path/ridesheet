@@ -3,6 +3,8 @@ repo_url: https://github.com/full-path/ridesheet
 site_url: https://full-path.github.io/ridesheet/
 theme:
   name: material
+  logo: images/ridesheet-logo.png
+  favicon: images/favicon.png
   features:
     - navigation.sections
     - navigation.path
@@ -23,9 +25,9 @@ nav:
   - Technical Guide: 
     - technical-guide/index.md
     - Installing RideSheet: technical-guide/installing-ridesheet.md
-    - RideSheet Permissions: technical-guide/permissions.md
     - Configuration: technical-guide/configuration.md
     - Importing data: technical-guide/importing-data.md
+    - RideSheet Permissions: technical-guide/permissions.md
     - Apps Script: technical-guide/apps-script.md
     - Updating the Code: technical-guide/updating-the-code.md
     - Troubleshooting: technical-guide/troubleshooting.md

@@ -9,7 +9,7 @@ Welcome to RideSheet! RideSheet is a simple and affordable tool for operating an
 
 ## Features
 
-- **Built on Google Cloud Infrastructure** Because RideSheet is in the cloud, you benefit from features like automatic backups and version tracking, easy collaboration across your organization, and data security that meets HIPAA regulations.
+- **Built on Google Cloud Infrastructure** Because RideSheet is in the cloud, you benefit from features like automatic backups and version tracking, easy collaboration across your organization, and, with proper setup, data security that meets HIPAA regulations.
 - **Spreadsheet-Based** Anyone with experience in Excel, Google Sheets, or other spreadsheet applications will find it easy to learn RideSheet. Plus, it’s flexible and easy to customize.
 - **Manages Tracking, Manifests, and Reports** RideSheet handles tracking customers, trips, runs and more, and makes it easy to generate manifests and reports. It is customizable to handle thorny problems such as splitting trips between multiple funding sources.
 
