@@ -465,17 +465,13 @@ function getSheetHeaderNames(sheet, {forceRefresh = false, headerRowPosition = 1
   try {
     const sheetName = sheet.getName()
     if (!cachedHeaderNames[sheetName] || forceRefresh) {
-      const headerNames = sheet.getRange("A" + headerRowPosition + ":" + headerRowPosition).getValues()[0]
+      const headerRange = sheet.getRange("A" + headerRowPosition + ":" + headerRowPosition)
+      const headerNames = headerRange.getValues()[0]
+      const headerFormulas = headerRange.getFormulas()[0]
       cachedHeaderNames[sheetName] = headerNames.map(headerName => !headerName ? " " : headerName)
+      cachedHeaderFormulas[sheetName] = headerFormulas
     }
     return cachedHeaderNames[sheetName]
-  } catch(e) { logError(e) }
-}
-
-function setValuesForRow(newValues, rowNumber, sheet, {headerRowPosition = 1, overwriteAll = false} = {}) {
-  try {
-    const range = sheet.getRange(rowNumber + ":" + rowNumber)
-    return setValuesByHeaderNames([newValues], range, {headerRowPosition: headerRowPosition, overwriteAll: overwriteAll})
   } catch(e) { logError(e) }
 }
 
@@ -493,10 +489,7 @@ function getRangeHeaderNames(range, {forceRefresh = false, headerRowPosition = 1
 function getSheetHeaderFormulas(sheet, {forceRefresh = false, headerRowPosition = 1} = {}) {
   try {
     const sheetName = sheet.getName()
-    if (!cachedHeaderFormulas[sheetName] || forceRefresh) {
-      const headerFormulas = sheet.getRange("A" + headerRowPosition + ":" + headerRowPosition).getFormulas()[0]
-      cachedHeaderFormulas[sheetName] = headerFormulas
-    }
+    getSheetHeaderNames(sheet, {forceRefresh: forceRefresh, headerRowPosition: headerRowPosition})
     return cachedHeaderFormulas[sheetName]
   } catch(e) { logError(e) }
 }
@@ -558,4 +551,100 @@ function clearSheet(sheet) {
     const dataRange = sheet.getRange(2, 1, 1, sheet.getLastColumn());
     dataRange.clearContent();
   }
+}
+
+// Clears out hand-entered values that break "array spill" formulas located in headers.
+function clearSpillBlockages(e) {
+  try {
+    const sheet = e.range.getSheet()
+    const headerValues = getSheetHeaderNames(sheet)
+    const headerFormulas = getSheetHeaderFormulas(sheet)
+
+    headerValues.forEach((headerValue, i) => {
+      if (headerValue === ("#REF!") && headerFormulas[i].startsWith(`={"|`)) {
+        const spillColumnCount = getSpillColumnCount(headerFormulas[i])
+        const spillRowCount = sheet.getLastRow() - 1
+        const rangeToClear = sheet.getRange(2,i+1,spillRowCount,spillColumnCount)
+        rangeToClear.clearContent()
+        // Refresh the header name and formula caches for any calls after this that rely on it.
+        getSheetHeaderNames(sheet,{forceRefresh: true})
+        SpreadsheetApp.getActiveSpreadsheet().toast("Data blocking a calculated column has been removed.")
+      }
+    })
+  } catch(e) { logError(e) }
+}
+
+function getSpillColumnCount(formula) {
+  const start = formula.indexOf('{')
+  const semicolonPos = findTopLevelSemicolon(formula, start)
+  if (start === -1 || semicolonPos === -1) return 0
+
+  const firstRow = formula.substring(start + 1, semicolonPos)
+  let commas = 0
+  let inQuote = false
+  let parenDepth = 0
+  let braceDepth = 0
+
+  for (let i = 0; i < firstRow.length; i++) {
+    const char = firstRow[i]
+    const nextChar = firstRow[i + 1]
+
+    if (inQuote) {
+      // Check for escaped quote (double quote)
+      if (char === '"' && nextChar === '"') {
+        i++; // skip next quote
+      } else if (char === '"') {
+        inQuote = false
+      }
+    } else {
+      if (char === '"') {
+        inQuote = true
+      } else if (char === '(') {
+        parenDepth++
+      } else if (char === ')') {
+        parenDepth--
+      } else if (char === '{') {
+        braceDepth++
+      } else if (char === '}') {
+        braceDepth--
+      } else if (char === ',' && parenDepth === 0 && braceDepth === 0) {
+        commas++
+      }
+    }
+  }
+  return commas + 1
+}
+
+function findTopLevelSemicolon(formula, startPos) {
+  let inQuote = false
+  let parenDepth = 0
+  let braceDepth = 0
+
+  for (let i = startPos + 1; i < formula.length; i++) {
+    const char = formula[i]
+    const nextChar = formula[i + 1]
+
+    if (inQuote) {
+      if (char === '"' && nextChar === '"') {
+        i++
+      } else if (char === '"') {
+        inQuote = false
+      }
+    } else {
+      if (char === '"') {
+        inQuote = true
+      } else if (char === '(') {
+        parenDepth++
+      } else if (char === ')') {
+        parenDepth--
+      } else if (char === '{') {
+        braceDepth++
+      } else if (char === '}') {
+        braceDepth--
+      } else if (char === ';' && parenDepth === 0 && braceDepth === 0) {
+        return i
+      }
+    }
+  }
+  return -1
 }
