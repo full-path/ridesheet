@@ -560,7 +560,20 @@ function clearSheet(sheet) {
   }
 }
 
-// Clears out hand-entered values that break "array spill" formulas located in headers.
+/**
+ * Clears out hand-entered values that break "array spill" formulas located in headers.
+ *
+ * This function is intended to be called from an onEdit trigger. It inspects the
+ * header row for spill-formula headers that evaluate to "#REF!" and match the
+ * expected array-literal pattern (e.g. formulas starting with `={"|`). For any
+ * such header, it calculates the spill range underneath the header and clears
+ * any blocking values in that range so the array spill formula can recalculate.
+ * It then refreshes cached header names and notifies the user via a toast.
+ *
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} e The edit event object describing
+ *     the user edit that triggered this handler, including the edited range.
+ * @returns {void}
+ */
 function clearSpillBlockages(e) {
   try {
     const sheet = e.range.getSheet()
@@ -581,6 +594,22 @@ function clearSpillBlockages(e) {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Parses a Google Sheets array-literal "spill" formula to determine how many
+ * columns the first row of the spilled array will occupy.
+ *
+ * The function expects a formula string that contains an array literal,
+ * typically of the form:
+ *   ={"col1","col2","col3"; ... }
+ * It inspects only the first row of the array (up to the first top-level
+ * semicolon) and counts top-level commas that are not inside quotes,
+ * parentheses, or nested array literals.
+ *
+ * @param {string} formula The full formula string containing an array
+ *   literal whose first row's width (number of columns) should be computed.
+ * @return {number} The number of columns in the first row of the spilled
+ *   array; returns 0 if no valid array literal start or row separator is found.
+ */
 function getSpillColumnCount(formula) {
   const start = formula.indexOf('{')
   const semicolonPos = findTopLevelSemicolon(formula, start)
@@ -622,6 +651,14 @@ function getSpillColumnCount(formula) {
   return commas + 1
 }
 
+/**
+ * Finds the first semicolon at the top level of nesting in a formula string.
+ * Semicolons that appear inside quotes, parentheses, or braces are ignored.
+ *
+ * @param {string} formula The formula text to search.
+ * @param {number} startPos The index from which to start scanning (typically the index of '{').
+ * @return {number} The index of the first top-level semicolon, or -1 if none is found.
+ */
 function findTopLevelSemicolon(formula, startPos) {
   let inQuote = false
   let parenDepth = 0
