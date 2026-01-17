@@ -565,7 +565,7 @@ function clearSheet(sheet) {
  *
  * This function is intended to be called from an onEdit trigger. It inspects the
  * header row for spill-formula headers that evaluate to "#REF!" and match the
- * expected array-literal pattern (e.g. formulas starting with `={"|`). For any
+ * expected array-literal pattern (e.g. formulas starting with `={"`). For any
  * such header, it calculates the spill range underneath the header and clears
  * any blocking values in that range so the array spill formula can recalculate.
  * It then refreshes cached header names and notifies the user via a toast.
@@ -579,16 +579,24 @@ function clearSpillBlockages(e) {
     const sheet = e.range.getSheet()
     const headerValues = getSheetHeaderNames(sheet)
     const headerFormulas = getSheetHeaderFormulas(sheet)
+    let blockagesCleared = 0
 
     headerValues.forEach((headerValue, i) => {
-      if (headerValue === ("#REF!") && headerFormulas[i].startsWith(`={"|`)) {
+      if (headerValue === ("#REF!") && headerFormulas[i].startsWith(`={"`)) {
         const spillColumnCount = getSpillColumnCount(headerFormulas[i])
         const spillRowCount = sheet.getLastRow() - 1
-        const rangeToClear = sheet.getRange(2,i+1,spillRowCount,spillColumnCount)
-        rangeToClear.clearContent()
+        if (spillColumnCount > 0 && spillRowCount > 0) {
+          const rangeToClear = sheet.getRange(2,i+1,spillRowCount,spillColumnCount)
+          rangeToClear.clearContent()
+          blockagesCleared++
+        }
+      }
+      if (blockagesCleared) {
+        SpreadsheetApp.getActiveSpreadsheet().toast(
+          `Data blocking ${blockagesCleared === 1 ? "a" : blockagesCleared} calculated column${blockagesCleared === 1 ? "" : "s"}  has been cleared.`
+        )
         // Refresh the header name and formula caches for any calls after this that rely on it.
         getSheetHeaderNames(sheet,{forceRefresh: true})
-        SpreadsheetApp.getActiveSpreadsheet().toast("Data blocking a calculated column has been removed.")
       }
     })
   } catch(e) { logError(e) }
