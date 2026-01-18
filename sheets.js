@@ -619,48 +619,49 @@ function clearSpillBlockages(e) {
  *   array; returns 0 if no valid array literal start or row separator is found.
  */
 function getSpillColumnCount(formula) {
-  const start = formula.indexOf('{')
-  if (start === -1) return 0
-  let endOfRowPos = findTopLevelSemicolon(formula, start)
-  if (endOfRowPos === -1) {
-    endOfRowPos = formula.lastIndexOf('}')
+  try {
+    if (typeof formula !== 'string' || formula.length === 0) return -1
+    const start = formula.indexOf('{')
+    if (start === -1) return 0
+    let endOfRowPos = findTopLevelSemicolon(formula, start)
+    if (endOfRowPos === -1) endOfRowPos = formula.lastIndexOf('}')
     if (endOfRowPos === -1 || endOfRowPos < start) return 0
-  }
 
-  const firstRow = formula.substring(start + 1, endOfRowPos)
-  let commas = 0
-  let inQuote = false
-  let parenDepth = 0
-  let braceDepth = 0
+    const firstRow = formula.substring(start + 1, endOfRowPos)
+    let commas = 0
+    let inQuote = false
+    let parenDepth = 0
+    let braceDepth = 0
 
-  for (let i = 0; i < firstRow.length; i++) {
-    const char = firstRow[i]
-    const nextChar = firstRow[i + 1]
+    for (let i = 0; i < firstRow.length; i++) {
+      const char = firstRow[i]
+      const nextChar = firstRow[i + 1]
 
-    if (inQuote) {
-      // Check for escaped quote (double quote)
-      if (char === '"' && nextChar === '"') {
-        i++; // skip next quote
-      } else if (char === '"') {
-        inQuote = false
-      }
-    } else {
-      if (char === '"') {
-        inQuote = true
-      } else if (char === '(') {
-        parenDepth++
-      } else if (char === ')') {
-        parenDepth--
-      } else if (char === '{') {
-        braceDepth++
-      } else if (char === '}') {
-        braceDepth--
-      } else if (char === ',' && parenDepth === 0 && braceDepth === 0) {
-        commas++
+      if (inQuote) {
+        // Check for escaped quote (double quote)
+        if (char === '"' && nextChar === '"') {
+          i++; // skip next quote
+        } else if (char === '"') {
+          inQuote = false
+        }
+      } else {
+        if (char === '"') {
+          inQuote = true
+        } else if (char === '(') {
+          parenDepth++
+        } else if (char === ')') {
+          parenDepth--
+        } else if (char === '{') {
+          braceDepth++
+        } else if (char === '}') {
+          braceDepth--
+        } else if (char === ',' && parenDepth === 0 && braceDepth === 0) {
+          commas++
+        }
       }
     }
-  }
-  return commas + 1
+    return commas + 1
+  } catch(e) { logError(e) }
 }
 
 /**
@@ -672,35 +673,38 @@ function getSpillColumnCount(formula) {
  * @return {number} The index of the first top-level semicolon, or -1 if none is found.
  */
 function findTopLevelSemicolon(formula, startPos) {
-  let inQuote = false
-  let parenDepth = 0
-  let braceDepth = 0
+  try {
+    if (typeof formula !== 'string' || formula.length === 0) return -1
+    let inQuote = false
+    let parenDepth = 0
+    let braceDepth = 0
 
-  for (let i = startPos + 1; i < formula.length; i++) {
-    const char = formula[i]
-    const nextChar = formula[i + 1]
+    for (let i = startPos + 1; i < formula.length; i++) {
+      const char = formula[i]
+      const nextChar = formula[i + 1]
 
-    if (inQuote) {
-      if (char === '"' && nextChar === '"') {
-        i++
-      } else if (char === '"') {
-        inQuote = false
-      }
-    } else {
-      if (char === '"') {
-        inQuote = true
-      } else if (char === '(') {
-        parenDepth++
-      } else if (char === ')') {
-        parenDepth--
-      } else if (char === '{') {
-        braceDepth++
-      } else if (char === '}') {
-        braceDepth--
-      } else if (char === ';' && parenDepth === 0 && braceDepth === 0) {
-        return i
+      if (inQuote) {
+        if (char === '"' && nextChar === '"') {
+          i++
+        } else if (char === '"') {
+          inQuote = false
+        }
+      } else {
+        if (char === '"') {
+          inQuote = true
+        } else if (char === '(') {
+          parenDepth++
+        } else if (char === ')') {
+          parenDepth--
+        } else if (char === '{') {
+          braceDepth++
+        } else if (char === '}') {
+          braceDepth--
+        } else if (char === ';' && parenDepth === 0 && braceDepth === 0) {
+          return i
+        }
       }
     }
-  }
-  return -1
+    return -1
+  } catch(e) { logError(e) }
 }
