@@ -595,7 +595,7 @@ function clearSpillBlockages(e) {
 
     if (blockagesCleared) {
       SpreadsheetApp.getActiveSpreadsheet().toast(
-        `Data blocking ${blockagesCleared === 1 ? "a" : blockagesCleared} calculated column${blockagesCleared === 1 ? "" : "s"}  has been cleared.`
+        `Data blocking ${blockagesCleared === 1 ? "a" : blockagesCleared} calculated column${blockagesCleared === 1 ? "" : "s"} has been cleared.`
       )
       // Refresh the header name and formula caches for any calls after this that rely on it.
       getSheetHeaderNames(sheet,{forceRefresh: true})
@@ -610,9 +610,8 @@ function clearSpillBlockages(e) {
  * The function expects a formula string that contains an array literal,
  * typically of the form:
  *   ={"col1","col2","col3"; ... }
- * It inspects only the first row of the array (up to the first top-level
- * semicolon) and counts top-level commas that are not inside quotes,
- * parentheses, or nested array literals.
+ * It inspects only the first row of the array and counts top-level commas
+ * that are not inside quotes, parentheses, or nested array literals.
  *
  * @param {string} formula The full formula string containing an array
  *   literal whose first row's width (number of columns) should be computed.
@@ -621,10 +620,14 @@ function clearSpillBlockages(e) {
  */
 function getSpillColumnCount(formula) {
   const start = formula.indexOf('{')
-  const semicolonPos = findTopLevelSemicolon(formula, start)
-  if (start === -1 || semicolonPos === -1) return 0
+  if (start === -1) return 0
+  let endOfRowPos = findTopLevelSemicolon(formula, start)
+  if (endOfRowPos === -1) {
+    endOfRowPos = formula.lastIndexOf('}')
+    if (endOfRowPos === -1 || endOfRowPos < start) return 0
+  }
 
-  const firstRow = formula.substring(start + 1, semicolonPos)
+  const firstRow = formula.substring(start + 1, endOfRowPos)
   let commas = 0
   let inQuote = false
   let parenDepth = 0
