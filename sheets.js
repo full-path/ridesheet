@@ -582,7 +582,7 @@ function clearSpillBlockages(e) {
     let blockagesCleared = 0
 
     headerValues.forEach((headerValue, i) => {
-      if (headerValue === ("#REF!") && headerFormulas[i].startsWith(`={"`)) {
+      if (headerValue === "#REF!" && headerFormulas[i]?.startsWith(`={"`)) {
         const spillColumnCount = getSpillColumnCount(headerFormulas[i])
         const spillRowCount = sheet.getLastRow() - 1
         if (spillColumnCount > 0 && spillRowCount > 0) {
@@ -591,14 +591,15 @@ function clearSpillBlockages(e) {
           blockagesCleared++
         }
       }
-      if (blockagesCleared) {
-        SpreadsheetApp.getActiveSpreadsheet().toast(
-          `Data blocking ${blockagesCleared === 1 ? "a" : blockagesCleared} calculated column${blockagesCleared === 1 ? "" : "s"}  has been cleared.`
-        )
-        // Refresh the header name and formula caches for any calls after this that rely on it.
-        getSheetHeaderNames(sheet,{forceRefresh: true})
-      }
     })
+
+    if (blockagesCleared) {
+      SpreadsheetApp.getActiveSpreadsheet().toast(
+        `Data blocking ${blockagesCleared === 1 ? "a" : blockagesCleared} calculated column${blockagesCleared === 1 ? "" : "s"}  has been cleared.`
+      )
+      // Refresh the header name and formula caches for any calls after this that rely on it.
+      getSheetHeaderNames(sheet,{forceRefresh: true})
+    }
   } catch(e) { logError(e) }
 }
 
