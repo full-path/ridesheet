@@ -561,7 +561,7 @@ function clearSheet(sheet) {
 }
 
 /**
- * Clears out hand-entered values that break "array spill" formulas located in headers.
+ * Clears out hand-entered values that block "array spill" formulas located in headers.
  *
  * This function is intended to be called from an onEdit trigger. It inspects the
  * header row for spill-formula headers that evaluate to "#REF!" and match the
@@ -661,7 +661,10 @@ function getSpillColumnCount(formula) {
       }
     }
     return commas + 1
-  } catch(e) { logError(e) }
+  } catch(e) {
+    logError(e)
+    return -1
+  }
 }
 
 /**
@@ -706,5 +709,8 @@ function findTopLevelSemicolon(formula, startPos) {
       }
     }
     return -1
-  } catch(e) { logError(e) }
+  } catch(e) {
+    logError(e)
+    return -1
+  }
 }
