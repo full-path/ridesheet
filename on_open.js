@@ -4,6 +4,9 @@ function onOpen(e) {
     buildMenus()
   } catch(e) { logError(e) }
   try {
+    runFirstOpenTasks()
+  } catch(e) { logError(e) }
+  try {
     buildDocumentPropertiesIfEmpty()
     buildDocumentPropertiesFromDefaults()
     purgeOldDocumentProperties()
