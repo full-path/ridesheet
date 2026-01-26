@@ -51,48 +51,51 @@ function getSortConfig() {
   return [
     {
       name: "Date, PU Time",
+      sheets: ["Trips","Trip Review", "Trip Archive"],
       sort: [
         {
           column: "Trip Date",
-          ascending: false
+          sortOrder: "DESCENDING"
         },
         {
           column: "PU Time",
-          ascending: true
+          sortOrder: "ASCENDING"
         },
       ]
     },
     {
       name: "Date, Vehicle, PU Time",
+      sheets: ["Trips","Trip Review", "Trip Archive"],
       sort: [
         {
           column: "Trip Date",
-          ascending: false
+          sortOrder: "DESCENDING"
         },
         {
           column: "Vehicle ID",
-          ascending: true
+          sortOrder: "ASCENDING"
         },
         {
           column: "PU Time",
-          ascending: true
+          sortOrder: "ASCENDING"
         },
       ]
     },
     {
       name: "Customer, Date, PU Time",
+      sheets: ["Trips","Trip Review", "Trip Archive"],
       sort: [
         {
           column: "Customer Name and ID",
-          ascending: true
+          sortOrder: "ASCENDING"
         },
         {
           column: "Trip Date",
-          ascending: false
+          sortOrder: "DESCENDING"
         },
         {
           column: "PU Time",
-          ascending: true
+          sortOrder: "ASCENDING"
         },
       ]
     }
@@ -104,121 +107,116 @@ function getSortConfig() {
  * This function is designed to be a companion to sortTrips() and uses the
  * same config object from getSortConfig().
  *
- * @param {number} index - The index of the config object from getSortConfig().
+ * @param {number} config - The config object from getSortConfig().
  */
-function createOrUpdateFilterView(index) {
+function createOrUpdateFilterViews(config) {
   // --- 1. Get Config and Sheet Details ---
-  if (!index) index = 2
-  const allConfigs = getSortConfig();
-  if (!allConfigs[index]) {
-    Logger.log(`Error: No config found at index ${index}.`);
-    return;
-  }
-  
-  const config = allConfigs[index];
-  const filterViewTitle = config.name; // Assumes config has a "name" property
-  const sortSettings = config.sort;
-  
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const spreadsheetId = ss.getId();
-  const sheet = ss.getSheetByName("Trip Review")
-  const sheetId = sheet.getSheetId();
-  
-  // --- 2. Define the Filter View's Range ---
-  
-  const lastRow = sheet.getLastRow();
-  const lastCol = sheet.getLastColumn();
-  
-  if (lastRow <= 1) return; // Don't create a filter for just a header
+  const requests = []
 
-  // Define the GridRange for the filter view
-  const filterRange = {
-    sheetId: sheetId,
-    startRowIndex: 0, // 0-indexed, so 0 is row 1 (header)
-    endRowIndex: lastRow,
-    startColumnIndex: 0, // 0 is column A
-    endColumnIndex: lastCol
-  };
-  
-  // --- 3. Convert Sort Config to API "SortSpecs" ---
-  
-  const sheetHeaderNames = getSheetHeaderNames(sheet);
-  let missingHeaders = [];
-  const sortSpecs = [];
+  config.forEach((view) => {
+    view.sheets.forEach((sheetName) => {
+      const sheet = ss.getSheetByName(sheetName)
+      const sheetId = sheet.getSheetId()
+      const filterViewTitle = view.name
+      const sortSettings = view.sort
 
-  sortSettings.forEach(item => {
-    const columnNumber = sheetHeaderNames.indexOf(item.column) + 1;
-    if (!columnNumber) {
-      missingHeaders.push(item.column);
-    } else {
-      sortSpecs.push({
-        dimensionIndex: columnNumber - 1, // API uses 0-indexed column
-        sortOrder: item.ascending ? "ASCENDING" : "DESCENDING"
-      });
-    }
-  });
+      // Define the Filter View's Range ---
+      const lastRow = sheet.getLastRow();
+      const lastCol = sheet.getLastColumn();
 
-  if (missingHeaders.length) {
-    ss.toast(`Filter view failed. Columns missing: ${missingHeaders.join(", ")}`);
-    return;
-  }
+      if (lastRow > 1) {
 
-  // --- 4. Check for an Existing Filter View ---
-  
-  let existingFilterViewId = null;
-  try {
-    // Get all filter views on the spreadsheet
-    const allFilterViews = Sheets.Spreadsheets.get(spreadsheetId, {
-      fields: 'sheets.filterViews(filterViewId,title,range.sheetId)'
-    }).sheets
-      .flatMap(s => s.filterViews || []); // Get all filter views from all sheets
+        // Define the GridRange for the filter view
+        const filterRange = {
+          sheetId: sheetId,
+          startRowIndex: 0, // 0-indexed, so 0 is row 1 (header)
+          endRowIndex: lastRow,
+          startColumnIndex: 0, // 0 is column A
+          endColumnIndex: lastCol
+        };
 
-    // Find a filter view on *this* sheet with a matching title
-    const existingView = allFilterViews.find(fv => 
-      fv.range.sheetId === sheetId && fv.title === filterViewTitle
-    );
+        // --- 3. Convert Sort Config to API "SortSpecs" ---
 
-    if (existingView) {
-      existingFilterViewId = existingView.filterViewId;
-    }
+        const sheetHeaderNames = getSheetHeaderNames(sheet);
+        let missingHeaders = [];
+        const sortSpecs = [];
 
-  } catch (e) {
-    ss.toast(`Error checking for filter views: ${e.message}`);
-    return;
-  }
+        sortSettings.forEach(item => {
+          const columnNumber = sheetHeaderNames.indexOf(item.column) + 1;
+          if (!columnNumber) {
+            missingHeaders.push(item.column);
+          } else {
+            sortSpecs.push({
+              dimensionIndex: columnNumber - 1, // API uses 0-indexed column
+              sortOrder: item.sortOrder
+            });
+          }
+        });
 
-  // --- 5. Create or Update the Filter View ---
-  
-  let request;
-  if (existingFilterViewId) {
-    // --- UPDATE existing filter view ---
-    request = {
-      updateFilterView: {
-        filter: {
-          filterViewId: existingFilterViewId,
-          title: filterViewTitle,
-          range: filterRange,
-          sortSpecs: sortSpecs
-        },
-        fields: "title,range,sortSpecs" // Fields to update
-      }
-    };
-    ss.toast(`Filter view "${filterViewTitle}" updated.`);
-  } else {
-    // --- ADD new filter view ---
-    request = {
-      addFilterView: {
-        filter: {
-          // No filterViewId needed for creation
-          title: filterViewTitle,
-          range: filterRange,
-          sortSpecs: sortSpecs
+        if (missingHeaders.length) {
+          ss.toast(`Filter view failed. Columns missing: ${missingHeaders.join(", ")}`);
+          return;
         }
-      }
-    };
-    ss.toast(`Filter view "${filterViewTitle}" created.`);
-  }
 
+        // --- 4. Check for an Existing Filter View ---
+
+        let existingFilterViewId = null;
+        try {
+          // Get all filter views on the spreadsheet
+          const allFilterViews = Sheets.Spreadsheets.get(spreadsheetId, {
+            fields: 'sheets.filterViews(filterViewId,title,range.sheetId)'
+          }).sheets
+            .flatMap(s => s.filterViews || []); // Get all filter views from all sheets
+
+          // Find a filter view on *this* sheet with a matching title
+          const existingView = allFilterViews.find(fv =>
+            fv.range.sheetId === sheetId && fv.title === filterViewTitle
+          );
+
+          if (existingView) {
+            existingFilterViewId = existingView.filterViewId;
+          }
+
+        } catch (e) {
+          ss.toast(`Error checking for filter views: ${e.message}`);
+          return
+        }
+
+        // --- 5. Create or Update the Filter View ---
+
+        let request
+        if (existingFilterViewId) {
+          // --- UPDATE existing filter view ---
+          request = {
+            updateFilterView: {
+              filter: {
+                filterViewId: existingFilterViewId,
+                title: filterViewTitle,
+                range: filterRange,
+                sortSpecs: sortSpecs
+              },
+              fields: "title,range,sortSpecs" // Fields to update
+            }
+          }
+        } else {
+          // --- ADD new filter view ---
+          request = {
+            addFilterView: {
+              filter: {
+                // No filterViewId needed for creation
+                title: filterViewTitle,
+                range: filterRange,
+                sortSpecs: sortSpecs
+              }
+            }
+          }
+        }
+        requests.push(request)
+      }
+    })
+  })
   // --- 6. Execute the Request ---
   
   try {
