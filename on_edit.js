@@ -3,7 +3,8 @@ const initialSheetTriggers = {
 }
 
 const finalSheetTriggers = {
-  "Trips": tripSheetTrigger
+  "Trips": tripSheetTrigger,
+  "Runs":  runSheetTrigger
 }
 
 const rangeTriggers = {
@@ -341,5 +342,12 @@ function tripSheetTrigger(e) {
   try {
     updateTripID(e)
     completeTripRunValues(e)
+    clearSpillBlockages(e)
+  } catch(e) { logError(e) }
+}
+
+function runSheetTrigger(e) {
+  try {
+    clearSpillBlockages(e)
   } catch(e) { logError(e) }
 }
