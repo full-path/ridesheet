@@ -148,26 +148,48 @@ function getType(value) {
 
 function replaceText(templateString, data) {
   try {
-    //templateString = "This is {a} test {with} words in {braces]"
     let result = templateString
-    const pattern = /{(.*?)}/g
-    const innerMatches = [...templateString.matchAll(pattern)].map(match => match[1])
-    innerMatches.forEach(field => {
-      if (isValidDate(data[field])) {
-        if (field.match(/\bdate\b/i)) {
-          datum = formatDate(data[field])
-        } else if (field.match(/\btime\b/i)) {
-          datum = formatDate(data[field], null, "h:mm aa")
+
+    // First pass: Process conditional fields {?field}...{field}
+    const conditionalPattern = /\{\?([^}]+)\}(.*?)\{\1\}/g
+    const conditionalMatches = [...result.matchAll(conditionalPattern)]
+
+    conditionalMatches.forEach(match => {
+      const fullMatch = match[0]
+      const fieldName = match[1]
+      if (Object.keys(data).includes(fieldName)) {
+        const hasValue = data[fieldName] !== null &&
+                         data[fieldName] !== undefined &&
+                         data[fieldName] !== ''
+        if (hasValue) {
+          // Field has value - remove just the conditional marker {?field}
+          result = result.replace('{?' + fieldName + '}', '')
         } else {
-          datum = formatDate(data[field], null, "h:mm aa M/d/yy")
+          // Field is empty - remove the entire conditional block
+          result = result.replace(fullMatch, '')
+        }
+      }
+    })
+
+    // Second pass: Process regular fields {field}
+    const pattern = /{(.*?)}/g
+    const innerMatches = [...result.matchAll(pattern)].map(match => match[1])
+    innerMatches.forEach(fieldName => {
+      if (isValidDate(data[fieldName])) {
+        if (fieldName.match(/\bdate\b/i)) {
+          datum = formatDate(data[fieldName])
+        } else if (fieldName.match(/\btime\b/i)) {
+          datum = formatDate(data[fieldName], null, "h:mm aa")
+        } else {
+          datum = formatDate(data[fieldName], null, "h:mm aa M/d/yy")
         }
       } else {
-        datum = data[field]
+        datum = data[fieldName] || ''
       }
-      if (Object.keys(data).includes(field)) {
-        result = result.replace("{" + field + "}", datum)
+      if (Object.keys(data).includes(fieldName)) {
+        result = result.replace("{" + fieldName + "}", datum)
       } else {
-        result = result.replace("{" + field + "}", field + " not specified")
+        result = result.replace("{" + fieldName + "}", fieldName + " not specified")
       }
     })
     return result
@@ -194,5 +216,13 @@ function pluralize(count, singular, plural){
     return `${count || 0} ${word}`
   } catch (e) {
     logError(e)
+  }
+}
+
+function safeGetUi() {
+  try {
+    return SpreadsheetApp.getUi()
+  } catch (e) {
+    return null
   }
 }
