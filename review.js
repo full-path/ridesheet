@@ -321,16 +321,34 @@ function moveTripsToArchive() {
  * @param {Sheet} destSheet - The sheet to move rows to.
  * @param {function} filter - A function to filter which rows to move.
  * @param {string} timestampColName - The name of the column to add a timestamp to.
+ * @param {Object} [options] - Optional settings.
+ * @param {boolean} [options.copyBackgrounds=false] - Whether to copy cell background colors from the source rows.
  * @return {Array} - The rows that were moved.
  */
-function moveRows(sourceSheet, destSheet, filter, timestampColName) {
+function moveRows(sourceSheet, destSheet, filter, timestampColName, {copyBackgrounds=false}={}) {
   try {
-    const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
+    const sourceRange = sourceSheet.getDataRange()
+    const sourceData = getRangeValuesAsTable(sourceRange, {includeFormulaValues: false})
     const rowsToMove = sourceData.filter(row => filter(row))
     if (rowsToMove.length < 1) {
       return []
     }
-    const rowsMovedSuccessfully = createRows(destSheet, rowsToMove, timestampColName)
+
+    let rowBackgrounds = null
+    if (copyBackgrounds) {
+      const allBackgrounds = sourceRange.getBackgrounds()
+      const sourceHeaders = getSheetHeaderNames(sourceSheet)
+      rowBackgrounds = rowsToMove.map(row => {
+        const bgRow = allBackgrounds[row._rowIndex + 1]
+        const bgMap = {}
+        sourceHeaders.forEach((name, i) => {
+          bgMap[name] = bgRow[i]
+        })
+        return bgMap
+      })
+    }
+
+    const rowsMovedSuccessfully = createRows(destSheet, rowsToMove, timestampColName, {backgrounds: rowBackgrounds})
     if (rowsMovedSuccessfully) {
       safelyDeleteRows(sourceSheet, rowsToMove)
     } else {

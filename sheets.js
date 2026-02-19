@@ -80,7 +80,17 @@ function findFirstRowByHeaderNames(sheet, filter) {
   } catch(e) { logError(e) }
 }
 
-function createRows(destSheet, data, timestampColName, overwrite=false) {
+/**
+ * Creates rows in the destination sheet from the provided data.
+ * @param {Sheet} destSheet - The sheet to add rows to.
+ * @param {Array<Object>} data - The row data to write.
+ * @param {string} timestampColName - The name of the column to add a timestamp to.
+ * @param {Object} [options] - Optional settings.
+ * @param {boolean} [options.overwrite=false] - Whether to overwrite existing data starting at row 2.
+ * @param {Array<Object>|null} [options.backgrounds=null] - Background color maps keyed by column name, one per row.
+ * @return {boolean} - Whether the rows were created successfully.
+ */
+function createRows(destSheet, data, timestampColName, {overwrite=false, backgrounds=null}={}) {
   try {
     const timestamp = new Date()
     let destColumnNames = getSheetHeaderNames(destSheet)
@@ -107,6 +117,14 @@ function createRows(destSheet, data, timestampColName, overwrite=false) {
     let firstRow = overwrite ? 2 : destSheet.getLastRow() + 1
     let newRows = destSheet.getRange(firstRow, 1, values.length, values[0].length)
     newRows.setValues(values)
+
+    if (backgrounds && backgrounds.length === data.length) {
+      const bgValues = backgrounds.map(bgMap => {
+        return destColumnNames.map(colName => bgMap[colName] || '#ffffff')
+      })
+      newRows.setBackgrounds(bgValues)
+    }
+
     applySheetFormatsAndValidation(destSheet, firstRow)
     return true
   } catch(e) {
