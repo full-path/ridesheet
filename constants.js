@@ -1097,10 +1097,6 @@ const defaultNamedRanges = {
     "sheetName":"Trips",
     "headerName":"Go"
   },
-  "codeUpdateTripVehicle": {
-    "sheetName":"Trips",
-    "headerName":"Driver ID"
-  },
   "codeUpdateTripTimes1": {
     "sheetName":"Trips",
     "headerName":"PU Time"
