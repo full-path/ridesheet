@@ -743,7 +743,7 @@ function buildRecordsFromTemplate(templateSheetName, destSheetName, destDateFiel
 
   const ui = SpreadsheetApp.getUi()
   const response = ui.alert(
-    'Generate Runs',
+    `Generate ${destSheetName}`,
     `Would you like to generate ${destSheetName.toLowerCase()} starting from ${formatDate(latestDate)}? Click No to enter a custom date.`,
     ui.ButtonSet.YES_NO_CANCEL
   )
@@ -792,5 +792,6 @@ function buildRecordsFromTemplate(templateSheetName, destSheetName, destDateFiel
     })
   }
   const newRows = createRows(destSheet, rowsToCreate)
+  return newRows
 }
 
