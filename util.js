@@ -226,3 +226,31 @@ function safeGetUi() {
     return null
   }
 }
+
+/**
+ * Returns the 1-indexed row number of the last row containing actual data,
+ * scanning all columns. Uses getDataRange() as the upper bound, then walks
+ * upward to find the true last populated row.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
+ * @returns {number} 1-indexed row number, or 0 if the sheet is entirely empty.
+ */
+function getTrueLastRow(sheet) {
+  const dataRange = sheet.getDataRange()
+  const values = dataRange.getValues()
+  const startRow = dataRange.getRow() // Typically 1, but not assumed
+
+  for (let i = values.length - 1; i >= 0; i--) {
+    const rowHasData = values[i].some(cell =>
+      cell !== null &&
+      cell !== undefined &&
+      String(cell).trim() !== ''
+    )
+
+    if (rowHasData) {
+      return startRow + i
+    }
+  }
+
+  return 0 // Sheet is empty
+}

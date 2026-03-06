@@ -160,3 +160,10 @@ function completeTripRunValues(e) {
     }
   } catch(e) { logError(e) }
 }
+
+
+// Fill in a week of entries in the "Runs" sheet using the schedule information in "Run Template"
+function buildTripsFromTemplate() {
+  buildRecordsFromTemplate("Trip Template","Trips","Trip Date")
+}
+

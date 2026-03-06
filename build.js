@@ -11,6 +11,7 @@ function buildMenus() {
   if (getDocProp("createRunMode") === "default") {
     menu.addItem('Generate weekly runs from template', 'buildRunsFromTemplate')
   }
+  menu.addItem('Generate weekly trips from template', 'buildTripsFromTemplate')
   menu.addSeparator()
   let settingsMenu = ui.createMenu('Settings')
   settingsMenu.addItem('Refresh document properties sheet', 'presentProperties')

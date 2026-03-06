@@ -104,11 +104,11 @@ function createRows(destSheet, data, timestampColName, overwrite=false) {
         }
       })
     })
-    let firstRow = overwrite ? 2 : destSheet.getLastRow() + 1
+    let firstRow = overwrite ? 2 : getTrueLastRow(destSheet) + 1
     let newRows = destSheet.getRange(firstRow, 1, values.length, values[0].length)
     newRows.setValues(values)
     applySheetFormatsAndValidation(destSheet, firstRow)
-    return true
+    return newRows
   } catch(e) {
       logError(e)
       return false
@@ -714,3 +714,83 @@ function findTopLevelSemicolon(formula, startPos) {
     return -1
   }
 }
+
+function buildRecordsFromTemplate(templateSheetName, destSheetName, destDateField) {
+  const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+  const dowField = "Days of Week"
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const destSheet = ss.getSheetByName(destSheetName)
+  const destValues = getRangeValuesAsTable(destSheet.getDataRange())
+  const templateSheet = ss.getSheetByName(templateSheetName)
+  const templateValues = getRangeValuesAsTable(templateSheet.getDataRange())
+
+  const templateFieldNamesToCopy = Object.keys(templateValues[0]).filter(val => {
+    return val !== dowField
+  })
+  let destDateRaw = destValues.reduce((latest, run) =>
+    run[destDateField] > latest ? run[destDateField] : latest,
+    destValues[0][destDateField]
+  )
+
+  let latestDate
+  if (!destDateRaw) {
+    latestDate = new Date()
+  } else {
+    latestDate = new Date(destDateRaw)
+  }
+
+  latestDate.setDate(latestDate.getDate() + 1)
+
+  const ui = SpreadsheetApp.getUi()
+  const response = ui.alert(
+    'Generate Runs',
+    `Would you like to generate ${destSheetName.toLowerCase()} starting from ${formatDate(latestDate)}? Click No to enter a custom date.`,
+    ui.ButtonSet.YES_NO_CANCEL
+  )
+
+  let startDate
+  if (response == ui.Button.YES) {
+    startDate = latestDate
+  } else if (response == ui.Button.NO) {
+    const promptResult = ui.prompt(
+      'Enter Start Date',
+      `Enter the date to start generating ${destSheetName.toLowerCase()} from (MM/DD/YYYY):`,
+      ui.ButtonSet.OK_CANCEL
+    )
+    if (promptResult.getSelectedButton() == ui.Button.OK) {
+      startDate = parseDate(promptResult.getResponseText())
+      if (!isValidDate(startDate)) {
+        ui.alert('Invalid date entered. Operation cancelled.')
+        return
+      }
+    } else {
+      ss.toast('Action cancelled')
+      return
+    }
+  } else {
+    ss.toast('Action cancelled')
+    return
+  }
+
+  let rowsToCreate = []
+  for (let i = 0; i < 7; i++) {
+    let currentDate = new Date(startDate)
+    currentDate.setDate(startDate.getDate() + i)
+    let currentDayOfWeek = weekday[currentDate.getDay()]
+
+    const matchingTemplates = templateValues.filter(row =>
+      row["Days of Week"] && row["Days of Week"].includes(currentDayOfWeek)
+    )
+
+    matchingTemplates.forEach(template => {
+      const newRun = {}
+      newRun[destDateField] = formatDate(currentDate)
+      templateFieldNamesToCopy.forEach(fieldName => {
+        newRun[fieldName] = template[fieldName]
+      })
+      rowsToCreate.push(newRun)
+    })
+  }
+  const newRows = createRows(destSheet, rowsToCreate)
+}
+
