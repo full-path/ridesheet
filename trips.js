@@ -162,11 +162,19 @@ function completeTripRunValues(e) {
 }
 
 
-// Fill in a week of entries in the "Runs" sheet using the schedule information in "Run Template"
+// Fill in a week of entries in the "Trips" sheet using the schedule information in "Trip Template"
 function buildTripsFromTemplate() {
   const newRows = buildRecordsFromTemplate("Trip Template","Trips","Trip Date")
   if (newRows) {
-
+    const tripSheet = newRows.getSheet()
+    const headerNames = getSheetHeaderNames(tripSheet)
+    const customerNameColIndex = headerNames.indexOf("Customer Name and ID") + 1
+    const startRow = newRows.getRow()
+    const numRows = newRows.getNumRows()
+    for (let i = 0; i < numRows; i++) {
+      const customerNameCell = tripSheet.getRange(startRow + i, customerNameColIndex)
+      fillTripCells(customerNameCell)
+      fillHoursAndMilesOnEdit(customerNameCell)
+    }
   }
 }
-

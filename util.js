@@ -244,7 +244,8 @@ function getTrueLastRow(sheet) {
     const rowHasData = values[i].some(cell =>
       cell !== null &&
       cell !== undefined &&
-      String(cell).trim() !== ''
+      String(cell).trim() !== '' &&
+      cell !== false
     )
 
     if (rowHasData) {
