@@ -244,6 +244,15 @@ const localColumns = {
       }
     }
   },
+  "Runs": {
+    "Run Date": {
+      numberFormat: "MM/dd/yyyy ddd",
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid date.",
+      },
+    },
+  },
   "Dispatch": {
     "Trip Date": {
       numberFormat: "M/d/yyyy",
