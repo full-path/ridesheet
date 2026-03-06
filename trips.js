@@ -164,6 +164,9 @@ function completeTripRunValues(e) {
 
 // Fill in a week of entries in the "Runs" sheet using the schedule information in "Run Template"
 function buildTripsFromTemplate() {
-  buildRecordsFromTemplate("Trip Template","Trips","Trip Date")
+  const newRows = buildRecordsFromTemplate("Trip Template","Trips","Trip Date")
+  if (newRows) {
+
+  }
 }
 
