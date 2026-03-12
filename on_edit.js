@@ -121,7 +121,7 @@ function callCellTriggers(e) {
             triggeredRows[triggerName].push(range.getRow())
           }
         } else {
-          callsToMake[triggerName].push(range)
+          callsToMake[triggerName]?.push(range)
         }
       })
     })

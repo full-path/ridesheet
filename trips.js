@@ -163,7 +163,7 @@ function completeTripRunValues(e) {
         }
         const filteredRunRows = runRows.filter(filter).filter(timeFilter)
         if (filteredRunRows.length === 1) {
-          const runRow = runRows[0]
+          const runRow = filteredRunRows[0]
           let valuesToChange = {}
           valuesToChange["Vehicle ID"] = runRow["Vehicle ID"]
           valuesToChange["Run ID"] = runRow["Run ID"]
@@ -187,7 +187,7 @@ function completeTripRunValues(e) {
         }
         const filteredRunRows = runRows.filter(filter).filter(timeFilter)
         if (filteredRunRows.length === 1) {
-          const runRow = runRows[0]
+          const runRow = filteredRunRows[0]
           let valuesToChange = {}
           valuesToChange["Driver ID"] = runRow["Driver ID"]
           valuesToChange["Run ID"] = runRow["Run ID"]
