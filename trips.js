@@ -131,35 +131,71 @@ function isTripWithValidTimes(trip) {
 function completeTripRunValues(e) {
   try{
     const ss = SpreadsheetApp.getActiveSpreadsheet()
-    const range = e.range
+    let range
+    try {
+      range = e.range
+    } catch(error) {
+      range = e
+    }
     const tripRow = getFullRow(range)
     const tripValues = getRangeValuesAsTable(tripRow)[0]
-    if (tripValues["|Run OK?|"] === 1) {
-      if (tripValues["Driver ID"] && !tripValues["Vehicle ID"]) {
-        const filter = function(row) {
-          return row["Run Date"].valueOf() === tripValues["Trip Date"].valueOf() &&
-          row["Driver ID"] === tripValues["Driver ID"] &&
-          row["Run ID"] === tripValues["Run ID"]
+    const tripDate = tripValues["Trip Date"]
+    const tripPuTime = tripValues["PU Time"]
+    const tripDoTime = tripValues["DO Time"]
+    const tripDriverId = tripValues["Driver ID"]
+    const tripVehicleId = tripValues["Vehicle ID"]
+    let timeFilter = function(row) { return true }
+    let runRows = getRangeValuesAsTable(ss.getSheetByName("Runs").getDataRange())
+
+    if (tripDate) {
+      if (tripPuTime && tripDoTime) {
+        timeFilter = function(row) {
+          return row["Scheduled Start Time"] && row["Scheduled End Time"] &&
+            row["Scheduled Start Time"].valueOf() <= tripPuTime.valueOf() &&
+            row["Scheduled End Time"].valueOf() >= tripDoTime.valueOf()
         }
-        const runRow = findFirstRowByHeaderNames(ss.getSheetByName("Runs"), filter)
-        if (runRow) {
+      }
+      if (tripDriverId && !tripVehicleId) {
+        const filter = function(row) {
+          return row["Run Date"] &&
+            row["Run Date"].valueOf() === tripDate.valueOf() &&
+            row["Driver ID"] === tripDriverId
+        }
+        const filteredRunRows = runRows.filter(filter).filter(timeFilter)
+        if (filteredRunRows.length === 1) {
+          const runRow = filteredRunRows[0]
           let valuesToChange = {}
           valuesToChange["Vehicle ID"] = runRow["Vehicle ID"]
+          valuesToChange["Run ID"] = runRow["Run ID"]
           setValuesByHeaderNames([valuesToChange], tripRow)
+          return true
+        } else {
+          const filter = function(row) { return row["Driver ID"] === tripDriverId && row["Default Vehicle ID"] }
+          const driverRow = findFirstRowByHeaderNames(ss.getSheetByName("Drivers"), filter)
+          if (driverRow && driverRow["Default Vehicle ID"]) {
+            let valuesToChange = {}
+            valuesToChange["Vehicle ID"] = driverRow["Default Vehicle ID"]
+            setValuesByHeaderNames([valuesToChange], tripRow)
+            return true
+          }
         }
       } else if (!tripValues["Driver ID"] && tripValues["Vehicle ID"]) {
         const filter = function(row) {
-          return row["Run Date"].valueOf() === tripValues["Trip Date"].valueOf() &&
-          row["Vehicle ID"] === tripValues["Vehicle ID"] &&
-          row["Run ID"] === tripValues["Run ID"]
+          return row["Run Date"] &&
+            row["Run Date"].valueOf() === tripDate.valueOf() &&
+            row["Vehicle ID"] === tripVehicleId
         }
-        const runRow = findFirstRowByHeaderNames(ss.getSheetByName("Runs"), filter)
-        if (runRow) {
+        const filteredRunRows = runRows.filter(filter).filter(timeFilter)
+        if (filteredRunRows.length === 1) {
+          const runRow = filteredRunRows[0]
           let valuesToChange = {}
           valuesToChange["Driver ID"] = runRow["Driver ID"]
+          valuesToChange["Run ID"] = runRow["Run ID"]
           setValuesByHeaderNames([valuesToChange], tripRow)
+          return true
         }
       }
     }
+    return false
   } catch(e) { logError(e) }
 }
