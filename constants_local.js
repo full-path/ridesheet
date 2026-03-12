@@ -127,6 +127,14 @@ const localNamedRanges = {
     "sheetName":"Dispatch",
     "headerName":"Run ID"
   },
+  "localCodeExpandAddress5": {
+    "sheetName":"Trip Template",
+    "headerName":"|PU|"
+  },
+  "localCodeExpandAddress6": {
+    "sheetName":"Trip Template",
+    "headerName":"|DO|"
+  },
 }
 
 const localNamedRangesToRemove = [
@@ -613,6 +621,65 @@ const localColumns = {
     },
     "Total Revenue": {
       headerFormula: `={"Total Revenue";MAP(formulaRunArchiveFareRevenue,formulaRunArchiveDonationRevenue,formulaRunArchiveTicketRevenue,LAMBDA(source1,source2,source3,IF(COUNTA(source1,source2,source3) < 3,"",SUM(source1,source2,source3))))}`
+    }
+  },
+  "Trip Template": {
+    "|PU|": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupAddressShortNames",
+        showDropdown: false,
+        allowInvalid: false
+      },
+    },
+    "|DO|": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupAddressShortNames",
+        showDropdown: false,
+        allowInvalid: false
+      },
+    },
+    "Will Call": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "WILL CALL",
+        allowInvalid: false,
+      },
+    },
+    "SDR": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "SDR",
+        allowInvalid: false,
+      },
+    },
+    "Rider Type": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupRiderTypes",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid rider type.",
+      },
+    },
+    "Mobility Factors": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupMobilityFactors",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid mobility factor.",
+      },
+    },
+    "Fare": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupFareTypes",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid fare type.",
+      }
     }
   }
 }
