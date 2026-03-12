@@ -51,8 +51,11 @@ function copyTrip(sourceTripRange, isReturnTrip) {
     if (isReturnTrip) {
       const allTrips = getRangeValuesAsTable(tripSheet.getDataRange())
       const customerTripsThisDay = allTrips.
-        filter((row) => row["Customer ID"] === sourceTripData["Customer ID"] &&
-        row["Trip Date"].getTime() === sourceTripData["Trip Date"].getTime())
+        filter((row) => {
+          return row["Customer ID"] === sourceTripData["Customer ID"] &&
+            row["Trip Date"] && row["PU Time"] && row["PU Address"] &&
+            row["Trip Date"].getTime() === sourceTripData["Trip Date"].getTime()
+        })
       const firstCustomerTripThisDay = customerTripsThisDay.
         reduce((earliestRow, row) => timeOnlyAsMilliseconds(row["PU Time"]) < timeOnlyAsMilliseconds(earliestRow["PU Time"]) ? row : earliestRow)
         DoAddress = firstCustomerTripThisDay["PU Address"]
