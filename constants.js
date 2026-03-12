@@ -1061,6 +1061,7 @@ const defaultColumns = {
   },
 
   "Trip Template": {
+    "Days of Week": {},
     "Customer Name and ID": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -1518,5 +1519,9 @@ const defaultNamedRanges = {
   "formulaTripArchivePuTime": {
     "sheetName":"Trip Archive",
     "headerName":"PU Time"
+  },
+  "codeTripActionButton2": {
+    "sheetName":"Trip Template",
+    "headerName":"|Go|"
   }
 }
