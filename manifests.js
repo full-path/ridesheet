@@ -145,15 +145,15 @@ function createManifest(manifestGroup, templateDoc, manifestFileName, folderId) 
   }
 
   // Add the document header elements
-  appendTemplateRange(templateDoc.getNamedRanges("HEADER")[0].getRange(), manifestBody, manifestGroup["Events"][0])
+  appendTemplateRange(templateDoc.getNamedRanges("HEADER")[0]?.getRange(), manifestBody, manifestGroup["Events"][0])
 
   // Add all the PU and DO elements. Use the section name of each event to decide whether to add a PU or DO range.
   manifestGroup["Events"].forEach((event, i) => {
-    appendTemplateRange(templateDoc.getNamedRanges(event["Section Name"])[0].getRange(), manifestBody, event)
+    appendTemplateRange(templateDoc.getNamedRanges(event["Section Name"])[0]?.getRange(), manifestBody, event)
   })
 
   // Add the footer elements
-  appendTemplateRange(templateDoc.getNamedRanges("FOOTER")[0].getRange(), manifestBody, manifestGroup["Events"][manifestGroup["Events"].length - 1])
+  appendTemplateRange(templateDoc.getNamedRanges("FOOTER")[0]?.getRange(), manifestBody, manifestGroup["Events"][manifestGroup["Events"].length - 1])
 
   // Remove the tempText needed to create the file
   manifestBody.removeChild(manifestBody.getChild(0))
@@ -207,6 +207,7 @@ function createDoc(fileName, folderId, content, contentType) {
 }
 
 function appendTemplateRange(range, docSection, data) {
+  if (!range) return
   const rangeElements = range.getRangeElements()
   rangeElements.forEach(rangeElement => {
     const templateElement = rangeElement.getElement()

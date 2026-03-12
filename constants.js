@@ -1237,7 +1237,7 @@ const defaultNamedRanges = {
   },
   "codeTripActionButton1": {
     "sheetName":"Trips",
-    "headerName":"Go"
+    "headerName":"|Go|"
   },
   "codeUpdateTripVehicle": {
     "sheetName":"Trips",
