@@ -29,6 +29,8 @@ const defaultSheets = [
   "Vehicles",
   "Drivers",
   "Services",
+  "Run Template",
+  "Trip Template",
   "Lookups",
   "Document Properties",
   "Debug Log",
@@ -46,6 +48,8 @@ const sheetsWithHeaders = [
   "Vehicles",
   "Drivers",
   "Services",
+  "Run Template",
+  "Trip Template",
   "Lookups",
   "Addresses"
 ]
@@ -1017,6 +1021,145 @@ const defaultColumns = {
       headerFormula: `={"Service IDs";QUERY({queryServiceId,queryServiceEndDate},"SELECT Col1 WHERE Col1 IS NOT NULL AND Col2 IS NULL ORDER BY Col1",0)}`},
     "Trip Purposes": {},
     "Trip Results": {}
+  },
+  "Run Template": {
+    "Days of Week": {},
+    "Driver ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupDriverIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid driver ID.",
+      },
+    },
+    "Vehicle ID": {
+      numberFormat: '@',
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupVehicleIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid vehicle ID.",
+      },
+    },
+    "Run ID": {},
+    "Scheduled Start Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Scheduled End Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    }
+  },
+
+  "Trip Template": {
+    "Days of Week": {},
+    "Customer Name and ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupCustomerNames",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid customer name and ID.",
+      },
+    },
+    "|Action|": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_LIST",
+        values: [
+          "Add return trip",
+          "Add stop",
+        ],
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid action.",
+      },
+    },
+    "|Go|": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        allowInvalid: true,
+      }
+    },
+    "PU Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "DO Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "Appt Time": {
+      numberFormat: 'h":"mm am/pm',
+      dataValidation: {
+        criteriaType: "DATE_IS_VALID_DATE",
+        helpText: "Value must be a valid time.",
+      },
+    },
+    "PU Address": {},
+    "DO Address": {},
+    "Driver ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupDriverIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid driver ID.",
+      },
+    },
+    "Vehicle ID": {
+      numberFormat: '@',
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupVehicleIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid vehicle ID.",
+      },
+    },
+    "Run ID": {},
+    "Service ID": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupServiceIds",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid service ID.",
+      },
+    },
+    "Guests": {
+      dataValidation: {
+        criteriaType: "NUMBER_GREATER_THAN_OR_EQUAL_TO",
+        args: [0],
+        allowInvalid: false,
+        helpText: "Value must be the number of guests (0 or more).",
+      },
+    },
+    "Mobility Factors": {},
+    "Trip Purpose": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupTripPurposes",
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid trip purpose.",
+      },
+    },
+    "Notes": {},
   }
 }
 
@@ -1095,7 +1238,7 @@ const defaultNamedRanges = {
   },
   "codeTripActionButton1": {
     "sheetName":"Trips",
-    "headerName":"Go"
+    "headerName":"|Go|"
   },
   "codeUpdateTripVehicle": {
     "sheetName":"Trips",
@@ -1376,5 +1519,9 @@ const defaultNamedRanges = {
   "formulaTripArchivePuTime": {
     "sheetName":"Trip Archive",
     "headerName":"PU Time"
+  },
+  "codeTripActionButton2": {
+    "sheetName":"Trip Template",
+    "headerName":"|Go|"
   }
 }
