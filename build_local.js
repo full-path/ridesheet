@@ -1,1 +1,3 @@
-function buildLocalMenus() {}
+function buildLocalMenus() {
+  addSortingMenuItems()
+}
