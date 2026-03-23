@@ -75,29 +75,29 @@ const localNamedRanges = {
     "sheetName":"Dispatch",
     "headerName":"|DO|"
   },
-  "formulaRunReviewFareRevenue": {
+  "formulaRunReviewCashRevenue": {
     "sheetName":"Run Review",
-    "headerName":"Fare Revenue"
+    "headerName":"Cash Revenue"
   },
-  "formulaRunReviewDonationRevenue": {
+  "formulaRunReviewCheckRevenue": {
     "sheetName":"Run Review",
-    "headerName":"Donation Revenue"
+    "headerName":"Check Revenue"
   },
-  "formulaRunReviewTicketRevenue": {
+  "formulaRunReviewVoucherRevenue": {
     "sheetName":"Run Review",
-    "headerName":"Ticket Revenue"
+    "headerName":"Voucher Revenue"
   },
-  "formulaRunArchiveFareRevenue": {
+  "formulaRunArchiveCashRevenue": {
     "sheetName":"Run Archive",
-    "headerName":"Fare Revenue"
+    "headerName":"Cash Revenue"
   },
-  "formulaRunArchiveDonationRevenue": {
+  "formulaRunArchiveCheckRevenue": {
     "sheetName":"Run Archive",
-    "headerName":"Donation Revenue"
+    "headerName":"Check Revenue"
   },
-  "formulaRunArchiveTicketRevenue": {
+  "formulaRunArchiveVoucherRevenue": {
     "sheetName":"Run Archive",
-    "headerName":"Ticket Revenue"
+    "headerName":"Voucher Revenue"
   },
   "queryAddresses": {
     "sheetName":"Addresses",
@@ -127,14 +127,6 @@ const localNamedRanges = {
     "sheetName":"Dispatch",
     "headerName":"Run ID"
   },
-  "localCodeExpandAddress5": {
-    "sheetName":"Trip Template",
-    "headerName":"|PU|"
-  },
-  "localCodeExpandAddress6": {
-    "sheetName":"Trip Template",
-    "headerName":"|DO|"
-  },
 }
 
 const localNamedRangesToRemove = [
@@ -162,7 +154,7 @@ const localColumns = {
         helpText: "Value must be a valid rider type.",
       },
     },
-    "Default Fare": {
+    "Default Fare Type": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupFareTypes",
@@ -201,20 +193,6 @@ const localColumns = {
         allowInvalid: false
       },
     },
-    "Will Call": {
-      dataValidation: {
-        criteriaType: "CHECKBOX",
-        checkedValue: "WILL CALL",
-        allowInvalid: false,
-      },
-    },
-    "SDR": {
-      dataValidation: {
-        criteriaType: "CHECKBOX",
-        checkedValue: "SDR",
-        allowInvalid: false,
-      },
-    },
     "Rider Type": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -233,7 +211,7 @@ const localColumns = {
         helpText: "Value must be a valid mobility factor.",
       },
     },
-    "Fare": {
+    "Fare Type": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupFareTypes",
@@ -241,6 +219,9 @@ const localColumns = {
         allowInvalid: false,
         helpText: "Value must be a valid fare type.",
       }
+    },
+    "Fare Amount": {
+      numberFormat: "$0.00"
     },
     "Dispatch ID": {
       dataValidation: {
@@ -419,20 +400,6 @@ const localColumns = {
         allowInvalid: false
       },
     },
-    "Will Call": {
-      dataValidation: {
-        criteriaType: "CHECKBOX",
-        checkedValue: "WILL CALL",
-        allowInvalid: false,
-      },
-    },
-    "SDR": {
-      dataValidation: {
-        criteriaType: "CHECKBOX",
-        checkedValue: "SDR",
-        allowInvalid: false,
-      },
-    },
     "Rider Type": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -451,7 +418,7 @@ const localColumns = {
         helpText: "Value must be a valid mobility factor.",
       },
     },
-    "Fare": {
+    "Fare Type": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
         namedRange: "lookupFareTypes",
@@ -459,6 +426,9 @@ const localColumns = {
         allowInvalid: false,
         helpText: "Value must be a valid fare type.",
       }
+    },
+    "Fare Amount": {
+      numberFormat: "$0.00"
     },
     "Dispatch ID": {
       dataValidation: {
@@ -471,26 +441,20 @@ const localColumns = {
     }
   },
   "Run Review": {
-    "Tickets Used": {
-      numberFormat: "0"
-    },
-    "Fare Revenue": {
+    "Cash Revenue": {
       numberFormat: "$0.00"
     },
-    "Donation Revenue": {
+    "Voucher Revenue": {
       numberFormat: "$0.00"
     },
-    "Ticket Revenue": {
-      numberFormat: "$0.00"
-    },
-    "Prepaid Revenue": {
+    "Check Revenue": {
       numberFormat: "$0.00"
     },
     "Total Completed Trip Fares": {
       headerFormula: `={"Total Completed Trip Fares";MAP(formulaRunReviewRunDate,formulaRunReviewDriverId,formulaRunReviewVehicleId,formulaRunReviewRunId,LAMBDA(tripDate,driverId,vehicleId,runId,QUERY_TRIP_FARE_SUM(tripDate,driverId,vehicleID,runId,formulaTripReviewCoreData,formulaTripReviewCoreHeaders)))}`
     },
     "Total Revenue": {
-      headerFormula: `={"Total Revenue";MAP(formulaRunReviewFareRevenue,formulaRunReviewDonationRevenue,formulaRunReviewTicketRevenue,LAMBDA(source1,source2,source3,IF(COUNTBLANK(source1,source2,source3)>0,"",SUM(source1,source2,source3))))}`
+      headerFormula: `={"Total Revenue";MAP(formulaRunReviewCashRevenue,formulaRunReviewVoucherRevenue,formulaRunReviewCheckRevenue,LAMBDA(source1,source2,source3,IF(COUNTBLANK(source1,source2,source3)>0,"",SUM(source1,source2,source3))))}`
     },
   },
   "Trip Review": {
@@ -604,82 +568,17 @@ const localColumns = {
     },
   },
   "Run Archive": {
-    "Tickets Used": {
-      numberFormat: "0"
-    },
-    "Fare Revenue": {
+    "Cash Revenue": {
       numberFormat: "$0.00"
     },
-    "Donation Revenue": {
+    "Voucher Revenue": {
       numberFormat: "$0.00"
     },
-    "Ticket Revenue": {
-      numberFormat: "$0.00"
-    },
-    "Prepaid Revenue": {
+    "Check Revenue": {
       numberFormat: "$0.00"
     },
     "Total Revenue": {
-      headerFormula: `={"Total Revenue";MAP(formulaRunArchiveFareRevenue,formulaRunArchiveDonationRevenue,formulaRunArchiveTicketRevenue,LAMBDA(source1,source2,source3,IF(COUNTA(source1,source2,source3) < 3,"",SUM(source1,source2,source3))))}`
-    }
-  },
-  "Trip Template": {
-    "|PU|": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupAddressShortNames",
-        showDropdown: false,
-        allowInvalid: false
-      },
-    },
-    "|DO|": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupAddressShortNames",
-        showDropdown: false,
-        allowInvalid: false
-      },
-    },
-    "Will Call": {
-      dataValidation: {
-        criteriaType: "CHECKBOX",
-        checkedValue: "WILL CALL",
-        allowInvalid: false,
-      },
-    },
-    "SDR": {
-      dataValidation: {
-        criteriaType: "CHECKBOX",
-        checkedValue: "SDR",
-        allowInvalid: false,
-      },
-    },
-    "Rider Type": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupRiderTypes",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid rider type.",
-      },
-    },
-    "Mobility Factors": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupMobilityFactors",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid mobility factor.",
-      },
-    },
-    "Fare": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupFareTypes",
-        showDropdown: true,
-        allowInvalid: false,
-        helpText: "Value must be a valid fare type.",
-      }
+      headerFormula: `={"Total Revenue";MAP(formulaRunArchiveCashRevenue,formulaRunArchiveVoucherRevenue,formulaRunArchiveCheckRevenue,LAMBDA(source1,source2,source3,IF(COUNTA(source1,source2,source3) < 3,"",SUM(source1,source2,source3))))}`
     }
   }
 }
