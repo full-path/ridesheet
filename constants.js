@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = "1.0.1-ks-osage-county"
+const SCRIPT_VERSION = "1.0.2-ks-osage-county"
 
 const debugLogging                       = false
 const allowPropDescriptionEdits          = false
