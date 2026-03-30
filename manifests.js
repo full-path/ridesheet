@@ -89,10 +89,10 @@ function createSelectedManifestsByRun() {
 
 function createManifests(templateDocId, groupedManifestData, fileNameFunction) {
   try {
-    const manifestFolderId = getDocProp("driverManifestFolderId")
-    const templateDoc = DocumentApp.openById(templateDocId)
     prepareTemplate(templateDocId)
 
+    const manifestFolderId = getDocProp("driverManifestFolderId")
+    const templateDoc = DocumentApp.openById(templateDocId)
     let manifestCount = 0
     groupedManifestData.forEach(manifestGroup => {
       const manifestFileName = fileNameFunction(manifestGroup)
