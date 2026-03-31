@@ -465,10 +465,20 @@ function getSheetHeaderNames(sheet, {forceRefresh = false, headerRowPosition = 1
   try {
     const sheetName = sheet.getName()
     if (!cachedHeaderNames[sheetName] || forceRefresh) {
-      const headerNames = sheet.getRange("A" + headerRowPosition + ":" + headerRowPosition).getValues()[0]
+      const headerRange = sheet.getRange("A" + headerRowPosition + ":" + headerRowPosition)
+      const headerNames = headerRange.getValues()[0]
+      const headerFormulas = headerRange.getFormulas()[0]
       cachedHeaderNames[sheetName] = headerNames.map(headerName => !headerName ? " " : headerName)
+      cachedHeaderFormulas[sheetName] = headerFormulas
     }
     return cachedHeaderNames[sheetName]
+  } catch(e) { logError(e) }
+}
+
+function setValuesForRow(newValues, rowNumber, sheet, {headerRowPosition = 1, overwriteAll = false} = {}) {
+  try {
+    const range = sheet.getRange(rowNumber + ":" + rowNumber)
+    return setValuesByHeaderNames([newValues], range, {headerRowPosition: headerRowPosition, overwriteAll: overwriteAll})
   } catch(e) { logError(e) }
 }
 
@@ -486,10 +496,7 @@ function getRangeHeaderNames(range, {forceRefresh = false, headerRowPosition = 1
 function getSheetHeaderFormulas(sheet, {forceRefresh = false, headerRowPosition = 1} = {}) {
   try {
     const sheetName = sheet.getName()
-    if (!cachedHeaderFormulas[sheetName] || forceRefresh) {
-      const headerFormulas = sheet.getRange("A" + headerRowPosition + ":" + headerRowPosition).getFormulas()[0]
-      cachedHeaderFormulas[sheetName] = headerFormulas
-    }
+    getSheetHeaderNames(sheet, {forceRefresh: forceRefresh, headerRowPosition: headerRowPosition})
     return cachedHeaderFormulas[sheetName]
   } catch(e) { logError(e) }
 }
@@ -550,5 +557,160 @@ function clearSheet(sheet) {
     }
     const dataRange = sheet.getRange(2, 1, 1, sheet.getLastColumn());
     dataRange.clearContent();
+  }
+}
+
+/**
+ * Clears out hand-entered values that block "array spill" formulas located in headers.
+ *
+ * This function is intended to be called from an onEdit trigger. It inspects the
+ * header row for spill-formula headers that evaluate to "#REF!" and match the
+ * expected array-literal pattern (e.g. formulas starting with `={"`). For any
+ * such header, it calculates the spill range underneath the header and clears
+ * any blocking values in that range so the array spill formula can recalculate.
+ * It then refreshes cached header names and notifies the user via a toast.
+ *
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} e The edit event object describing
+ *     the user edit that triggered this handler, including the edited range.
+ * @returns {void}
+ */
+function clearSpillBlockages(e) {
+  try {
+    const sheet = e.range.getSheet()
+    const headerValues = getSheetHeaderNames(sheet)
+    const headerFormulas = getSheetHeaderFormulas(sheet)
+    let blockagesCleared = 0
+
+    headerValues.forEach((headerValue, i) => {
+      if (headerValue === "#REF!" && headerFormulas[i]?.startsWith(`={"`)) {
+        const spillColumnCount = getSpillColumnCount(headerFormulas[i])
+        const spillRowCount = sheet.getLastRow() - 1
+        if (spillColumnCount > 0 && spillRowCount > 0) {
+          const rangeToClear = sheet.getRange(2,i+1,spillRowCount,spillColumnCount)
+          rangeToClear.clearContent()
+          blockagesCleared++
+        }
+      }
+    })
+
+    if (blockagesCleared) {
+      SpreadsheetApp.getActiveSpreadsheet().toast(
+        `Data blocking ${blockagesCleared === 1 ? "a" : blockagesCleared} calculated column${blockagesCleared === 1 ? "" : "s"} has been cleared.`
+      )
+      // Refresh the header name and formula caches for any calls after this that rely on it.
+      getSheetHeaderNames(sheet,{forceRefresh: true})
+    }
+  } catch(e) { logError(e) }
+}
+
+/**
+ * Parses a Google Sheets array-literal "spill" formula to determine how many
+ * columns the first row of the spilled array will occupy.
+ *
+ * The function expects a formula string that contains an array literal,
+ * typically of the form:
+ *   ={"col1","col2","col3"; ... }
+ * It inspects only the first row of the array and counts top-level commas
+ * that are not inside quotes, parentheses, or nested array literals.
+ *
+ * @param {string} formula The full formula string containing an array
+ *   literal whose first row's width (number of columns) should be computed.
+ * @return {number} The number of columns in the first row of the spilled
+ *   array; returns 0 if no valid array literal start or row separator is found.
+ */
+function getSpillColumnCount(formula) {
+  try {
+    if (typeof formula !== 'string' || formula.length === 0) return -1
+    const start = formula.indexOf('{')
+    if (start === -1) return 0
+    let endOfRowPos = findTopLevelSemicolon(formula, start)
+    if (endOfRowPos === -1) endOfRowPos = formula.lastIndexOf('}')
+    if (endOfRowPos === -1 || endOfRowPos < start) return 0
+
+    const firstRow = formula.substring(start + 1, endOfRowPos)
+    let commas = 0
+    let inQuote = false
+    let parenDepth = 0
+    let braceDepth = 0
+
+    for (let i = 0; i < firstRow.length; i++) {
+      const char = firstRow[i]
+      const nextChar = firstRow[i + 1]
+
+      if (inQuote) {
+        // Check for escaped quote (double quote)
+        if (char === '"' && nextChar === '"') {
+          i++; // skip next quote
+        } else if (char === '"') {
+          inQuote = false
+        }
+      } else {
+        if (char === '"') {
+          inQuote = true
+        } else if (char === '(') {
+          parenDepth++
+        } else if (char === ')') {
+          parenDepth--
+        } else if (char === '{') {
+          braceDepth++
+        } else if (char === '}') {
+          braceDepth--
+        } else if (char === ',' && parenDepth === 0 && braceDepth === 0) {
+          commas++
+        }
+      }
+    }
+    return commas + 1
+  } catch(e) {
+    logError(e)
+    return -1
+  }
+}
+
+/**
+ * Finds the first semicolon at the top level of nesting in a formula string.
+ * Semicolons that appear inside quotes, parentheses, or braces are ignored.
+ *
+ * @param {string} formula The formula text to search.
+ * @param {number} startPos The index from which to start scanning (typically the index of '{').
+ * @return {number} The index of the first top-level semicolon, or -1 if none is found.
+ */
+function findTopLevelSemicolon(formula, startPos) {
+  try {
+    if (typeof formula !== 'string' || formula.length === 0) return -1
+    let inQuote = false
+    let parenDepth = 0
+    let braceDepth = 0
+
+    for (let i = startPos + 1; i < formula.length; i++) {
+      const char = formula[i]
+      const nextChar = formula[i + 1]
+
+      if (inQuote) {
+        if (char === '"' && nextChar === '"') {
+          i++
+        } else if (char === '"') {
+          inQuote = false
+        }
+      } else {
+        if (char === '"') {
+          inQuote = true
+        } else if (char === '(') {
+          parenDepth++
+        } else if (char === ')') {
+          parenDepth--
+        } else if (char === '{') {
+          braceDepth++
+        } else if (char === '}') {
+          braceDepth--
+        } else if (char === ';' && parenDepth === 0 && braceDepth === 0) {
+          return i
+        }
+      }
+    }
+    return -1
+  } catch(e) {
+    logError(e)
+    return -1
   }
 }

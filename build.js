@@ -18,7 +18,7 @@ function buildMenus() {
   settingsMenu.addItem('Rebuild metadata', 'rebuildAllMetadata')
   settingsMenu.addItem('Show metadata as column header notes', 'showColumnMetadata')
   settingsMenu.addItem('Clear metadata notes', 'clearHeaderNotes')
-  settingsMenu.addItem('Setup new installation', 'setupNewInstall')
+  settingsMenu.addItem('Set up new installation', 'setupNewInstall')
   menu.addSubMenu(settingsMenu)
   menu.addToUi()
   buildLocalMenus()
@@ -95,12 +95,150 @@ function buildNamedRange(ss, rangeName, rangeConfigObj) {
   }
 }
 
+function runFirstOpenTasks() {
+  try {
+    const ui = safeGetUi()
+    if (ui) {
+      if (isNewCopy() || getDocProp("showNewInstallMenu")) {
+        const menu = ui.createMenu('⭐️NEW INSTALL⭐️')
+        menu.addItem('Set up new installation', "setupNewInstall")
+        menu.addToUi()
+      }
+      if (isNewCopy()) {
+        const ss = SpreadsheetApp.getActiveSpreadsheet()
+        const ui = safeGetUi()
+        const propSheet = ss.getSheetByName("Document Properties")
+        const propSheetDataRange = propSheet.getDataRange()
+        const propSheetData = propSheetDataRange.getValues()
+        updatePropertyRange(propSheetData, "showNewInstallMenu", "TRUE")
+        propSheetDataRange.setValues(propSheetData)
+        buildDocumentPropertiesFromSheet()
+        const msg = `
+          It looks like you have a fresh copy of RideSheet.\n
+          If you would like to set up its environment,
+          select "Set up new installation" from the "NEW INSTALL" menu,
+          and then grant RideSheet's permission request by clicking
+          "Select all" then scrolling down and clicking "Continue".\n
+          To learn more about installing RideSheet, visit https://docs.ridesheet.org/technical-guide/installing-ridesheet/
+        `
+        ui.alert("Welcome to RideSheet!", msg, ui.ButtonSet.OK)
+      }
+    }
+  } catch(e) { logError(e) }
+}
+
+function isNewCopy() {
+  const propCount = PropertiesService.getDocumentProperties().getProperties()
+  return Object.keys(propCount).length === 0
+}
+
+function setupNewInstall() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const ui = safeGetUi()
+
+    // Instructions
+    const manifestsResponse = ui.prompt(
+      'New Install Step 1: Set Folder Where Driver Manifests Will Be Saved',
+      'RideSheet needs to know where driver manifests will be saved.\n\n' +
+      'We recommend that the folder be named "RideSheet Driver Manifests" and\n' +
+      'that it be located in the same folder as RideSheet itself.\n\n' +
+      'Create the folder now in another browser window, double-click into it, ' +
+      'copy its address from the browser address bar, and enter that address below.',
+      ui.ButtonSet.OK_CANCEL
+    )
+    if (manifestsResponse.getSelectedButton() !== ui.Button.OK) {
+        ss.toast("New installation cancelled.")
+        return
+      }
+    const manifestsFolderId = extractFolderId(manifestsResponse.getResponseText())
+
+    // Make sure we can truly put a file in the manifest folder
+    try {
+      const testDocId = createDoc("Test File", manifestsFolderId, "Just testing", "text/plain")
+      Drive.Files.update({ trashed: true }, testDocId, null, { supportsAllDrives: true })
+    } catch(e) {
+      ui.alert("Error Testing Access to Driver Manifest Folder",
+        'Check that the folder location is correct.\n\n' +
+        'New installation cancelled.', ui.ButtonSet.OK)
+      return
+    }
+
+    // Get Settings folder ID
+    const settingsResponse = ui.prompt(
+      'New Install Step 2: Set Folder Where The Driver Manifest Template Will Be Saved',
+      'RideSheet needs to know where to save the driver manifest template.\n\n' +
+      'We recommend that the folder be named "RideSheet Settings" and\n' +
+      'that it be located in the same folder as RideSheet itself.\n\n' +
+      'Create the folder now in another browser window, double-click into it, ' +
+      'copy its address from the browser address bar, and enter that address below.',
+      ui.ButtonSet.OK_CANCEL
+    )
+    if (settingsResponse.getSelectedButton() !== ui.Button.OK) {
+      ss.toast("Setup cancelled.")
+      return
+    }
+    const settingsFolderId = extractFolderId(settingsResponse.getResponseText())
+
+    // Do the same testing with the settings folder
+    try {
+      const testDocId = createDoc("Test File", settingsFolderId, "Just testing", "text/plain")
+      Drive.Files.update({ trashed: true }, testDocId, null, { supportsAllDrives: true })
+    } catch(e) {
+      ui.alert("Error Testing Access to Settings Folder",
+        'Check that the folder location is correct.\n\n' +
+        'New installation cancelled.', ui.ButtonSet.OK)
+      return
+    }
+
+    // Create the driver manifest template via an import from HTML
+    // Imports from HTML cannot set the page header or footer
+    const templateSourceHtml = HtmlService.createHtmlOutputFromFile('manifest_template').getContent()
+    templateDocId = createDoc("RideSheet Manifest Template", settingsFolderId, templateSourceHtml, "text/html")
+
+    // Open up the doc and put the page header and footer into place
+    prepareTemplate(templateDocId)
+    const doc = DocumentApp.openById(templateDocId)
+    appendTemplateRange(doc.getNamedRanges("PAGE_HEADER")[0].getRange(), doc.addHeader())
+    appendTemplateRange(doc.getNamedRanges("PAGE_FOOTER")[0].getRange(), doc.addFooter())
+
+    // Now delete the body elements that held the page header and footer text
+    // This text wouldn't break anything, but it would be confusing to the user
+    const rangeNamesToRemove = ["OUTER_PAGE_HEADER","OUTER_PAGE_FOOTER"]
+    rangeNamesToRemove.forEach(namedRangeName => {
+      const namedRange = doc.getNamedRanges(namedRangeName)[0].getRange()
+      const rangeElements = namedRange.getRangeElements()
+      rangeElements.forEach(rangeElement => {
+        const element = rangeElement.getElement()
+        element.removeFromParent()
+      })
+    })
+
+    const propSheet = ss.getSheetByName("Document Properties")
+    const propSheetDataRange = propSheet.getDataRange()
+    const propSheetData = propSheetDataRange.getValues()
+    updatePropertyRange(propSheetData, "driverManifestFolderId",      manifestsFolderId)
+    updatePropertyRange(propSheetData, "driverManifestTemplateDocId", templateDocId)
+    updatePropertyRange(propSheetData, "showNewInstallMenu",          "FALSE")
+    propSheetDataRange.setValues(propSheetData)
+    buildDocumentPropertiesFromSheet()
+
+    ui.alert("Installation Complete",
+      "You can now generate driver manifests. Go to the settings folder you entered to view the manifest template and tailor it to your needs.\n\n" +
+      "For more details about using RideSheet, visit https://docs.ridesheet.org.", ui.ButtonSet.OK
+    )
+  } catch(e) {
+    safeGetUi()?.alert(e.name + ': ' + e.message)
+    logError(e)
+  }
+}
+
 function buildDocumentPropertiesIfEmpty() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const propSheet = ss.getSheetByName("Document Properties")
-  let docProps = PropertiesService.getDocumentProperties().getProperties()
-  if (Object.keys(docProps).length === 0 && propSheet) {
+  if (isNewCopy() && propSheet) {
     buildDocumentPropertiesFromSheet()
+    return true
   }
 }
 
@@ -451,67 +589,6 @@ function logMetadata() {
   } catch(e) { logError(e) }
 }
 
-// Sets up a new instance of RideSheet
-function buildRideSheetInstall(destFolderId, sourceRideSheetFileId, namePrefix) {
-  const manifestTemplateName = "Manifest Template"
-  const reportFileName = "Monthly Reporting"
-
-  const sourceRideSheetFile = DriveApp.getFileById(sourceRideSheetFileId)
-  const sourceFolder = sourceRideSheetFile.getParents().next()
-  const sourceTemplateFile = sourceFolder.getFoldersByName("Settings").next().
-    getFilesByName(manifestTemplateName).next()
-  const sourceReportFile = sourceFolder.getFoldersByName("Reports").next().
-    getFilesByName(reportFileName).next()
-
-  const destFolder = DriveApp.getFolderById(destFolderId)
-  const newManifestFolder = destFolder.createFolder("Manifests")
-  const newReportsFolder = destFolder.createFolder("Reports")
-  const newSettingsFolder = destFolder.createFolder("Settings")
-  const newRideSheetFile = sourceRideSheetFile.makeCopy(destFolder).setName(namePrefix + " RideSheet")
-  const newTemplateFile = sourceTemplateFile.makeCopy(newSettingsFolder).setName(manifestTemplateName)
-  const newReportFile = sourceReportFile.makeCopy(newReportsFolder).setName(reportFileName)
-
-  const newRideSheet = SpreadsheetApp.open(newRideSheetFile)
-  const propSheet = newRideSheet.getSheetByName("Document Properties")
-  const propSheetDataRange = propSheet.getDataRange()
-  const propSheetData = propSheetDataRange.getValues()
-  updatePropertyRange(propSheetData,"driverManifestFolderId",newManifestFolder.getId())
-  updatePropertyRange(propSheetData,"driverManifestTemplateDocId",newTemplateFile.getId())
-  updatePropertyRange(propSheetData,"configFolderId",newSettingsFolder.getId())
-  propSheetDataRange.setValues(propSheetData)
-}
-
-/**
- * Sets up a new RideSheet installation by:
- * - Building document properties from the properties sheet
- * - Creating Manifests and Templates folders in the parent directory
- * - Copying the manifest template from RideSheet Public Sample to the Templates folder
- * - Updating document properties with new folder and template IDs
- * @throws {Error} If any step of the setup process fails
- */
-function setupNewInstall() {
-  try {
-    buildDocumentPropertiesFromSheet()
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
-    const currentFile = DriveApp.getFileById(ss.getId())
-    const parentFolder = currentFile.getParents().next()
-    const manifestsFolder = parentFolder.createFolder("Manifests")
-    const templatesFolder = parentFolder.createFolder("Settings")
-    const sourceTemplateId = "1-E-gxHgS3h5gr9Fh4VfdZkAwcN5kjJ7_hqx69Cs1BmY"
-    const sourceTemplate = DriveApp.getFileById(sourceTemplateId)
-    const newTemplate = sourceTemplate.makeCopy(templatesFolder)
-    const propSheet = ss.getSheetByName("Document Properties")
-    const propSheetDataRange = propSheet.getDataRange()
-    const propSheetData = propSheetDataRange.getValues()
-
-    updatePropertyRange(propSheetData, "driverManifestFolderId", manifestsFolder.getId())
-    updatePropertyRange(propSheetData, "driverManifestTemplateDocId", newTemplate.getId())
-    propSheetDataRange.setValues(propSheetData)
-  } catch(e) {
-    logError(e)
-  }
-}
-
 function updatePropertyRange(dataRange, propName, newPropValue) {
   dataRange.forEach(row => {
     if (row[0] === propName) { row[1] = newPropValue }
@@ -607,4 +684,19 @@ function getInBoundsRange(range) {
   const sheetLastRow = sheet.getMaxRows()
   const newRowCount = range.getLastRow() > sheetLastRow ? sheetLastRow - range.getRow() + 1 : range.getNumRows()
   return sheet.getRange(range.getRow(),range.getColumn(), newRowCount,range.getNumColumns())
+}
+
+function extractFolderId(input) {
+  if (!input) {
+    throw new Error('No folder ID provided')
+  }
+  input = input.trim()
+  // Try to extract from full URL
+  // https://drive.google.com/drive/folders/FOLDER_ID
+  const urlMatch = input.match(/\/folders\/([a-zA-Z0-9_-]+)/)
+  if (urlMatch) {
+    return urlMatch[1]
+  }
+  // Assume it's already just the ID
+  return input
 }

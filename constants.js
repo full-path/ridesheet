@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = "1.0.0-marshall-county"
+const SCRIPT_VERSION = "1.0.2-marshall-county"
 
 const debugLogging                       = false
 const allowPropDescriptionEdits          = false
@@ -51,10 +51,20 @@ const sheetsWithHeaders = [
 ]
 
 const defaultDocumentProperties = {
+  manifestTemplateLastUpdated_: {
+    type: "number",
+    value: 0,
+    description: "The date the driver manifest template was last updated, formatted as a numerical JavaScipt timestamp"
+  },
   lastCustomerID_: {
     type: "number",
     value: 0,
     description: "The value of the last set customer ID."
+  },
+  showNewInstallMenu: {
+    type: "boolean",
+    value: false,
+    description: "Show the new install menu? This keeps the menu in place until a new install is fully complete."
   },
   driverManifestFolderId: {
     type: "string",
@@ -66,10 +76,20 @@ const defaultDocumentProperties = {
     value: "Enter ID here",
     description: "The document ID of the Google Doc you'll be using as your manifest template."
   },
-  driverManifestAddLinksToAddresses: {
+  createManifestPdf: {
     type: "boolean",
     value: true,
-    description: "Adds a Google Maps driving directions link to PU and DO addresses."
+    description: "When creating manifests, create them as PDFs?"
+  },
+  keepManifestDoc: {
+    type: "boolean",
+    value: true,
+    description: "When creating manifests, keep the Google Docs version?"
+  },
+  addManifestAddressLinks: {
+    type: "boolean",
+    value: true,
+    description: "When creating manifests, add Google Maps links to addresses?"
   },
   geocoderBoundNeLatitude: {
     type: "number",
@@ -1075,11 +1095,7 @@ const defaultNamedRanges = {
   },
   "codeTripActionButton1": {
     "sheetName":"Trips",
-    "headerName":"Go"
-  },
-  "codeUpdateTripVehicle": {
-    "sheetName":"Trips",
-    "headerName":"Driver ID"
+    "headerName":"|Go|"
   },
   "codeUpdateTripTimes1": {
     "sheetName":"Trips",

@@ -3,7 +3,8 @@ const initialSheetTriggers = {
 }
 
 const finalSheetTriggers = {
-  "Trips": tripSheetTrigger
+  "Trips": tripSheetTrigger,
+  "Runs":  runSheetTrigger
 }
 
 const rangeTriggers = {
@@ -33,10 +34,6 @@ const rangeTriggers = {
   },
   codeUpdateTripTimes: {
     functionCall: updateTripTimesOnEdit,
-    callOncePerRow: true
-  },
-  codeUpdateTripVehicle: {
-    functionCall: updateTripVehicleOnEdit,
     callOncePerRow: true
   }
 }
@@ -124,7 +121,7 @@ function callCellTriggers(e) {
             triggeredRows[triggerName].push(range.getRow())
           }
         } else {
-          callsToMake[triggerName].push(range)
+          callsToMake[triggerName]?.push(range)
         }
       })
     })
@@ -258,23 +255,6 @@ function updateTripTimesOnEdit(range) {
   } catch(e) { logError(e) }
 }
 
-function updateTripVehicleOnEdit(range) {
-  try{
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
-    const tripRow = getFullRow(range)
-    const tripValues = getRangeValuesAsTable(tripRow)[0]
-    if (tripValues["Driver ID"] && !tripValues["Vehicle ID"]) {
-      const filter = function(row) { return row["Driver ID"] === tripValues["Driver ID"] && row["Default Vehicle ID"] }
-      const driverRow = findFirstRowByHeaderNames(ss.getSheetByName("Drivers"), filter)
-      if (driverRow) {
-        let valuesToChange = {}
-        valuesToChange["Vehicle ID"] = driverRow["Default Vehicle ID"]
-        setValuesByHeaderNames([valuesToChange], tripRow)
-      }
-    }
-  } catch(e) { logError(e) }
-}
-
 function scanForDuplicatesOnEdit(range) {
   try {
     thisValue = range.getValue()
@@ -341,5 +321,12 @@ function tripSheetTrigger(e) {
   try {
     updateTripID(e)
     completeTripRunValues(e)
+    clearSpillBlockages(e)
+  } catch(e) { logError(e) }
+}
+
+function runSheetTrigger(e) {
+  try {
+    clearSpillBlockages(e)
   } catch(e) { logError(e) }
 }
