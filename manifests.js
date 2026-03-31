@@ -89,10 +89,10 @@ function createSelectedManifestsByRun() {
 
 function createManifests(templateDocId, groupedManifestData, fileNameFunction) {
   try {
-    const manifestFolderId = getDocProp("driverManifestFolderId")
-    const templateDoc = DocumentApp.openById(templateDocId)
     prepareTemplate(templateDocId)
 
+    const manifestFolderId = getDocProp("driverManifestFolderId")
+    const templateDoc = DocumentApp.openById(templateDocId)
     let manifestCount = 0
     groupedManifestData.forEach(manifestGroup => {
       const manifestFileName = fileNameFunction(manifestGroup)
@@ -494,7 +494,11 @@ function copyNamedRanges(source, destination) {
 function appendElement(body, element) {
   let type = element.getType()
   if (type == DocumentApp.ElementType.PARAGRAPH) {
-    body.appendParagraph(element)
+    if (paragraphHasImages(element)) {
+      appendParagraphWithImages(body, element)
+    } else {
+      body.appendParagraph(element)
+    }
   } else if (type == DocumentApp.ElementType.TABLE) {
     body.appendTable(element)
   } else if (type == DocumentApp.ElementType.LIST_ITEM) {
@@ -543,4 +547,65 @@ function createRunFilterForManifestData(runs) {
               trip["Vehicle ID"] === run["Vehicle ID"]
     })
   }
+}
+
+function getFileLastUpdated(fileId) {
+  const fileMetadata = Drive.Files.get(
+    fileId,
+    {
+      fields: 'modifiedTime',
+      supportsAllDrives: true
+    }
+  )
+  return new Date(fileMetadata.modifiedTime).getTime()
+}
+
+function appendParagraphWithImages(targetBody, sourceParagraph) {
+  const newParagraph = targetBody.appendParagraph('')
+
+  // Set heading before appending children — setHeading() resets character-level formatting
+  newParagraph.setHeading(sourceParagraph.getHeading())
+  newParagraph.setSpacingBefore(sourceParagraph.getSpacingBefore())
+  newParagraph.setSpacingAfter(sourceParagraph.getSpacingAfter())
+
+  for (let i = 0; i < sourceParagraph.getNumChildren(); i++) {
+    const child = sourceParagraph.getChild(i)
+    const childType = child.getType()
+
+    if (childType === DocumentApp.ElementType.TEXT) {
+      const textObj = child.asText()
+      const rawText = textObj.getText()
+      if (rawText) {
+        const newText = newParagraph.appendText(rawText)
+        const indices = textObj.getTextAttributeIndices()
+        indices.forEach((startIndex, i) => {
+          const endIndex = (i + 1 < indices.length) ? indices[i + 1] - 1 : rawText.length - 1
+          const attrs = textObj.getAttributes(startIndex)
+          const cleanAttrs = Object.fromEntries(
+            Object.entries(attrs).filter(([_, v]) => v !== null)
+          )
+          newText.setAttributes(startIndex, endIndex, cleanAttrs)
+        })
+      }
+    } else if (childType === DocumentApp.ElementType.INLINE_IMAGE) {
+      const img = child.asInlineImage()
+      const newImg = newParagraph.appendInlineImage(img.getBlob())
+      newImg.setWidth(img.getWidth())
+      newImg.setHeight(img.getHeight())
+      newImg.setAltTitle(img.getAltTitle())
+      newImg.setAltDescription(img.getAltDescription())
+    }
+  }
+  // setAlignment last — appending children can reset it
+  newParagraph.setAlignment(sourceParagraph.getAlignment())
+  return newParagraph
+}
+
+function paragraphHasImages(paragraph) {
+  for (let i = 0; i < paragraph.getNumChildren(); i++) {
+    if (paragraph.getChild(i).getType() === DocumentApp.ElementType.INLINE_IMAGE) {
+      return true
+    }
+  }
+  return false
 }
