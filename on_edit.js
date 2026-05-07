@@ -1,12 +1,67 @@
+/**
+ * @fileoverview Spreadsheet onEdit trigger dispatch for RideSheet.
+ *
+ * Implements a two-stage dispatch architecture so that edits are handled in a
+ * predictable order and sheet-specific triggers fire before and after cell
+ * triggers:
+ *
+ * ```
+ * onEdit
+ *   └─ callLocalSheetTriggers  (initialLocalSheetTriggers — from on_edit_local.js)
+ *   └─ callSheetTriggers       (initialSheetTriggers)
+ *   └─ callLocalCellTriggers   (from on_edit_local.js)
+ *   └─ callCellTriggers        (rangeTriggers — named ranges prefixed with "code")
+ *   └─ callSheetTriggers       (finalSheetTriggers)
+ *   └─ callLocalSheetTriggers  (finalLocalSheetTriggers — from on_edit_local.js)
+ * ```
+ *
+ * **Sheet triggers** (`initialSheetTriggers`, `finalSheetTriggers`) are plain
+ * objects mapping sheet name → handler function. The handler is called with the
+ * `onEdit` event object `e`.
+ *
+ * **Cell triggers** (`rangeTriggers`) are keyed by named range name (must start
+ * with `"code"`). Each entry has:
+ * - `functionCall` {function} — called with the edited `Range` object.
+ * - `callOncePerRow` {boolean} — when `true`, the function is called at most
+ *   once per row even if multiple cells in that row are in the named range.
+ *
+ * Named ranges used as cell triggers and their handlers:
+ * - `codeTripActionButton`   → `tripActionButton`    (callOncePerRow: true)
+ * - `codeFillRequestCells`   → `fillTripCellsOnEdit` (callOncePerRow: true)
+ * - `codeFormatAddress`      → `formatAddressOnEdit` (callOncePerRow: false)
+ * - `codeFillHoursAndMiles`  → `fillHoursAndMilesOnEdit` (callOncePerRow: true)
+ * - `codeSetCustomerKey`     → `setCustomerKeyOnEdit` (callOncePerRow: true)
+ * - `codeScanForDuplicates`  → `scanForDuplicatesOnEdit` (callOncePerRow: false)
+ * - `codeUpdateTripTimes`    → `updateTripTimesOnEdit` (callOncePerRow: true)
+ */
+
+/**
+ * Sheet triggers called at the start of `onEdit`, before cell triggers.
+ * Maps sheet name to a handler function receiving the onEdit event `e`.
+ * Local overrides/additions are in `initialLocalSheetTriggers` (on_edit_local.js).
+ * @type {Object.<string, function(GoogleAppsScript.Events.SheetsOnEdit): void>}
+ */
 const initialSheetTriggers = {
   "Document Properties": updatePropertiesOnEdit
 }
 
+/**
+ * Sheet triggers called at the end of `onEdit`, after cell triggers.
+ * Maps sheet name to a handler function receiving the onEdit event `e`.
+ * Local overrides/additions are in `finalLocalSheetTriggers` (on_edit_local.js).
+ * @type {Object.<string, function(GoogleAppsScript.Events.SheetsOnEdit): void>}
+ */
 const finalSheetTriggers = {
   "Trips": tripSheetTrigger,
   "Runs":  runSheetTrigger
 }
 
+/**
+ * Cell-level triggers keyed by named range name (prefix `"code"`).
+ * Each entry maps to a handler function and a `callOncePerRow` flag.
+ * See the file overview for the full list of entries.
+ * @type {Object.<string, {functionCall: function(GoogleAppsScript.Spreadsheet.Range): void, callOncePerRow: boolean}>}
+ */
 const rangeTriggers = {
   codeTripActionButton: {
     functionCall: tripActionButton,
@@ -39,8 +94,12 @@ const rangeTriggers = {
 }
 
 /**
- * The event handler triggered when editing the spreadsheet.
- * @param {event} e The onEdit event.
+ * The Google Apps Script onEdit trigger entry point.
+ * Dispatches the edit event through the full trigger pipeline in order:
+ * initial local sheet triggers, initial sheet triggers, local cell triggers,
+ * cell triggers, final sheet triggers, final local sheet triggers.
+ * Logs total execution time when `debugLogging` is enabled.
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} e - The onEdit event object.
  */
 function onEdit(e) {
   try {
@@ -63,12 +122,31 @@ function onEdit(e) {
   }
 }
 
+/**
+ * Calls the handler for the given sheet name if one exists in `triggers`.
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} e - The onEdit event object.
+ * @param {string} sheetName - The name of the edited sheet.
+ * @param {Object.<string, function>} triggers - A sheet-trigger map.
+ */
 function callSheetTriggers(e, sheetName, triggers) {
   if (Object.keys(triggers).indexOf(sheetName) !== -1) {
     triggers[sheetName](e)
   }
 }
 
+/**
+ * Evaluates all `code`-prefixed named ranges that overlap the edited cell(s)
+ * and calls the corresponding handler functions from `rangeTriggers`.
+ *
+ * For multi-cell edits, each cell is evaluated individually (header row cells
+ * are skipped). When a trigger has `callOncePerRow: true`, its handler is
+ * called at most once per row regardless of how many cells in that row match.
+ *
+ * Handlers are called in the order their trigger names appear in `rangeTriggers`,
+ * not in the order cells were edited.
+ *
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} e - The onEdit event object.
+ */
 function callCellTriggers(e) {
   try {
     const spreadsheet = e.source
@@ -126,11 +204,6 @@ function callCellTriggers(e) {
       })
     })
 
-    //  const serializableCallsToMake = {}
-    //  Object.keys(callsToMake).forEach(rangeTrigger => {
-    //    serializableCallsToMake[rangeTrigger] = callsToMake[rangeTrigger].map(range => range.getA1Notation())
-    //  })
-    //  log(JSON.stringify(serializableCallsToMake))
     Object.keys(callsToMake).forEach(rangeTrigger => {
       callsToMake[rangeTrigger].forEach(range => {
         rangeTriggers[rangeTrigger]["functionCall"](range)
@@ -139,6 +212,13 @@ function callCellTriggers(e) {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Formats an address cell when its value changes. First attempts to resolve
+ * the value as a short name via the Addresses sheet (`setAddressByShortName()`);
+ * if that fails, geocodes it via the Maps API (`setAddressByApi()`). Clears
+ * the cell note and background if the cell is blank.
+ * @param {GoogleAppsScript.Spreadsheet.Range} range - The edited address cell.
+ */
 function formatAddressOnEdit(range) {
   try {
     if (range.getValue() && range.getValue().toString().trim()) {
@@ -152,12 +232,24 @@ function formatAddressOnEdit(range) {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Thin wrapper that calls `fillTripCells()` for a cell trigger invocation.
+ * @param {GoogleAppsScript.Spreadsheet.Range} range - The edited cell.
+ */
 function fillTripCellsOnEdit(range) {
   try {
     fillTripCells(range)
   } catch(e) { logError(e) }
 }
 
+/**
+ * Calculates estimated trip hours and miles from the PU and DO addresses in
+ * the trip row and writes them back to `"Est Hours"` and `"Est Miles"`. Clears
+ * both fields if either address is blank. On success, calls
+ * `updateTripTimesOnEdit()` to derive missing PU/DO times from the estimate.
+ * Shows a toast on a successful estimate.
+ * @param {GoogleAppsScript.Spreadsheet.Range} range - Any cell in the trip row.
+ */
 function fillHoursAndMilesOnEdit(range) {
   try {
     const tripRow = getFullRow(range)
@@ -178,12 +270,14 @@ function fillHoursAndMilesOnEdit(range) {
 }
 
 /**
- * Manage setup of a new customer record. The goals here are to:
- * - Trim the customer name as needed
- * _ Generate a customer ID when it's missing and there's a first and last name present
- * - Autofill the "Customer Name and ID" field when the first name, last name, and ID are present.
- *   This will be the field used to identify the customer in trip records
- * - Keep track of the current highest customer ID in document properties, seeding data when needed
+ * Manages customer record setup when the customer's name fields are edited.
+ * - Trims first and last name.
+ * - Generates a numeric `"Customer ID"` if not already set, using the
+ *   `lastCustomerID_` private document property as a counter seed (falling
+ *   back to scanning the ID column for the current max).
+ * - Constructs `"Customer Name and ID"` from the three key fields.
+ * - Updates `lastCustomerID_` when a new or higher ID is encountered.
+ * @param {GoogleAppsScript.Spreadsheet.Range} range - Any cell in the customer row.
  */
 function setCustomerKeyOnEdit(range) {
   try {
@@ -226,6 +320,17 @@ function setCustomerKeyOnEdit(range) {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Derives missing PU or DO times from `"Est Hours"` and document-property
+ * padding/dwell settings. Handles three cases (for each row in the range):
+ * - PU Time set, DO Time blank, no Appt Time → computes DO Time.
+ * - DO Time set, PU Time blank, no Appt Time → computes PU Time.
+ * - Appt Time set, neither PU nor DO Time set → computes DO Time from Appt
+ *   Time minus `dropOffToAppointmentTimeInMinutes`, then PU Time from that.
+ * Rows without `"Est Hours"` are passed through as empty objects (no change).
+ * @param {GoogleAppsScript.Spreadsheet.Range} range - A cell or multi-row range
+ *   in the Trips sheet.
+ */
 function updateTripTimesOnEdit(range) {
   try {
     const tripRows = getFullRows(range)
@@ -255,9 +360,15 @@ function updateTripTimesOnEdit(range) {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Scans the entire column of the edited cell for duplicate values and sets a
+ * cell note listing the row numbers of any duplicates found. Clears the note
+ * if no duplicates exist.
+ * @param {GoogleAppsScript.Spreadsheet.Range} range - The edited cell.
+ */
 function scanForDuplicatesOnEdit(range) {
   try {
-    thisValue = range.getValue()
+    const thisValue = range.getValue()
     const thisRowNumber = range.getRow()
     const fullRange = range.getSheet().getRange(1, range.getColumn(), range.getSheet().getLastRow())
     const values = fullRange.getValues().flat()
@@ -272,6 +383,12 @@ function scanForDuplicatesOnEdit(range) {
   } catch(e) { logError(e) }
 }
 
+/**
+ * When a full-width row paste is detected (the edited range spans all columns
+ * from column 1), replaces any existing `"Trip ID"` values with new UUIDs to
+ * prevent duplicate trip IDs from being introduced via paste.
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} e - The onEdit event object.
+ */
 // When a trip is pasted in, change the Trip ID to avoid duplicate IDs
 function updateTripID(e) {
   try {
@@ -286,6 +403,14 @@ function updateTripID(e) {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Handles the Action/Go checkbox trigger on trip rows. Reads the action text
+ * from the cell to the left of the checkbox and dispatches to `createReturnTrip()`
+ * or `addStop()`. Clears both the checkbox and action cell after dispatching,
+ * or if no valid action is found.
+ * @param {GoogleAppsScript.Spreadsheet.Range} goCheckBoxRange - The range of the
+ *   Go checkbox cell that was checked.
+ */
 function tripActionButton(goCheckBoxRange) {
   try {
     const goCheckboxValue = goCheckBoxRange.getValue()
@@ -311,12 +436,23 @@ function tripActionButton(goCheckBoxRange) {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Thin wrapper that calls `updateProperties()` for a sheet-trigger invocation
+ * on the "Document Properties" sheet.
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} e - The onEdit event object.
+ */
 function updatePropertiesOnEdit(e) {
   try {
     updateProperties(e)
   } catch(e) { logError(e) }
 }
 
+/**
+ * Final sheet trigger for the Trips sheet. Runs after cell triggers.
+ * Calls `updateTripID()` (paste detection), `completeTripRunValues()` (run
+ * association auto-fill), and `clearSpillBlockages()` (array formula upkeep).
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} e - The onEdit event object.
+ */
 function tripSheetTrigger(e) {
   try {
     updateTripID(e)
@@ -325,6 +461,11 @@ function tripSheetTrigger(e) {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Final sheet trigger for the Runs sheet. Runs after cell triggers.
+ * Calls `clearSpillBlockages()` to repair any array-formula spill blockages.
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} e - The onEdit event object.
+ */
 function runSheetTrigger(e) {
   try {
     clearSpillBlockages(e)
