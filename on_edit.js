@@ -4,6 +4,7 @@ const initialSheetTriggers = {
 
 const finalSheetTriggers = {
   "Trips": tripSheetTrigger,
+  "Trip Review": tripSheetTrigger,
   "Runs":  runSheetTrigger
 }
 

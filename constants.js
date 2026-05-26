@@ -446,6 +446,24 @@ const defaultColumns = {
         helpText: "Value must be a valid customer name and ID.",
       },
     },
+    "|Action|": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_LIST",
+        values: [
+          "Add return trip",
+          "Add stop",
+        ],
+        showDropdown: true,
+        allowInvalid: false,
+        helpText: "Value must be a valid action.",
+      },
+    },
+    "|Go|": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        allowInvalid: true,
+      }
+    },
     "Trip Result": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -519,6 +537,9 @@ const defaultColumns = {
         allowInvalid: false,
         helpText: "Value must be a valid vehicle ID.",
       },
+    },
+    "|Run OK?|": {
+      headerFormula: `={"|Run OK?|";MAP(formulaTripReviewTripDate, formulaTripReviewPuTime, formulaTripReviewDoTime, formulaTripReviewTripDriverId, formulaTripReviewTripVehicleId, formulaTripReviewTripRunId, LAMBDA(TripDate,TripPuTime,TripDoTime,TripDriverId,TripVehicleID,TripRunId, QUERY_RUN_MATCH_COUNT(TripDate,TripPuTime,TripDoTime,TripDriverId,TripVehicleID,TripRunId,formulaRunReviewSheet)))}`
     },
     "Run ID": {},
     "PU Address": {},
@@ -1041,6 +1062,10 @@ const defaultNamedRanges = {
     "sheetName":"Trips",
     "headerName":"Customer Name and ID"
   },
+  "codeFillRequestCells2": {
+    "sheetName":"Trip Review",
+    "headerName":"Customer Name and ID"
+  },
   "codeFormatAddress1": {
     "sheetName":"Trips",
     "headerName":"PU Address"
@@ -1097,6 +1122,10 @@ const defaultNamedRanges = {
     "sheetName":"Trips",
     "headerName":"|Go|"
   },
+  "codeTripActionButton2": {
+    "sheetName":"Trip Review",
+    "headerName":"|Go|"
+  },
   "codeUpdateTripTimes1": {
     "sheetName":"Trips",
     "headerName":"PU Time"
@@ -1107,6 +1136,18 @@ const defaultNamedRanges = {
   },
   "codeUpdateTripTimes3":{
     "sheetName":"Trips",
+    "headerName":"Appt Time"
+  },
+  "codeUpdateTripTimes4": {
+    "sheetName":"Trip Review",
+    "headerName":"PU Time"
+  },
+  "codeUpdateTripTimes5": {
+    "sheetName":"Trip Review",
+    "headerName":"DO Time"
+  },
+  "codeUpdateTripTimes6": {
+    "sheetName":"Trip Review",
     "headerName":"Appt Time"
   },
   "lookupCustomerNames": {
@@ -1234,6 +1275,36 @@ const defaultNamedRanges = {
     "sheetName":"Trip Review",
     "startHeaderName":"Trip Date",
     "endHeaderName":"Run ID",
+  },
+  "formulaRunReviewSheet": {
+    "sheetName":"Run Review",
+    "startHeaderName":"Run Date",
+    "endHeaderName":"Scheduled End Time",
+    "allRows": true
+  },
+  "formulaTripReviewTripDate": {
+    "sheetName":"Trip Review",
+    "headerName":"Trip Date"
+  },
+  "formulaTripReviewPuTime": {
+    "sheetName":"Trip Review",
+    "headerName":"PU Time"
+  },
+  "formulaTripReviewDoTime": {
+    "sheetName":"Trip Review",
+    "headerName":"DO Time"
+  },
+  "formulaTripReviewTripDriverId": {
+    "sheetName":"Trip Review",
+    "headerName":"Driver ID"
+  },
+  "formulaTripReviewTripVehicleId": {
+    "sheetName":"Trip Review",
+    "headerName":"Vehicle ID"
+  },
+  "formulaTripReviewTripRunId": {
+    "sheetName":"Trip Review",
+    "headerName":"Run ID"
   },
   "formulaRunsSheet": {
     "sheetName":"Runs",
