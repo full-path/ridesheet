@@ -1,159 +1,139 @@
 const localNamedRanges = {
   "lookupRiderTypes": {
-    "sheetName":"Lookups",
-    "headerName":"Rider Types"
+    "sheetName": "Lookups",
+    "headerName": "Rider Types"
   },
   "lookupMobilityFactors": {
-    "sheetName":"Lookups",
-    "headerName":"Mobility Factors"
+    "sheetName": "Lookups",
+    "headerName": "Mobility Factors"
   },
   "lookupFareTypes": {
-    "sheetName":"Lookups",
-    "headerName":"Fare Types"
+    "sheetName": "Lookups",
+    "headerName": "Fare Types"
   },
   "lookupDispatchIds": {
-    "sheetName":"Lookups",
-    "headerName":"Dispatch IDs"
-  },
-  "lookupFares": {
-    "sheetName":"Lookups",
-    "headerName":"Fares"
+    "sheetName": "Lookups",
+    "headerName": "Dispatch IDs"
   },
   "lookupAddressShortNames": {
-    "sheetName":"Lookups",
-    "headerName":"Address Short Names"
-  },
-  "localCodeExpandAddress1": {
-    "sheetName":"Trips",
-    "headerName":"|PU|"
+    "sheetName": "Lookups",
+    "headerName": "Address Short Names"
   },
   "codeFillHoursAndMiles001": {
-    "sheetName":"Dispatch",
-    "headerName":"PU Address"
+    "sheetName": "Dispatch",
+    "headerName": "PU Address"
   },
   "codeFillHoursAndMiles002": {
-    "sheetName":"Dispatch",
-    "headerName":"DO Address"
+    "sheetName": "Dispatch",
+    "headerName": "DO Address"
   },
   "codeFormatAddress001": {
-    "sheetName":"Dispatch",
-    "headerName":"PU Address"
+    "sheetName": "Dispatch",
+    "headerName": "PU Address"
   },
   "codeFormatAddress002": {
-    "sheetName":"Dispatch",
-    "headerName":"DO Address"
+    "sheetName": "Dispatch",
+    "headerName": "DO Address"
   },
   "codeFillRequestCells001": {
-    "sheetName":"Dispatch",
-    "headerName":"Customer Name and ID"
+    "sheetName": "Dispatch",
+    "headerName": "Customer Name and ID"
   },
   "codeTripActionButton001": {
-    "sheetName":"Dispatch",
-    "headerName":"|Go|"
+    "sheetName": "Dispatch",
+    "headerName": "|Go|"
   },
   "codeUpdateTripTimes001": {
-    "sheetName":"Dispatch",
-    "headerName":"PU Time"
+    "sheetName": "Dispatch",
+    "headerName": "PU Time"
   },
   "codeUpdateTripTimes002": {
-    "sheetName":"Dispatch",
-    "headerName":"DO Time"
+    "sheetName": "Dispatch",
+    "headerName": "DO Time"
   },
   "codeUpdateTripTimes003": {
-    "sheetName":"Dispatch",
-    "headerName":"Appt Time"
+    "sheetName": "Dispatch",
+    "headerName": "Appt Time"
   },
   "codeUpdateTripVehicle001": {
-    "sheetName":"Dispatch",
-    "headerName":"Driver ID"
-  },
-  "lookupRiderTypes": {
-    "sheetName":"Lookups",
-    "headerName":"Rider Types"
-  },
-  "lookupMobilityFactors": {
-    "sheetName":"Lookups",
-    "headerName":"Mobility Factors"
-  },
-  "lookupFareTypes": {
-    "sheetName":"Lookups",
-    "headerName":"Fare Types"
-  },
-  "lookupDispatchIds": {
-    "sheetName":"Lookups",
-    "headerName":"Dispatch IDs"
-  },
-  "lookupAddressShortNames": {
-    "sheetName":"Lookups",
-    "headerName":"Address Short Names"
+    "sheetName": "Dispatch",
+    "headerName": "Driver ID"
   },
   "localCodeExpandAddress1": {
-    "sheetName":"Trips",
-    "headerName":"|PU|"
+    "sheetName": "Trips",
+    "headerName": "|PU|"
   },
   "localCodeExpandAddress2": {
-    "sheetName":"Trips",
-    "headerName":"|DO|"
+    "sheetName": "Trips",
+    "headerName": "|DO|"
   },
   "localCodeExpandAddress3": {
-    "sheetName":"Dispatch",
-    "headerName":"|PU|"
+    "sheetName": "Dispatch",
+    "headerName": "|PU|"
   },
   "localCodeExpandAddress4": {
-    "sheetName":"Dispatch",
-    "headerName":"|DO|"
+    "sheetName": "Dispatch",
+    "headerName": "|DO|"
+  },
+  "localCodeExpandAddress5": {
+    "sheetName": "Trip Review",
+    "headerName": "|PU|"
+  },
+  "localCodeExpandAddress6": {
+    "sheetName": "Trip Review",
+    "headerName": "|DO|"
   },
   "formulaRunReviewFareRevenue": {
-    "sheetName":"Run Review",
-    "headerName":"Fare Revenue"
+    "sheetName": "Run Review",
+    "headerName": "Fare Revenue"
   },
   "formulaRunReviewDonationRevenue": {
-    "sheetName":"Run Review",
-    "headerName":"Donation Revenue"
+    "sheetName": "Run Review",
+    "headerName": "Donation Revenue"
   },
   "formulaRunReviewTicketRevenue": {
-    "sheetName":"Run Review",
-    "headerName":"Ticket Revenue"
+    "sheetName": "Run Review",
+    "headerName": "Ticket Revenue"
   },
   "formulaRunArchiveFareRevenue": {
-    "sheetName":"Run Archive",
-    "headerName":"Fare Revenue"
+    "sheetName": "Run Archive",
+    "headerName": "Fare Revenue"
   },
   "formulaRunArchiveDonationRevenue": {
-    "sheetName":"Run Archive",
-    "headerName":"Donation Revenue"
+    "sheetName": "Run Archive",
+    "headerName": "Donation Revenue"
   },
   "formulaRunArchiveTicketRevenue": {
-    "sheetName":"Run Archive",
-    "headerName":"Ticket Revenue"
+    "sheetName": "Run Archive",
+    "headerName": "Ticket Revenue"
   },
   "queryAddresses": {
-    "sheetName":"Addresses",
-    "headerName":"Short Name"
+    "sheetName": "Addresses",
+    "headerName": "Short Name"
   },
   "formulaDispatchTripDate": {
-    "sheetName":"Dispatch",
-    "headerName":"Trip Date"
+    "sheetName": "Dispatch",
+    "headerName": "Trip Date"
   },
   "formulaDispatchPuTime": {
-    "sheetName":"Dispatch",
-    "headerName":"PU Time"
+    "sheetName": "Dispatch",
+    "headerName": "PU Time"
   },
   "formulaDispatchDoTime": {
-    "sheetName":"Dispatch",
-    "headerName":"DO Time"
+    "sheetName": "Dispatch",
+    "headerName": "DO Time"
   },
   "formulaDispatchDriverId": {
-    "sheetName":"Dispatch",
-    "headerName":"Driver ID"
+    "sheetName": "Dispatch",
+    "headerName": "Driver ID"
   },
   "formulaDispatchVehicleId": {
-    "sheetName":"Dispatch",
-    "headerName":"Vehicle ID"
+    "sheetName": "Dispatch",
+    "headerName": "Vehicle ID"
   },
   "formulaDispatchRunId": {
-    "sheetName":"Dispatch",
-    "headerName":"Run ID"
+    "sheetName": "Dispatch",
+    "headerName": "Run ID"
   },
 }
 
@@ -287,15 +267,6 @@ const localColumns = {
       }
     }
   },
-  "Lookups": {
-    "Rider Types": {},
-    "Mobility Factors": {},
-    "Fare Types": {},
-    "Dispatch IDs": {},
-    "Address Short Names": {
-      headerFormula: `={"Address Short Names";QUERY(queryAddresses,"SELECT Col1 WHERE Col1 IS NOT NULL ORDER BY Col1",0)}`,
-    }
-  },
   "Dispatch": {
     "Trip Date": {
       numberFormat: "M/d/yyyy",
@@ -418,7 +389,6 @@ const localColumns = {
         helpText: "Value must be the number of guests (0 or more).",
       },
     },
-    "Mobility Factors": {},
     "Trip Purpose": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
