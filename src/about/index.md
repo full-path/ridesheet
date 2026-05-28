@@ -8,6 +8,10 @@ For questions about RideSheet, you can reach Full Path through:
 - Email: [ridesheet-info@fullpath.io](mailto:ridesheet-info@fullpath.io)
 - Website: [fullpath.io](https://fullpath.io)
 
+### Informational and Training Videos
+
+The [Fullpath YouTube channel](https://www.youtube.com/@fullpathtransit) has a selection of videos covering what RideSheet is, how to install it, and how to use it at your organization.
+
 ### GitHub
 Visit our [GitHub repository](https://github.com/full-path/ridesheet) to:
 
@@ -15,6 +19,9 @@ Visit our [GitHub repository](https://github.com/full-path/ridesheet) to:
 - Submit feature requests 
 - Contribute code
 - Access documentation
+
+### National RTAP
+Ridesheet is funded in part by National RTAP. Check out the [NRTAP website](https://www.nationalrtap.org/Technology-Tools/Ridesheet) for additional resources and tools.
 
 ## License
 RideSheet is Open Source software, licensed under the MIT license. 

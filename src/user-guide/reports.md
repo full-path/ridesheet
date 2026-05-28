@@ -9,3 +9,14 @@ RideSheet is extremely flexible when it comes to reporting. The data in `Trip Ar
 Older versions of RideSheet may have reports built into a separate Google Sheet. It's possible to use RideSheet archives as a database and pull them into another spreadsheet for analysis.
 
 Newer installations of RideSheet are migrating to using [Looker Studio](https://lookerstudio.google.com/overview). This guide will eventually cover how to set up Looker Studio with your copy of RideSheet.
+
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+  <iframe
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+    src="https://www.youtube-nocookie.com/embed/mlhO5Odj61c"
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+</div>

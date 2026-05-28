@@ -1,6 +1,6 @@
 # Using RideSheet
 
-This page covers the most common daily operations in RideSheet. 
+This page covers the most common daily operations in RideSheet. For more information, check out the [RideSheet University video series](https://www.youtube.com/watch?v=wH86zrsS7t8&list=PLRrgS0EMo39xLKIrtw98ne6-xfj18xffn).
 
 ## The Basics
 RideSheet is a spreadsheet-based application consisting of multiple sheets or tabs. The basic view of RideSheet should look something like this:

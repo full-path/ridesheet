@@ -40,6 +40,17 @@ If you're not confident in setting up RideSheet on your own, don't worry. Most s
 - Hire a technical consultant: Consider hiring a consultant with experience in setting up Google Workspace and spreadsheet-based solutions.
 - Seek help from Full Path: [Contact us](about/index.md) for guidance on installation and setup. In some cases, there may be grant-based assistance available to help you get started.
 
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+  <iframe
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+    src="https://www.youtube-nocookie.com/embed/epB9zhFQWz0"
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+</div>
+
 ## Creating a Plan for Migrating to RideSheet
 
 Migrating to RideSheet requires careful planning to ensure a smooth transition. Consider the following:

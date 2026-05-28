@@ -49,6 +49,17 @@ Your organization should also have a **plan for security**. Google Workspace has
 
 Finally, **plan for training**. It's important to train users to use Google Workspace effectively and set them up for success, especially if staff are new to cloud-based applications and are only familiar with applications and files that are stored on their local computer or network. 
 
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+  <iframe
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+    src="https://www.youtube-nocookie.com/embed/s-socNbYUc8"
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+</div>
+
 ## Trip Sharing with other Organizations
 
 RideSheet is engaged in several pilot programs to implement [TDS: The Transactional Data Specification](https://blog.aarp.org/the-transactional-data-specification). This allows organizations in the same service area to share trips and refer customers. If you are interested in using RideSheet for TDS, please get in touch.
