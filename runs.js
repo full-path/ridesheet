@@ -1,7 +1,46 @@
 /**
- * Updates run details based on associated trips and returns array of runs
- * @param {Object} runsObject - Object with run data in format {tripKey: {run: {...}, trips: [...]}}
- * @returns {Array} Array of run objects with calculated details
+ * @fileoverview Run record management for RideSheet.
+ *
+ * A "run" represents a driver + vehicle assignment for a date, potentially
+ * covering multiple trips. Two run-creation strategies exist, controlled by
+ * the `createRunMode` document property:
+ *
+ * - **`"default"`** — Runs are pre-created by staff in the Runs sheet either manually 
+ *    or by using `buildRunsFromTemplate()`. Trips are later associated with runs
+ *    manually or auto-matched by `completeTripRunValues()` (trips.js).
+ * - **`"auto"`** — Runs are generated automatically at review time by
+ *   `createRunsInReview()`, which groups the trips being moved to review by
+ *   date + driver + vehicle and synthesises a run record for each group.
+ *
+ * The shared `runsObject` intermediate format used by `createRunsInReview()`
+ * and `updateRunDetails()` is a plain object keyed by a composite trip key:
+ * ```
+ * {
+ *   [tripKey: string]: {
+ *     run:   Object,    // run row data (e.g. Run Date, Driver ID, Vehicle ID)
+ *     trips: Object[]  // trip row objects that belong to this run
+ *   }
+ * }
+ * ```
+ * `tripKey` is constructed as `JSON.stringify(tripDate) + driverId + vehicleId`.
+ */
+
+/**
+ * Calculates aggregate timing fields on each run entry in a `runsObject` and
+ * returns a flat array of run row objects ready to write to a sheet.
+ *
+ * For each run entry the following fields are computed from its `trips` array:
+ * - `"First PU Time"` / `"Scheduled Start Time"` — earliest `"PU Time"` across all
+ *   trips that have one, or `null` if no trips have a PU time.
+ * - `"Last DO Time"` / `"Scheduled End Time"` — latest `"DO Time"` across all
+ *   trips that have one, or `null` if no trips have a DO time.
+ * - `"Review TS"` — Timestamp set to the current date/time.
+ *
+ * @param {Object.<string, {run: Object, trips: Object[]}>} runsObject - The
+ *   intermediate runs map (see file overview for structure).
+ * @returns {Object[]} Array of run row objects, one per entry in `runsObject`,
+ *   with timing fields populated.
+ * @throws {Error} Re-throws any internal error with a descriptive message.
  */
 function updateRunDetails(runsObject) {
   try {
@@ -45,7 +84,21 @@ function updateRunDetails(runsObject) {
   }
 }
 
-// Fill in a week of entries in the "Runs" sheet using the schedule information in "Run Template"
+/**
+ * Fills the Runs sheet with one week of run entries generated from the
+ * "Run Template" sheet. Used in `"default"` run mode.
+ *
+ * The default start date is the day after the latest existing `"Run Date"`
+ * in the Runs sheet (or today if the sheet is empty). The user is prompted
+ * to confirm this date or enter a custom one.
+ *
+ * For each of the 7 days starting from the chosen date, every template row
+ * whose `"Days of Week"` field includes that day's name is matched. Matching
+ * templates are sorted by `"Scheduled Start Time"` and appended to the Runs
+ * sheet as new rows with `"Run Date"`, `"Driver ID"`, `"Vehicle ID"`,
+ * `"Scheduled Start Time"`, and `"Scheduled End Time"` populated.
+ * `applySheetFormatsAndValidation()` is called on the new rows when done.
+ */
 function buildRunsFromTemplate() {
   const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
   let ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -126,9 +179,20 @@ function buildRunsFromTemplate() {
 }
 
 /**
- * Creates run entries in the Run Review sheet based on trips being moved to review
- * @param {Array} trips - Array of trip objects being moved to review
+ * Generates run records in the Run Review sheet from an array of trips being
+ * moved to review. Used in `"auto"` run mode (see `moveTripsToReview()` in
+ * review.js).
+ *
+ * Trips are grouped by a composite key of `Trip Date + Driver ID + Vehicle ID`.
+ * Each unique combination becomes one run. After grouping, `updateRunDetails()`
+ * is called to compute timing fields, and the resulting run rows are appended
+ * to the Run Review sheet sorted by `"Run Date"`.
+ * `applySheetFormatsAndValidation()` is called on the newly added rows.
+ *
+ * @param {Object[]} trips - Array of trip row objects (as returned by
+ *   `getRangeValuesAsTable()`) that are being moved to Trip Review.
  * @returns {void}
+ * @throws {Error} Re-throws any internal error with a descriptive message.
  */
 function createRunsInReview(trips) {
   try {

@@ -1,23 +1,64 @@
+/**
+ * @fileoverview Application-wide constants and default configuration for RideSheet.
+ *
+ * This file defines:
+ * - Version and feature flags
+ * - UI color constants
+ * - Default geocoding bounds and timing values
+ * - `defaultSheets` and `sheetsWithHeaders`: the expected sheet inventory
+ * - `defaultDocumentProperties`: configurable per-installation settings, their
+ *   types, default values, and descriptions (surfaced via the "Document Properties" sheet)
+ * - `defaultColumns`: per-sheet column definitions including number formats and
+ *   data validation rules (used by `applySheetFormatsAndValidation()` in sheets.js)
+ * - `defaultNamedRanges`: named range configurations (used by `buildNamedRanges()` in build.js)
+ *
+ * The `_local` counterparts in `constants_local.js` allow forks to add or override
+ * these defaults without modifying this file.
+ */
+
+/** @type {string} The current version of RideSheet. */
 const SCRIPT_VERSION = "1.0.2"
 
+/** @type {boolean} Set to true to log timing information to the Debug Log sheet on each onEdit call. */
 const debugLogging                       = false
+/** @type {boolean} Set to true to allow editing property descriptions in the Document Properties sheet. */
 const allowPropDescriptionEdits          = false
 
+// ─── UI Color Constants ─────────────────────────────────────────────────────
+/** @type {string} Background color applied to cells with data errors. */
 const errorBackgroundColor               = "#f4cccc"
+/** @type {string} Default cell background color. */
 const defaultBackgroundColor             = "#ffffff"
+/** @type {string} Background color for header rows. */
 const headerBackgroundColor              = "#fff2cc"
+/** @type {string} Background color for highlighted cells. */
 const highlightBackgroundColor           = "#ffff00"
 
-// Config for the state of Oregon
+// ─── Default Geocoder Bounds and Timing ─────────────────────────────────────
+// These values default to the state of Oregon and serve as fallbacks when the
+// corresponding document properties have not been set. Live values are stored as
+// document properties and can be customized per installation.
+/** @type {string} Default IANA time zone identifier. */
 const defaultLocalTimeZone               = "America/Los_Angeles"
+/** @type {number} South latitude of the geocoder bounding box (degrees). */
 const defaultGeocoderBoundSwLatitude     = 41.997013
+/** @type {number} West longitude of the geocoder bounding box (degrees). */
 const defaultGeocoderBoundSwLongitude    = -124.560974
+/** @type {number} North latitude of the geocoder bounding box (degrees). */
 const defaultGeocoderBoundNeLatitude     = 46.299097
+/** @type {number} East longitude of the geocoder bounding box (degrees). */
 const defaultGeocoderBoundNeLongitude    = -116.463363
 
+/** @type {number} Default time in minutes added to each trip for pick-up and drop-off. */
 const defaultDwellTimeInMinutes          = 10
+/** @type {number} Default padding time in minutes added per hour of estimated travel time. */
 const defaultTripPaddingPerHourInMinutes = 5
 
+/**
+ * The full list of sheet names expected in a standard RideSheet installation.
+ * Used by setup and repair functions to detect or create missing sheets.
+ * @type {string[]}
+ */
 const defaultSheets = [
   "Customers",
   "Trips",
@@ -35,6 +76,11 @@ const defaultSheets = [
   "Addresses"
 ]
 
+/**
+ * The subset of `defaultSheets` that have a header row in row 1.
+ * Used to restrict formatting, data validation, and metadata operations to data rows only.
+ * @type {string[]}
+ */
 const sheetsWithHeaders = [
   "Customers",
   "Trips",
@@ -173,6 +219,27 @@ const defaultDocumentProperties = {
   }
 }
 
+/**
+ * Default column definitions for each sheet, consumed by `applySheetFormatsAndValidation()`
+ * in sheets.js and `buildMetadata()` in build.js.
+ *
+ * Each top-level key is a sheet name. Each nested key is a column header name. The column
+ * configuration object supports these optional properties:
+ * - `numberFormat` {string}   - A Sheets number format string (e.g. `"M/d/yyyy"`, `'h":"mm am/pm'`).
+ * - `dataValidation` {Object} - Validation rule definition (see `getValidationRule()` in sheets.js):
+ *   - `criteriaType` {string}   - The `SpreadsheetApp.DataValidationCriteria` enum name.
+ *   - `namedRange` {string}     - (VALUE_IN_RANGE) Named range supplying the dropdown list.
+ *   - `values` {Array}          - (VALUE_IN_LIST) Explicit list of allowed values.
+ *   - `args` {Array}            - Additional arguments required by some criteria types.
+ *   - `showDropdown` {boolean}  - Whether to render a dropdown arrow in the cell.
+ *   - `allowInvalid` {boolean}  - Whether to permit values outside the validation list.
+ *   - `helpText` {string}       - Tooltip shown when the cell is selected or validation fails.
+ * - `headerFormula` {string}  - A Sheets array formula placed in the header cell to compute
+ *   an entire column. These columns are read-only; their header names are wrapped in `|pipes|`
+ *   as a signal to `setValuesByHeaderNames()` not to overwrite formula output.
+ *
+ * @type {Object.<string, Object.<string, {numberFormat?: string, dataValidation?: Object, headerFormula?: string}>>}
+ */
 const defaultColumns = {
   "Customers": {
     "Customer Name and ID": {},
@@ -1020,6 +1087,30 @@ const defaultColumns = {
   }
 }
 
+/**
+ * Default named range definitions, consumed by `buildNamedRanges()` in build.js.
+ *
+ * Each key is the named range name. The value is a configuration object with:
+ * - `sheetName` {string}       - The sheet the named range lives on.
+ * - `headerName` {string}      - (optional) Column header to derive a single-column range.
+ *                                The range spans from row 2 to the sheet's last row + 1000.
+ * - `startHeaderName` {string} - (optional, pair with `endHeaderName`) First column of a multi-column range.
+ * - `endHeaderName` {string}   - (optional, pair with `startHeaderName`) Last column of a multi-column range.
+ * - `headerOnly` {boolean}     - (optional) If true, the range covers only row 1.
+ * - `allRows` {boolean}        - (optional) If true, the range starts from row 1 instead of row 2.
+ *
+ * Named range name prefixes indicate their role:
+ * - `code*`    — Cell-based edit trigger zones. Edits within these ranges invoke the
+ *                corresponding handler defined in `rangeTriggers` (see on_edit.js).
+ * - `lookup*`  — Source lists for data-validation dropdowns in cells.
+ * - `query*`   — Single-column references used as QUERY formula arguments.
+ * - `formula*` — Column or block references used in spreadsheet array formula arguments.
+ *
+ * Local forks can extend this set via `localNamedRanges` in constants_local.js,
+ * or remove entries via `localNamedRangesToRemove`.
+ *
+ * @type {Object.<string, {sheetName: string, headerName?: string, startHeaderName?: string, endHeaderName?: string, headerOnly?: boolean, allRows?: boolean}>}
+ */
 const defaultNamedRanges = {
   "codeFillHoursAndMiles1": {
     "sheetName":"Trips",

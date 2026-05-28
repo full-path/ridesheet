@@ -1,6 +1,43 @@
-// Once a customer is selected for a trip, fill in trip data with essential data to all trips
-// (customer ID and Trip ID), and then any default values from the custome record.
-// Home address is a special case if there isn't a designated default PU address.
+/**
+ * @fileoverview Trip record helpers for RideSheet.
+ *
+ * Provides functions for creating, copying, and validating trip rows in the
+ * Trips sheet, and for auto-filling run association data when a trip has
+ * enough information to be matched to a run.
+ *
+ * Key functions:
+ * - `fillTripCells()`         — populate a new trip row with customer defaults when
+ *                               a customer is selected.
+ * - `copyTrip()`              — duplicate an existing trip, swapping PU/DO addresses,
+ *                               and optionally setting the DO address to the customer's
+ *                               earliest PU address of the day (return-trip mode).
+ * - `createReturnTrip()`      — menu/trigger entry point for return-trip copy.
+ * - `addStop()`               — menu/trigger entry point for a forward copy (next stop).
+ * - `isCompleteTrip()`        — minimal validity check for a trip row object.
+ * - `isTripWithValidTimes()`  — stricter check that PU and DO times are valid and ordered.
+ * - `completeTripRunValues()` — auto-fill Vehicle ID / Driver ID / Run ID when a trip
+ *                               can be unambiguously matched to a run.
+ */
+
+/**
+ * When a customer is selected on a new trip row, fills in essential and default
+ * trip cell values from the matching customer record.
+ *
+ * Behaviour:
+ * - Always sets `"Customer ID"` from the customer record.
+ * - Generates a new UUID for `"Trip ID"` if the cell is currently empty.
+ * - Reads every column in the customer record whose header starts with `"Default "`
+ *   and copies its value into the corresponding trip column (with the `"Default "`
+ *   prefix stripped), but only if that trip cell is currently empty.
+ * - If `"PU Address"` is still empty after the above step and the customer record
+ *   has no `"Default PU Address"` column, falls back to the customer's
+ *   `"Home Address"`.
+ * - Triggers `fillHoursAndMilesOnEdit()` if either `"PU Address"` or `"DO Address"`
+ *   was set.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Range} range - A cell in the trip row that
+ *   contains the newly selected `"Customer Name and ID"` value.
+ */
 function fillTripCells(range) {
   try {
     if (range.getValue()) {
@@ -30,11 +67,37 @@ function fillTripCells(range) {
   } catch(e) { logError(e) }
 }
 
-// Takes an existing trip and makes a copy of it, using the DO address of the existing trip as the
-// PU address of the new one. If this isReturnTrip is true, the DO address of the new trip is the
-// PU address of the earliest trip for the customer and day
-// Function can be called from the Action/Go trigger or from the menu bar. If called from the
-// menu bar, the source row is taken from taken from whatever row the active cell is in
+/**
+ * Creates a copy of an existing trip row, swapping the PU and DO addresses,
+ * and inserts the new row immediately after the source row.
+ *
+ * In standard mode (`isReturnTrip = false`):
+ * - The new trip's `"PU Address"` is the source trip's `"DO Address"`.
+ * - The new trip's `"DO Address"` is `null` (left blank for the user to fill).
+ * - `"PU Time"` is calculated by adding `defaultStayDuration` (minutes) to the
+ *   source trip's `"Appt Time"` or `"DO Time"` (whichever is available). If
+ *   `defaultStayDuration` is `-1`, `"PU Time"` is set to `null`.
+ *
+ * In return-trip mode (`isReturnTrip = true`):
+ * - The new trip's `"DO Address"` is the `"PU Address"` of the **earliest** trip
+ *   for the same customer on the same date.
+ * - `fillHoursAndMilesOnEdit()` and `updateTripTimesOnEdit()` are called
+ *   automatically after the row is inserted.
+ *
+ * In both modes, `"Earliest PU Time"`, `"Latest PU Time"`, `"DO Time"`,
+ * `"Appt Time"`, `"Est Hours"`, `"Est Miles"`, `"Trip ID"`, and `"Calendar ID"`
+ * are always reset to `null` on the new trip.
+ *
+ * Can be called directly (e.g. from a named-range trigger) with a `sourceTripRange`,
+ * or called with `null` to use the active cell's row.
+ *
+ * Aborts with a toast if the source trip fails `isCompleteTrip()`.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Range|null} sourceTripRange - A range in the
+ *   source trip row, or `null` to use the active cell.
+ * @param {boolean} isReturnTrip - When `true`, sets the DO address to the earliest
+ *   same-day PU address for the customer.
+ */
 function copyTrip(sourceTripRange, isReturnTrip) {
   try {
     const ss                  = SpreadsheetApp.getActiveSpreadsheet()
@@ -92,24 +155,46 @@ function copyTrip(sourceTripRange, isReturnTrip) {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Entry point for the "Create Return Trip" menu action and named-range trigger.
+ * Calls `copyTrip(null, true)` using the active cell's row as the source.
+ */
 function createReturnTrip() {
   try {
     copyTrip(null, true)
   } catch(e) { logError(e) }
 }
 
+/**
+ * Entry point for the "Add Stop" menu action and named-range trigger.
+ * Calls `copyTrip(null, false)` using the active cell's row as the source,
+ * creating a forward copy (next stop) without setting the DO address.
+ */
 function addStop() {
   try {
     copyTrip(null, false)
   } catch(e) { logError(e) }
 }
 
+/**
+ * Returns `true` if the trip row object has the minimum fields required to be
+ * considered a valid trip: a `"Trip Date"` value and a `"Customer Name and ID"` value.
+ * @param {Object} trip - A trip row object as returned by `getRangeValuesAsTable()`.
+ * @returns {boolean}
+ */
 function isCompleteTrip(trip) {
   try {
     return (trip["Trip Date"] && trip["Customer Name and ID"])
   } catch(e) { logError(e) }
 }
 
+/**
+ * Returns `true` if the trip has both a `"PU Time"` and a `"DO Time"` that are
+ * finite Date values, the DO time is after the PU time, and the difference is
+ * less than 24 hours.
+ * @param {Object} trip - A trip row object as returned by `getRangeValuesAsTable()`.
+ * @returns {boolean}
+ */
 function isTripWithValidTimes(trip) {
   try {
     return (
@@ -126,8 +211,34 @@ function isTripWithValidTimes(trip) {
   }
 }
 
-// When a trip has enough information so that it can be associated with certainty with a run,
-// Fill in the missing data
+/**
+ * Attempts to auto-fill run association fields (`"Vehicle ID"`, `"Driver ID"`,
+ * `"Run ID"`) on a trip row when the trip can be unambiguously matched to a run.
+ *
+ * Matching logic (both branches require `"Trip Date"` to be set):
+ * - **Driver ID set, Vehicle ID empty**: searches the Runs sheet for a run on
+ *   the same date with the same Driver ID. If exactly one run is found (filtered
+ *   further by scheduled start/end times when both PU and DO times are present),
+ *   sets `"Vehicle ID"` and `"Run ID"`. If no unique run is found, falls back to
+ *   the driver's `"Default Vehicle ID"` from the Drivers sheet.
+ * - **Vehicle ID set, Driver ID empty**: searches the Runs sheet for a run on
+ *   the same date with the same Vehicle ID (optionally filtered by time). If
+ *   exactly one run is found, sets `"Driver ID"` and `"Run ID"`.
+ *
+ * This function is called on every edit to the Trips sheet via `tripSheetTrigger`
+ * regardless of `createRunMode`. It is only meaningful when `createRunMode` is
+ * `"default"` (runs are pre-created in the Runs sheet). In `"auto"` mode, no runs
+ * exist in the Runs sheet at trip-entry time, so the function always returns `false`
+ * without making any changes.
+ *
+ * Accepts either a `SheetsOnEdit` event object (uses `e.range`) or a Range
+ * directly (for non-event callers).
+ *
+ * @param {GoogleAppsScript.Events.SheetsOnEdit|GoogleAppsScript.Spreadsheet.Range} e
+ *   An onEdit event object whose `range` property is a cell in the trip row,
+ *   or a Range object directly.
+ * @returns {boolean} `true` if run values were successfully filled; `false` otherwise.
+ */
 function completeTripRunValues(e) {
   try{
     const ss = SpreadsheetApp.getActiveSpreadsheet()
