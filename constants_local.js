@@ -506,6 +506,22 @@ const localColumns = {
     },
   },
   "Trip Review": {
+    "|PU|": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupAddressShortNames",
+        showDropdown: false,
+        allowInvalid: false
+      },
+    },
+    "|DO|": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupAddressShortNames",
+        showDropdown: false,
+        allowInvalid: false
+      },
+    },
     "Will Call": {
       dataValidation: {
         criteriaType: "CHECKBOX",
