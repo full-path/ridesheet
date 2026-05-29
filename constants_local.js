@@ -207,6 +207,13 @@ const localColumns = {
         allowInvalid: false,
       },
     },
+    "Regional": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "REGIONAL",
+        allowInvalid: false,
+      },
+    },
     "Rider Type": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -416,6 +423,13 @@ const localColumns = {
         allowInvalid: false,
       },
     },
+    "Regional": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "REGIONAL",
+        allowInvalid: false,
+      },
+    },
     "Rider Type": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -491,6 +505,13 @@ const localColumns = {
         allowInvalid: false,
       },
     },
+    "Regional": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "REGIONAL",
+        allowInvalid: false,
+      },
+    },
     "Rider Type": {
       dataValidation: {
         criteriaType: "VALUE_IN_RANGE",
@@ -540,6 +561,13 @@ const localColumns = {
       dataValidation: {
         criteriaType: "CHECKBOX",
         checkedValue: "SDR",
+        allowInvalid: true,
+      },
+    },
+    "Regional": {
+      dataValidation: {
+        criteriaType: "CHECKBOX",
+        checkedValue: "REGIONAL",
         allowInvalid: true,
       },
     },
