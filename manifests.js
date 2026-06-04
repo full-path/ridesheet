@@ -673,6 +673,7 @@ function prepareTemplate(driverManifestTemplateDocId) {
               if (innerRangeBuilder.getRangeElements().length > 0) {
                 templateDoc.addNamedRange(sectionName, innerRangeBuilder.build())
               }
+              i-- // counteract inner for's i++ so outer loop resumes right after [END]
               stayInLoop = false
             } else {
               outerRangeBuilder.addElement(element)
