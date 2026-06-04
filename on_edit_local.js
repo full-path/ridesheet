@@ -1,16 +1,54 @@
+/**
+ * @fileoverview Local overrides and extensions for RideSheet's onEdit triggers.
+ *
+ * This file is the intended customization point for org-specific forks.
+ * Add local sheet triggers and cell triggers here without touching the core
+ * `on_edit.js` file.
+ *
+ * **Sheet triggers**: add entries to `initialLocalSheetTriggers` or
+ * `finalLocalSheetTriggers` mapping sheet name → handler function. These
+ * are dispatched by `callLocalSheetTriggers()` before and after the core
+ * cell triggers respectively.
+ *
+ * **Cell triggers**: add entries to `rangeTriggersLocal` keyed by named range
+ * name (must start with `"localCode"`). Each entry must have:
+ * - `functionCall` {function} — called with the edited `Range`.
+ * - `callOncePerRow` {boolean} — deduplicate calls within the same row.
+ *
+ * `callLocalCellTriggers()` mirrors the logic of `callCellTriggers()` in
+ * `on_edit.js` but looks for `"localCode"`-prefixed named ranges and
+ * dispatches from `rangeTriggersLocal`.
+ */
+
 // Any on_edit actions that are local to a specific RideSheet instance would
 // be put here.
 // cell-based triggers should be prefixed with "localCode"
 
+/**
+ * Local sheet triggers called at the start of `onEdit`, before cell triggers.
+ * Maps sheet name to a handler function receiving the onEdit event `e`.
+ * @type {Object.<string, function(GoogleAppsScript.Events.SheetsOnEdit): void>}
+ */
 const initialLocalSheetTriggers = {}
 
-const finalLocalSheetTriggers  = {
+/**
+ * Local sheet triggers called at the end of `onEdit`, after cell triggers.
+ * Maps sheet name to a handler function receiving the onEdit event `e`.
+ * @type {Object.<string, function(GoogleAppsScript.Events.SheetsOnEdit): void>}
+ */
+const finalLocalSheetTriggers = {
   "Timeline": localCodeTimelineManualRefresh,
   "Dispatch": localCodeRefreshTimelineIfChanged,
   "Trips": localCodeRefreshTimelineIfChanged,
   "Runs": localCodeRefreshTimelineIfChanged
 }
 
+
+/**
+ * Local cell-level triggers keyed by named range name (prefix `"localCode"`).
+ * Each entry maps to a handler function and a `callOncePerRow` flag.
+ * @type {Object.<string, {functionCall: function(GoogleAppsScript.Spreadsheet.Range): void, callOncePerRow: boolean}>}
+ */
 const rangeTriggersLocal = {
   localCodeExpandAddress: {
     functionCall: localExpandAddress,
@@ -18,12 +56,26 @@ const rangeTriggersLocal = {
   }
 }
 
+/**
+ * Dispatches a sheet-level trigger from a local trigger map.
+ * Mirrors `callSheetTriggers()` in `on_edit.js` but operates on local triggers.
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} e - The onEdit event object.
+ * @param {string} sheetName - The name of the edited sheet.
+ * @param {Object.<string, function>} triggers - A local sheet-trigger map.
+ */
 function callLocalSheetTriggers(e, sheetName, triggers) {
   if (Object.keys(triggers).indexOf(sheetName) !== -1) {
     triggers[sheetName](e)
   }
 }
 
+/**
+ * Evaluates all `localCode`-prefixed named ranges that overlap the edited
+ * cell(s) and calls the corresponding handler functions from
+ * `rangeTriggersLocal`. Returns immediately if `rangeTriggersLocal` is empty.
+ * Otherwise mirrors the logic of `callCellTriggers()` in `on_edit.js`.
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} e - The onEdit event object.
+ */
 function callLocalCellTriggers(e) {
   try {
     if (!Object.keys(rangeTriggersLocal).length) return
@@ -50,7 +102,7 @@ function callLocalCellTriggers(e) {
     if (isMultiRowRange || isMultiColumnRange) {
       for (let y = e.range.getColumn(); y <= e.range.getLastColumn(); y++) {
         for (let x = e.range.getRow(); x <= e.range.getLastRow(); x++) {
-          if (x > 1) ranges.push(sheet.getRange(x,y))
+          if (x > 1) ranges.push(sheet.getRange(x, y))
         }
       }
     } else if (e.range.getRow() > 1) {
@@ -87,19 +139,19 @@ function callLocalCellTriggers(e) {
         rangeTriggersLocal[rangeTrigger]["functionCall"](range)
       })
     })
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 function localCodeTimelineManualRefresh(e) {
   try {
     timelineManualRefresh(e)
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 function localCodeRefreshTimelineIfChanged(e) {
   try {
     refreshTimelineIfChanged(e)
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 function localExpandAddress(sourceRange) {
@@ -110,12 +162,12 @@ function localExpandAddress(sourceRange) {
       const targetRange = targetSheet.getRange(sourceRange.getRow(), sourceRange.getColumn(), 1, 2)
       const result = getAddressByShortName(shortName)
       if (result) {
-        targetRange.setValues([["",result]]).setNotes([["",""]]).setBackground(null)
+        targetRange.setValues([["", result]]).setNotes([["", ""]]).setBackground(null)
         fillHoursAndMilesOnEdit(sourceRange)
         return true
       }
       return false
-    } catch(e) {
+    } catch (e) {
       logError(e)
       return false
     }

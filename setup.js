@@ -1,9 +1,25 @@
 /**
- * Imports data from another Google Sheet into the current RideSheet instance.
- * This function will replace the data in the current sheet with data from the specified sheet.
- * 
- * @param {string} [fileId=null] - The ID of the Google Sheet to import data from. If not provided, the user will be prompted to enter it.
- * @param {boolean} [showWarning=true] - Whether to show a warning message before proceeding with the import.
+ * @fileoverview Data import utilities for migrating data into a RideSheet instance.
+ *
+ * Provides tools to import trip, run, customer, and reference data from another
+ * RideSheet spreadsheet. The import is column-header-driven: data is matched by
+ * header name, so schema differences between source and target are handled
+ * gracefully (extra source columns are logged and skipped; pipe-prefixed `|
+ * formula columns are always skipped). After import, sheet formats and data
+ * validation rules are reapplied via `applySheetFormatsAndValidation()`.
+ */
+
+/**
+ * Imports data from another Google Sheet into the current RideSheet instance,
+ * replacing the data in all standard sheets. Prompts the user for a source
+ * file ID if one is not supplied, and optionally imports Document Properties
+ * as well. Validates that the source spreadsheet looks like a RideSheet
+ * instance and that Trip Review / Run Review are empty before proceeding.
+ *
+ * @param {string} [fileId=null] - The ID of the Google Sheet to import data
+ *   from. If not provided, the user is prompted to enter it.
+ * @param {boolean} [showWarning=true] - Whether to show a confirmation
+ *   warning before proceeding with the import.
  */
 function importDataFromSheet(fileId = null, showWarning = true) {
   const ui = SpreadsheetApp.getUi();
@@ -109,9 +125,15 @@ function importDataFromSheet(fileId = null, showWarning = true) {
 }
 
 /**
- * Imports data from a specific sheet in the source spreadsheet to the corresponding sheet in the target (active) spreadsheet.
- * 
- * @param {SpreadsheetApp.Spreadsheet} sourceSpreadsheet - The spreadsheet to import data from.
+ * Imports data from a specific sheet in the source spreadsheet into the
+ * corresponding sheet in the active spreadsheet. Matches rows to columns
+ * by header name, skipping pipe-prefixed (`|`) formula columns. Clears the
+ * target sheet's data range before writing, then reapplies formats and
+ * validation via `applySheetFormatsAndValidation()`. Logs any source columns
+ * that have no match in the target.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} sourceSpreadsheet - The
+ *   spreadsheet to import data from.
  * @param {string} sheetName - The name of the sheet to import.
  */
 function importSheet(sourceSpreadsheet, sheetName) {
@@ -174,10 +196,16 @@ function importSheet(sourceSpreadsheet, sheetName) {
 }
 
 /**
- * Imports document properties from the source spreadsheet to the target spreadsheet.
- * 
- * @param {SpreadsheetApp.Spreadsheet} sourceSpreadsheet - The spreadsheet to import properties from.
- * @param {SpreadsheetApp.Spreadsheet} targetSpreadsheet - The spreadsheet to import properties to.
+ * Imports document property values from the Document Properties sheet of
+ * `sourceSpreadsheet` into the Document Properties sheet of `targetSpreadsheet`.
+ * Only properties whose keys already exist in the target are updated; unknown
+ * source keys are logged and skipped. Calls `buildDocumentPropertiesFromSheet()`
+ * after writing to reload the in-memory properties cache.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} sourceSpreadsheet - The
+ *   spreadsheet to import properties from.
+ * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} targetSpreadsheet - The
+ *   spreadsheet to import properties into.
  */
 function importDocumentProperties(sourceSpreadsheet, targetSpreadsheet) {
   const sourceSheet = sourceSpreadsheet.getSheetByName("Document Properties");

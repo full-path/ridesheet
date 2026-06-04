@@ -1,3 +1,26 @@
+/**
+ * @fileoverview Spreadsheet onOpen trigger for RideSheet.
+ *
+ * Runs each time the spreadsheet is opened (or re-opened after a permission
+ * change). Performs the following setup steps in order:
+ * 1. Build the RideSheet menu (`buildMenus()`).
+ * 2. Run first-open tasks if needed (`runFirstOpenTasks()`).
+ * 3. Ensure document properties exist and are up to date
+ *    (`buildDocumentPropertiesIfEmpty()`, `buildDocumentPropertiesFromDefaults()`,
+ *    `purgeOldDocumentProperties()`).
+ * 4. Ensure all named ranges exist (`buildNamedRanges()`).
+ * 5. Verify that the spreadsheet and script timezones match the configured
+ *    `localTimeZone` property (`checkTimezone()`).
+ *
+ * Each major step is wrapped in its own try/catch so a failure in one step
+ * does not prevent later steps from running.
+ */
+
+/**
+ * The Google Apps Script onOpen trigger entry point.
+ * Logs total execution time on every open.
+ * @param {GoogleAppsScript.Events.SheetsOnOpen} e - The onOpen event object.
+ */
 function onOpen(e) {
   const startTime = new Date()
   try {
@@ -18,6 +41,17 @@ function onOpen(e) {
   log("onOpen duration:",(new Date()) - startTime)
 }
 
+/**
+ * Checks that the spreadsheet timezone and script timezone both match the
+ * `localTimeZone` document property.
+ *
+ * - **Spreadsheet timezone**: can be corrected programmatically via
+ *   `Spreadsheet.setSpreadsheetTimeZone()`. If out of sync, it is fixed
+ *   automatically and a toast notification is shown.
+ * - **Script timezone**: is a project-level setting that cannot be changed
+ *   by script code. If out of sync, the user is shown an alert with
+ *   instructions to correct it manually in the Apps Script project settings.
+ */
 function checkTimezone() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
