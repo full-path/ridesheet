@@ -144,16 +144,27 @@ function createManifest(manifestGroup, templateDoc, manifestFileName, folderId) 
     replaceElementText(manifestFooter, manifestGroup["Events"][manifestGroup["Events"].length - 1])
   }
 
+  // Log all named ranges available in the template for debugging
+  const allNamedRanges = templateDoc.getNamedRanges()
+  log(`createManifest: template has ${allNamedRanges.length} named range(s): ${allNamedRanges.map(r => r.getName()).join(", ")}`)
+
   // Add the document header elements
-  appendTemplateRange(templateDoc.getNamedRanges("HEADER")[0]?.getRange(), manifestBody, manifestGroup["Events"][0])
+  const headerRange = templateDoc.getNamedRanges("HEADER")[0]
+  log(`createManifest: HEADER named range ${headerRange ? "found" : "NOT FOUND"}`)
+  appendTemplateRange(headerRange?.getRange(), manifestBody, manifestGroup["Events"][0])
 
   // Add all the PU and DO elements. Use the section name of each event to decide whether to add a PU or DO range.
   manifestGroup["Events"].forEach((event, i) => {
-    appendTemplateRange(templateDoc.getNamedRanges(event["Section Name"])[0]?.getRange(), manifestBody, event)
+    const sectionName = event["Section Name"]
+    const eventRange = templateDoc.getNamedRanges(sectionName)[0]
+    log(`createManifest: event[${i}] section "${sectionName}" named range ${eventRange ? "found" : "NOT FOUND"}`)
+    appendTemplateRange(eventRange?.getRange(), manifestBody, event)
   })
 
   // Add the footer elements
-  appendTemplateRange(templateDoc.getNamedRanges("FOOTER")[0]?.getRange(), manifestBody, manifestGroup["Events"][manifestGroup["Events"].length - 1])
+  const footerRange = templateDoc.getNamedRanges("FOOTER")[0]
+  log(`createManifest: FOOTER named range ${footerRange ? "found" : "NOT FOUND"}`)
+  appendTemplateRange(footerRange?.getRange(), manifestBody, manifestGroup["Events"][manifestGroup["Events"].length - 1])
 
   // Remove the tempText needed to create the file
   manifestBody.removeChild(manifestBody.getChild(0))
@@ -209,18 +220,21 @@ function createDoc(fileName, folderId, content, contentType) {
 function appendTemplateRange(range, docSection, data) {
   if (!range) return
   const rangeElements = range.getRangeElements()
-  rangeElements.forEach(rangeElement => {
+  log(`appendTemplateRange: processing ${rangeElements.length} element(s)`)
+  rangeElements.forEach((rangeElement, i) => {
     const templateElement = rangeElement.getElement()
     const newElement = templateElement.copy()
     if (data) {
       const tempText = replaceText(templateElement.getText(), data)
-      // Append the element if it will ultimately have text or
-      // if the element has no fields to populate (e.g., it's just a blank line)
       if (tempText.trim() || elementFieldCount(templateElement) === 0) {
+        log(`appendTemplateRange: element[${i}] type=${templateElement.getType()} → appending`)
         appendElement(docSection, newElement)
         replaceElementText(newElement, data)
+      } else {
+        log(`appendTemplateRange: element[${i}] type=${templateElement.getType()} → skipped (empty after field substitution)`)
       }
     } else {
+      log(`appendTemplateRange: element[${i}] type=${templateElement.getType()} → appending (no data)`)
       appendElement(docSection, newElement)
     }
   })
@@ -454,6 +468,9 @@ function prepareTemplate(driverManifestTemplateDocId) {
               templateDoc.addNamedRange(`OUTER_${sectionName}`, outerRangeBuilder.build())
               if (innerRangeBuilder.getRangeElements().length > 0) {
                 templateDoc.addNamedRange(sectionName, innerRangeBuilder.build())
+                log(`prepareTemplate: created named range "${sectionName}" with ${innerRangeBuilder.getRangeElements().length} element(s)`)
+              } else {
+                log(`prepareTemplate: skipped named range "${sectionName}" — inner range was empty`)
               }
               stayInLoop = false
             } else {
@@ -493,6 +510,7 @@ function copyNamedRanges(source, destination) {
 
 function appendElement(body, element) {
   let type = element.getType()
+  log(`appendElement: type=${type}`)
   if (type == DocumentApp.ElementType.PARAGRAPH) {
     if (paragraphHasImages(element)) {
       appendParagraphWithImages(body, element)
