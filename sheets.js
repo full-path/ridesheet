@@ -111,11 +111,45 @@ function findFirstRowByHeaderNames(sheet, filter) {
 }
 
 /**
+ * Called when `createRows()` catches an exception from `setValues()`. Scans the
+ * values array for cell types that commonly cause `setValues()` to fail (non-Date
+ * objects, `undefined`, arrays) and logs each suspicious cell by sheet name,
+ * column header, and batch-row index. Does not perform additional write attempts.
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} destSheet - The destination sheet.
+ * @param {string[]} columnNames - Column header names corresponding to the values columns.
+ * @param {Array[]} values - The 2-D array that was passed to `setValues()`.
+ * @param {Error} error - The exception caught from `setValues()`.
+ */
+function diagnoseBadRows(destSheet, columnNames, values, error) {
+  const sheetName = destSheet.getSheetName()
+  logError(`setValues() failed writing to "${sheetName}": ${error.message}`)
+  values.forEach((row, rowIdx) => {
+    row.forEach((cell, colIdx) => {
+      const isProblematic = (
+        cell === undefined ||
+        (cell !== null && typeof cell === 'object' && !(cell instanceof Date))
+      )
+      if (isProblematic) {
+        logError(
+          `  Suspicious cell — sheet: "${sheetName}", ` +
+          `column: "${columnNames[colIdx]}", ` +
+          `batch row ${rowIdx + 1}, ` +
+          `value type: ${Object.prototype.toString.call(cell)}, ` +
+          `value: ${JSON.stringify(cell)}`
+        )
+      }
+    })
+  })
+}
+
+/**
  * Writes multiple data rows to a destination sheet, aligning values to column
  * headers by name, and applies sheet formatting and data validation afterward.
  *
  * If any key in the source data does not match a destination column header (and
- * does not start with `"_"`), an alert is shown and no rows are written.
+ * does not start with `"_"`), an alert is shown and the failure is logged; no
+ * rows are written. If `setValues()` throws, `diagnoseBadRows()` scans the data
+ * for suspicious cell values and logs the offending column and batch-row index.
  * When `timestampColName` is provided, that column is set to the current date/time
  * for every row regardless of the source data value.
  *
@@ -129,21 +163,25 @@ function findFirstRowByHeaderNames(sheet, filter) {
  * @returns {boolean} `true` if rows were written successfully, `false` otherwise.
  */
 function createRows(destSheet, data, timestampColName, overwrite=false) {
+  let destColumnNames
+  let values
   try {
     const timestamp = new Date()
-    let destColumnNames = getSheetHeaderNames(destSheet)
+    destColumnNames = getSheetHeaderNames(destSheet)
     let sourceColumnNames = Object.keys(data[0])
     let missingDestColumns = sourceColumnNames.reduce((a, c) => {
       if (!destColumnNames.includes(c) && c.slice(0,1) !== "_") a.push(c)
       return a
     }, [])
     if (missingDestColumns.length) {
+      const missingList = missingDestColumns.map((e) => '"' + e + '"').join(", ")
       SpreadsheetApp.getUi().alert(
-        `Sheet "${destSheet.getSheetName()}" is missing the column${missingDestColumns.length === 1 ? "" : "s"} ${missingDestColumns.map((e) => '"' + e + '"').join(", ")}.
+        `Sheet "${destSheet.getSheetName()}" is missing the column${missingDestColumns.length === 1 ? "" : "s"} ${missingList}.
         Rows will not be moved to the "${destSheet.getSheetName()}" sheet.`)
+      logError(`createRows: destination sheet "${destSheet.getSheetName()}" is missing column${missingDestColumns.length === 1 ? "" : "s"} ${missingList}`)
       return false
     }
-    let values = data.map(row => {
+    values = data.map(row => {
       return destColumnNames.map(colName => {
         if (timestampColName && colName === timestampColName) {
           return timestamp
@@ -158,8 +196,12 @@ function createRows(destSheet, data, timestampColName, overwrite=false) {
     applySheetFormatsAndValidation(destSheet, firstRow)
     return true
   } catch(e) {
+    if (values && destColumnNames) {
+      diagnoseBadRows(destSheet, destColumnNames, values, e)
+    } else {
       logError(e)
-      return false
+    }
+    return false
   }
 }
 
@@ -287,6 +329,34 @@ function safelyDeleteRow(sheet, row) {
     sheet.insertRowAfter(lastRowPosition)
   }
   sheet.deleteRow(row._rowPosition)
+}
+
+/**
+ * Deletes a contiguous block of rows from a sheet using the Sheets API v4
+ * `batchUpdate` endpoint. Used by rollback helpers in `review.js` when an
+ * append to a destination sheet succeeded but a subsequent operation failed.
+ * Unlike `safelyDeleteRows()`, this function takes a 1-based start row and a
+ * count rather than row objects with `_rowIndex` metadata.
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet - The sheet to delete rows from.
+ * @param {number} firstRow - The 1-based row number of the first row to delete.
+ * @param {number} rowCount - The number of consecutive rows to delete.
+ */
+function deleteRowRange(sheet, firstRow, rowCount) {
+  if (rowCount < 1) return
+  const sheetId = sheet.getSheetId()
+  const ss = SpreadsheetApp.getActive()
+  Sheets.Spreadsheets.batchUpdate({
+    requests: [{
+      deleteDimension: {
+        range: {
+          sheetId,
+          startIndex: firstRow - 1,
+          endIndex: firstRow - 1 + rowCount,
+          dimension: "ROWS"
+        }
+      }
+    }]
+  }, ss.getId())
 }
 
 /**

@@ -419,6 +419,10 @@ function getTripKey(trip) {
  *   the moved trips.
  * - Any other value — shows a toast error and logs the problem.
  *
+ * Uses a two-phase commit: all rows are appended to destination sheets before
+ * any source rows are deleted. If any append fails, already-appended rows are
+ * rolled back so no records move. See `prepareMoveRows()` / `rollbackMoveRows()`.
+ *
  * A trip is considered past-date if its `"Trip Date"` is before today.
  * A run is considered past-date if its `"Run Date"` is before today.
  * Both use `dateToday()` for the comparison.
@@ -429,17 +433,43 @@ function moveTripsToReview() {
     const tripSheet       = ss.getSheetByName("Trips")
     const tripReviewSheet = ss.getSheetByName("Trip Review")
     const tripFilter      = function(row) { return row["Trip Date"] && row["Trip Date"] < dateToday() }
-    const movedTrips      = moveRows(tripSheet, tripReviewSheet, tripFilter, "Review TS")
 
     const runMode = getDocProp("createRunMode")
     if (runMode === "default") {
-      const runSheet        = ss.getSheetByName("Runs")
-      const runReviewSheet  = ss.getSheetByName("Run Review")
-      const runFilter       = function(row) { return row["Run Date"] && row["Run Date"] < dateToday() }
-      moveRows(runSheet, runReviewSheet, runFilter, "Review TS")
-    }
-    else if (runMode === "auto") {
-      createRunsInReview(movedTrips)
+      const runSheet       = ss.getSheetByName("Runs")
+      const runReviewSheet = ss.getSheetByName("Run Review")
+      const runFilter      = function(row) { return row["Run Date"] && row["Run Date"] < dateToday() }
+
+      const tripPrepare = prepareMoveRows(tripSheet, tripReviewSheet, tripFilter, "Review TS")
+      if (!tripPrepare) {
+        ss.toast('Move to review failed. No records were moved. See Debug Log for details.')
+        return
+      }
+      const runPrepare = prepareMoveRows(runSheet, runReviewSheet, runFilter, "Review TS")
+      if (!runPrepare) {
+        rollbackMoveRows(tripPrepare)
+        ss.toast('Move to review failed and was rolled back. No records were moved. See Debug Log for details.')
+        return
+      }
+      safelyDeleteRows(tripSheet, tripPrepare.rowsToMove)
+      safelyDeleteRows(runSheet, runPrepare.rowsToMove)
+
+    } else if (runMode === "auto") {
+      const tripPrepare = prepareMoveRows(tripSheet, tripReviewSheet, tripFilter, "Review TS")
+      if (!tripPrepare) {
+        ss.toast('Move to review failed. No records were moved. See Debug Log for details.')
+        return
+      }
+      try {
+        createRunsInReview(tripPrepare.rowsToMove)
+      } catch(e) {
+        logError(`createRunsInReview failed: ${e.message}. Rolling back trip move.`)
+        rollbackMoveRows(tripPrepare)
+        ss.toast('Move to review failed and was rolled back. No records were moved. See Debug Log for details.')
+        return
+      }
+      safelyDeleteRows(tripSheet, tripPrepare.rowsToMove)
+
     } else {
       const errorMessage = `Invalid runMode setting: ${runMode}`
       ss.toast(errorMessage)
@@ -458,9 +488,10 @@ function moveTripsToReview() {
  * - **All-cancelled**: the date has trips, no runs, no incomplete trips, and no
  *   trip has a completed trip result (e.g. an all-cancellation/weather day).
  *
- * Rows are moved via `moveRows()`, which appends to the archive sheet and
- * deletes from the review sheet. An `"Archive TS"` timestamp is set on each
- * moved row.
+ * Uses a two-phase commit: trips are appended to Trip Archive, then runs are
+ * appended to Run Archive, before any review rows are deleted. If either append
+ * fails, already-appended rows are rolled back so no records move. An
+ * `"Archive TS"` timestamp is set on each moved row.
  */
 function moveTripsToArchive() {
   try {
@@ -497,18 +528,38 @@ function moveTripsToArchive() {
       }
     })
 
-    moveRows(tripReviewSheet, tripArchiveSheet, function(row){
+    const tripArchiveFilter = function(row) {
       return moveDates.find(thisDate => thisDate.valueOf() === row["Trip Date"].valueOf())
-    }, "Archive TS")
-    moveRows(runReviewSheet, runArchiveSheet, function(row){
+    }
+    const runArchiveFilter = function(row) {
       return moveDates.find(thisDate => thisDate.valueOf() === row["Run Date"].valueOf())
-    }, "Archive TS")
+    }
+
+    const tripPrepare = prepareMoveRows(tripReviewSheet, tripArchiveSheet, tripArchiveFilter, "Archive TS")
+    if (!tripPrepare) {
+      ss.toast('Archive failed. No records were moved. See Debug Log for details.')
+      return
+    }
+    const runPrepare = prepareMoveRows(runReviewSheet, runArchiveSheet, runArchiveFilter, "Archive TS")
+    if (!runPrepare) {
+      rollbackMoveRows(tripPrepare)
+      ss.toast('Archive failed and was rolled back. No records were moved. See Debug Log for details.')
+      return
+    }
+    safelyDeleteRows(tripReviewSheet, tripPrepare.rowsToMove)
+    safelyDeleteRows(runReviewSheet, runPrepare.rowsToMove)
   } catch(e) { logError(e) }
 }
 
 /**
  * Moves rows matching a filter from one sheet to another, optionally
  * stamping a timestamp column, then deletes the moved rows from the source.
+ *
+ * If the append to the destination succeeds but the source deletion throws,
+ * the appended rows are rolled back via `deleteRowRange()` so the move leaves
+ * no trace. For multi-sheet atomic moves, use `prepareMoveRows()` /
+ * `rollbackMoveRows()` directly instead.
+ *
  * @param {GoogleAppsScript.Spreadsheet.Sheet} sourceSheet - The sheet to move rows from.
  * @param {GoogleAppsScript.Spreadsheet.Sheet} destSheet - The sheet to move rows to.
  * @param {function(Object): boolean} filter - Predicate function; rows for which
@@ -525,16 +576,94 @@ function moveRows(sourceSheet, destSheet, filter, timestampColName) {
     if (rowsToMove.length < 1) {
       return []
     }
+    const destStartRow = destSheet.getLastRow() + 1
     const rowsMovedSuccessfully = createRows(destSheet, rowsToMove, timestampColName)
-    if (rowsMovedSuccessfully) {
+    if (!rowsMovedSuccessfully) {
+      SpreadsheetApp.getActiveSpreadsheet().toast('Move failed. No records were moved. See Debug Log for details.')
+      return []
+    }
+    try {
       safelyDeleteRows(sourceSheet, rowsToMove)
-    } else {
-      SpreadsheetApp.getActiveSpreadsheet().toast('Error moving data. Please check for duplicate entries.')
+    } catch(e) {
+      logError(
+        `safelyDeleteRows failed moving from "${sourceSheet.getSheetName()}" to ` +
+        `"${destSheet.getSheetName()}": ${e.message}. Rolling back append.`
+      )
+      deleteRowRange(destSheet, destStartRow, rowsToMove.length)
+      logError(`Rollback complete: removed ${rowsToMove.length} row(s) from "${destSheet.getSheetName()}"`)
+      SpreadsheetApp.getActiveSpreadsheet().toast('Move failed and was rolled back. No records were moved. See Debug Log for details.')
+      return []
     }
     return rowsToMove
   } catch(e) {
     logError(e)
     return []
+  }
+}
+
+/**
+ * The "prepare" phase of a two-phase row move. Reads source rows matching
+ * `filter`, appends them to `destSheet` with an optional timestamp, and returns
+ * a state object describing what was written — without deleting anything from
+ * the source. If no rows match the filter, returns a no-op state object with an
+ * empty `rowsToMove` array. If the append fails, logs context and returns `null`.
+ *
+ * On success, call `safelyDeleteRows(state.sourceSheet, state.rowsToMove)` to
+ * commit, or `rollbackMoveRows(state)` to undo the append.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sourceSheet
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} destSheet
+ * @param {function(Object): boolean} filter - Predicate; rows for which it returns
+ *   truthy are candidates for the move.
+ * @param {string} timestampColName - Column name to stamp with the current timestamp.
+ * @returns {{rowsToMove: Object[], sourceSheet: GoogleAppsScript.Spreadsheet.Sheet,
+ *   destSheet: GoogleAppsScript.Spreadsheet.Sheet, destStartRow: number|null}|null}
+ *   State object on success (including empty-match case), or `null` on append failure.
+ */
+function prepareMoveRows(sourceSheet, destSheet, filter, timestampColName) {
+  const sourceData = getRangeValuesAsTable(sourceSheet.getDataRange(), {includeFormulaValues: false})
+  const rowsToMove = sourceData.filter(row => filter(row))
+  if (rowsToMove.length === 0) {
+    return { rowsToMove, sourceSheet, destSheet, destStartRow: null }
+  }
+  const destStartRow = destSheet.getLastRow() + 1
+  const success = createRows(destSheet, rowsToMove, timestampColName)
+  if (!success) {
+    logError(
+      `prepareMoveRows failed: could not append ${rowsToMove.length} row(s) ` +
+      `from "${sourceSheet.getSheetName()}" to "${destSheet.getSheetName()}"`
+    )
+    return null
+  }
+  return { rowsToMove, sourceSheet, destSheet, destStartRow }
+}
+
+/**
+ * Rolls back a `prepareMoveRows()` call by deleting the rows it wrote to the
+ * destination sheet. The source sheet is untouched (rows were never deleted
+ * during prepare). Logs the outcome on success. If the rollback deletion itself
+ * throws, logs a high-severity warning and shows a toast so the user knows
+ * manual cleanup is required.
+ * @param {{rowsToMove: Object[], destSheet: GoogleAppsScript.Spreadsheet.Sheet,
+ *   destStartRow: number|null}} preparedState - The return value of `prepareMoveRows()`.
+ */
+function rollbackMoveRows(preparedState) {
+  const { destSheet, destStartRow, rowsToMove } = preparedState
+  if (rowsToMove.length === 0 || !destStartRow) return
+  try {
+    deleteRowRange(destSheet, destStartRow, rowsToMove.length)
+    logError(
+      `Rollback complete: removed ${rowsToMove.length} row(s) from ` +
+      `"${destSheet.getSheetName()}" (rows ${destStartRow}–${destStartRow + rowsToMove.length - 1})`
+    )
+  } catch(e) {
+    logError(
+      `ROLLBACK FAILED for "${destSheet.getSheetName()}" rows ${destStartRow}–` +
+      `${destStartRow + rowsToMove.length - 1}: ${e.message}. Manual cleanup required.`
+    )
+    SpreadsheetApp.getActiveSpreadsheet().toast(
+      'A rollback error occurred. Data may be in an inconsistent state. Check the Debug Log.'
+    )
   }
 }
 
