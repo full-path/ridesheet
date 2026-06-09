@@ -36,3 +36,27 @@ Forks and custom versions may use:
 * 1.3.0-orgname – Organization-specific version.
 
 Check the CHANGELOG for updates and the Migration Guide for major changes.
+
+## Forking & Extending
+
+RideSheet is designed to be customized for specific organizations without modifying the core files. Three `_local` files are the intended extension points for forks:
+
+### `constants_local.js`
+Controls which sheets, columns, and named ranges are active. Use this to:
+- Add or override named ranges (`localNamedRanges`)
+- Remove default named ranges (`localNamedRangesToRemove`)
+- Add extra sheets (`localSheets`, `localSheetsWithHeaders`)
+- Remove default sheets (`localSheetsToRemove`)
+- Add or override column definitions (`localColumns`)
+- Remove default columns (`localColumnsToRemove`)
+
+### `on_edit_local.js`
+Adds org-specific onEdit behavior. Use this to:
+- Add sheet-level triggers that fire before or after core cell triggers (`initialLocalSheetTriggers`, `finalLocalSheetTriggers`)
+- Add cell-level triggers keyed to named ranges prefixed with `"localCode"` (`rangeTriggersLocal`)
+
+### `build_local.js`
+Adds org-specific menu items. Implement `buildLocalMenus()` to add entries to the UI — it is called at the end of `buildMenus()` after the core RideSheet menu is built.
+
+### Recommended approach
+Keep all org-specific logic in the `_local` files and avoid editing the core files (`constants.js`, `on_edit.js`, `build.js`, etc.). This makes it easier to pull in upstream updates and bugfixes without merge conflicts.

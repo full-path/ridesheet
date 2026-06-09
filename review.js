@@ -1,3 +1,45 @@
+/**
+ * @fileoverview Trip and run review workflow for RideSheet.
+ *
+ * Manages the two-stage lifecycle of trip and run data:
+ *
+ * 1. **Move to review** (`moveTripsToReview`) — moves past-date trips from the
+ *    Trips sheet to Trip Review. In `"default"` run mode, past-date runs are
+ *    also moved from Runs to Run Review. In `"auto"` mode, runs are instead
+ *    generated from the moved trips by `createRunsInReview()` (runs.js).
+ *
+ * 2. **Move to archive** (`moveTripsToArchive`) — moves fully-reviewed dates
+ *    from the Review sheets to the Archive sheets. A date is archivable when
+ *    all its trips and runs are complete, or when every trip is cancelled and
+ *    there are no completed trip results (e.g. weather cancellation).
+ *
+ * Also provides `addDataToRunsInReview` for computing and writing deadhead
+ *  mileage/hour fields to run rows in Run Review.
+ *
+ * Validation helpers (`hasOrphans`, `hasDuplicateRuns`, `hasDuplicateTrips`,
+ * `hasIncompleteTrips`, `hasIncompleteRuns`, `hasNegativeRunDistance`) return
+ * human-readable error message strings (empty string `""` if no problem found).
+ *
+ * State-check predicates:
+ * - `isReviewedTrip`              — trip has a result and all required fields filled
+ * - `isTripWithCompletedTripResult` — trip result is one of the completed values
+ * - `isUserReviewedRun`           — run has all user-review required fields filled
+ * - `isFullyReviewedRun`          — run has all full-review required fields filled
+ */
+
+/**
+ * Prompts the user for a date, then computes and writes deadhead mileage and
+ * hour fields to all runs on that date in the Run Review sheet.
+ *
+ * The default date is the earliest run date that is user-reviewed but not yet
+ * fully reviewed. Validation checks (`getDeadheadDataErrorMessages`) are run
+ * first; if any errors are found an alert is shown and no data is written.
+ *
+ * On success, writes the following fields to each matching run row:
+ * `"First PU Address"`, `"Last DO Address"`, `"Vehicle Garage Address"`,
+ * `"Starting Deadhead Miles"`, `"Starting Deadhead Hours"`,
+ * `"Ending Deadhead Miles"`, `"Ending Deadhead Hours"`.
+ */
 function addDataToRunsInReview() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -35,9 +77,12 @@ function addDataToRunsInReview() {
       return
     }
 
-    const completedTripsThisDay = trips.filter((row) => {
+    // Consider trips that have a blank trip result and that are marked completed in some way.
+    // Completed trips will be checked further to ensure that they have any additional required
+    // fields filled in.
+    const tripsToConsiderThisDay = trips.filter((row) => {
       return row["Trip Date"].valueOf() === date.valueOf() &&
-        tripReviewCompletedTripResults.includes(row["Trip Result"])
+        (!row["Trip Result"] || tripReviewCompletedTripResults.includes(row["Trip Result"]))
     })
     let runsThisDay = runs.filter((row) => row["Run Date"].valueOf() === date.valueOf())
     if (!runsThisDay.length) {
@@ -45,17 +90,17 @@ function addDataToRunsInReview() {
       return
     }
 
-    const dataErrorMessages = getDeadheadDataErrorMessages(completedTripsThisDay, runsThisDay)
+    const dataErrorMessages = getDeadheadDataErrorMessages(tripsToConsiderThisDay, runsThisDay)
     if (dataErrorMessages.length) {
       SpreadsheetApp.getUi().alert(
         `Deadhead data could not be added for ${formatDate(date)} to the due to the following ${pluralize(dataErrorMessages.length,"error")}:\n\n- ${dataErrorMessages.join("\n\n- ")}`
       )
     } else {
-      newRunData = runs.map((row) => {
+      let newRunData = runs.map((row) => {
         return { _rowPosition: row._rowPosition, _rowIndex: row._rowIndex }
       })
       runsThisDay.forEach((run) => {
-        const deadheadData = getDeadheadDataForRun(run, completedTripsThisDay, vehicles)
+        const deadheadData = getDeadheadDataForRun(run, tripsToConsiderThisDay, vehicles)
         let newRunDataRow = newRunData.find((row) => row._rowPosition === run._rowPosition)
         Object.assign(newRunDataRow, deadheadData)
       })
@@ -65,21 +110,38 @@ function addDataToRunsInReview() {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Computes deadhead distance and duration data for a single run by looking up
+ * the first pickup address, last drop-off address, and vehicle garage address,
+ * then calling `getTripEstimate()` for the start and end deadhead legs.
+ *
+ * Addresses are passed through `parseAddress().geocodeAddress` before being
+ * sent to the Maps API.
+ *
+ * @param {Object} run - A run row object from the Run Review sheet.
+ * @param {Object[]} tripsThisDay - All trip row objects for the same date.
+ * @param {Object[]} vehicles - All vehicle row objects from the Vehicles sheet.
+ * @returns {{"First PU Address": string, "Last DO Address": string,
+ *   "Vehicle Garage Address": string, "Starting Deadhead Miles": number,
+ *   "Starting Deadhead Hours": number, "Ending Deadhead Miles": number,
+ *   "Ending Deadhead Hours": number}} Deadhead data object ready to be merged
+ *   into the run row.
+ */
 function getDeadheadDataForRun(run, tripsThisDay, vehicles) {
   const tripsThisRun = tripsThisDay.
-    filter((row) => 
+    filter((row) =>
       row["Driver ID"] === run["Driver ID"] &&
       row["Vehicle ID"] === run["Vehicle ID"] &&
       row["Run ID"] === run["Run ID"]
     )
   const firstTrip = tripsThisRun.
-    reduce((earliestTrip, row) => 
-      timeOnlyAsMilliseconds(row["PU Time"]) < timeOnlyAsMilliseconds(earliestTrip["PU Time"]) ? 
+    reduce((earliestTrip, row) =>
+      timeOnlyAsMilliseconds(row["PU Time"]) < timeOnlyAsMilliseconds(earliestTrip["PU Time"]) ?
       row : earliestTrip
     )
   const lastTrip = tripsThisRun.
-    reduce((latestRow, row) => 
-      timeOnlyAsMilliseconds(row["PU Time"]) > timeOnlyAsMilliseconds(latestRow["PU Time"]) ? 
+    reduce((latestRow, row) =>
+      timeOnlyAsMilliseconds(row["PU Time"]) > timeOnlyAsMilliseconds(latestRow["PU Time"]) ?
       row : latestRow
     )
   const vehicle = vehicles.find((row) => row["Vehicle ID"] === run["Vehicle ID"])
@@ -99,6 +161,14 @@ function getDeadheadDataForRun(run, tripsThisDay, vehicles) {
   return result
 }
 
+/**
+ * Runs all validation checks against the trips and runs for a single date and
+ * returns an array of non-empty error message strings. Used by
+ * `addDataToRunsInReview()` to gate whether deadhead data can be written.
+ * @param {Object[]} tripsThisDay - Trip row objects for the date being validated.
+ * @param {Object[]} runsThisDay - Run row objects for the date being validated.
+ * @returns {string[]} Array of error message strings; empty if all checks pass.
+ */
 function getDeadheadDataErrorMessages(tripsThisDay, runsThisDay) {
   const result = [
     ...hasOrphans(tripsThisDay, runsThisDay),
@@ -111,6 +181,16 @@ function getDeadheadDataErrorMessages(tripsThisDay, runsThisDay) {
   return result
 }
 
+/**
+ * Checks for orphaned runs (runs with no matching trip) and orphaned trips
+ * (trips with no matching run) by comparing run keys across both sets.
+ * A "run key" is a composite of Driver ID + Vehicle ID + Run ID.
+ * @param {Object[]} tripsThisDay - Trip row objects for the date being checked.
+ * @param {Object[]} runsThisDay - Run row objects for the date being checked.
+ * @returns {[string, string]} A two-element array: the first element is an error
+ *   message for orphaned runs (empty string if none), the second for orphaned
+ *   trips (empty string if none).
+ */
 function hasOrphans(tripsThisDay, runsThisDay) {
   const runKeys = runsThisDay.map((row) => getRunKey(row))
   const runForeignKeys = tripsThisDay.map((row) => getRunKey(row))
@@ -133,75 +213,131 @@ function hasOrphans(tripsThisDay, runsThisDay) {
   return [runErrorMessage, tripErrorMessage]
 }
 
+/**
+ * Checks for runs that share the same composite run key (Driver ID + Vehicle ID
+ * + Run ID) on the same date.
+ * @param {Object[]} runsThisDay - Run row objects for the date being checked.
+ * @returns {string} An error message listing duplicate run keys, or `""` if none.
+ */
 function hasDuplicateRuns(runsThisDay) {
   const runKeys = runsThisDay.map((row) => getRunKey(row))
   const dupeRunKeysWithCount = Object.entries(getDupesWithCount(runKeys)).map(([dupe, count]) => {
-    return `${dupe} (${count} occurances)`
+    const msg = `${dupe} (${count} occurances)`
+    return msg
   })
   if (dupeRunKeysWithCount.length) {
-    return `Duplicate runs:\n-- ${dupeRunKeysWithCount.join("\n-- ")}`
+    const msg = `Duplicate runs:\n-- ${dupeRunKeysWithCount.join("\n-- ")}`
+    return msg
   } else {
     return ""
   }
 }
 
+/**
+ * Checks for trips that share the same composite trip key (Customer Name and ID
+ * + PU Time) on the same date.
+ * @param {Object[]} tripsThisDay - Trip row objects for the date being checked.
+ * @returns {string} An error message listing duplicate trip keys, or `""` if none.
+ */
 function hasDuplicateTrips(tripsThisDay) {
   const tripKeys = tripsThisDay.map((row) => getTripKey(row))
   const dupeTripKeysWithCount = Object.entries(getDupesWithCount(tripKeys)).map(([dupe, count]) => {
-    return `${dupe} (${count} occurances)`
+    const msg = `${dupe} (${count} occurances)`
+    return msg
   })
   if (dupeTripKeysWithCount.length) {
-    return `Duplicate trips:\n-- ${dupeTripKeysWithCount.join("\n-- ")}`
+    const msg = `Duplicate trips:\n-- ${dupeTripKeysWithCount.join("\n-- ")}`
+    return msg
   } else {
     return ""
   }
 }
 
+/**
+ * Checks whether any trips in the set fail `isReviewedTrip()`.
+ * @param {Object[]} tripsThisDay - Trip row objects for the date being checked.
+ * @returns {string} An error message listing incomplete trip keys, or `""` if none.
+ */
 function hasIncompleteTrips(tripsThisDay) {
   const incompleteTrips = tripsThisDay.filter((row) => !isReviewedTrip(row))
   if (incompleteTrips.length) {
     const incompleteTripKeys = incompleteTrips.map((row) => getTripKey(row))
-    return `${pluralize(incompleteTrips.length,"trip")} with incomplete data:\n-- ${incompleteTripKeys.join("\n-- ")}`
+    const msg = `${pluralize(incompleteTrips.length,"trip")} with incomplete data:\n-- ${incompleteTripKeys.join("\n-- ")}`
+    return msg
   } else {
     return ""
   }
 }
 
+/**
+ * Checks whether any runs in the set fail `isUserReviewedRun()`.
+ * @param {Object[]} runsThisDay - Run row objects for the date being checked.
+ * @returns {string} An error message listing incomplete run keys, or `""` if none.
+ */
 function hasIncompleteRuns(runsThisDay) {
   const incompleteRuns = runsThisDay.filter((row) => !isUserReviewedRun(row))
   if (incompleteRuns.length) {
     const incompleteRunKeys = incompleteRuns.map((row) => getRunKey(row))
-    return `${pluralize(incompleteRuns.length,"run")} with incomplete data:\n-- ${incompleteRunKeys.join("\n-- ")}`
+    const msg = `${pluralize(incompleteRuns.length,"run")} with incomplete data:\n-- ${incompleteRunKeys.join("\n-- ")}`
+    return msg
   } else {
     return ""
   }
 }
 
+/**
+ * Checks whether any runs have an odometer start value greater than the
+ * odometer end value, indicating a data entry error.
+ * @param {Object[]} runsThisDay - Run row objects for the date being checked.
+ * @returns {string} An error message listing affected run keys, or `""` if none.
+ */
 function hasNegativeRunDistance(runsThisDay) {
   const badRuns = runsThisDay.filter((row) => {
     return (row["Odometer Start"] > row["Odometer End"])
   })
   if (badRuns.length) {
     const badRunKeys = badRuns.map((row) => getRunKey(row))
-    return `${pluralize(badRuns.length,"run")} with a negative distance traveled:\n-- ${badRunKeys.join("\n-- ")}`
+    const msg = `${pluralize(badRuns.length,"run")} with a negative distance traveled:\n-- ${badRunKeys.join("\n-- ")}`
+    return msg
   } else {
     return ""
   }
 }
 
+/**
+ * Returns `true` if a trip row is considered fully reviewed and ready to archive.
+ *
+ * Logic:
+ * - If `"Trip Result"` is blank → `false`.
+ * - If `"Trip Result"` is one of the `tripReviewCompletedTripResults` values,
+ *   checks that every field in `tripReviewRequiredFields` is non-blank → `true`
+ *   only if all required fields are filled.
+ * - Otherwise (any other trip result, e.g. a cancellation code) → `true`.
+ *
+ * @param {Object} trip - A trip row object from the Trip Review sheet.
+ * @returns {boolean}
+ */
 function isReviewedTrip(trip) {
     const tripReviewRequiredFields       = getDocProp("tripReviewRequiredFields")
     const tripReviewCompletedTripResults = getDocProp("tripReviewCompletedTripResults")
     if (!trip["Trip Result"]) {
       return false
     } else if (tripReviewCompletedTripResults.includes(trip["Trip Result"])) {
-      blankColumns = tripReviewRequiredFields.filter(column => !trip[column])
+      const blankColumns = tripReviewRequiredFields.filter(column => !trip[column])
       return blankColumns.length === 0
     } else {
       return true
     }
 }
 
+/**
+ * Returns `true` if the trip's `"Trip Result"` value is one of the
+ * `tripReviewCompletedTripResults` document property values (e.g. `"Completed"`).
+ * Returns `false` if `"Trip Result"` is blank or is a non-completed value
+ * (e.g. a cancellation code).
+ * @param {Object} trip - A trip row object.
+ * @returns {boolean}
+ */
 function isTripWithCompletedTripResult(trip) {
   const tripReviewCompletedTripResults = getDocProp("tripReviewCompletedTripResults")
   if (!trip["Trip Result"]) {
@@ -213,6 +349,13 @@ function isTripWithCompletedTripResult(trip) {
   }
 }
 
+/**
+ * Returns `true` if all fields listed in the `runUserReviewRequiredFields`
+ * document property are non-blank on the run row. Numeric `0` is treated as
+ * a valid (non-blank) value.
+ * @param {Object} run - A run row object from the Run Review sheet.
+ * @returns {boolean}
+ */
 function isUserReviewedRun(run) {
   const runReviewRequiredFields = getDocProp("runUserReviewRequiredFields")
   const blankColumns = runReviewRequiredFields.filter(column => {
@@ -221,6 +364,13 @@ function isUserReviewedRun(run) {
   return blankColumns.length === 0
 }
 
+/**
+ * Returns `true` if all fields listed in the `runFullReviewRequiredFields`
+ * document property are non-blank on the run row. Numeric `0` is treated as
+ * a valid (non-blank) value.
+ * @param {Object} run - A run row object from the Run Review sheet.
+ * @returns {boolean}
+ */
 function isFullyReviewedRun(run) {
   const runReviewRequiredFields = getDocProp("runFullReviewRequiredFields")
   const blankColumns = runReviewRequiredFields.filter(column => {
@@ -229,6 +379,14 @@ function isFullyReviewedRun(run) {
   return blankColumns.length === 0
 }
 
+/**
+ * Builds a human-readable composite key string for a run or trip row, used
+ * to identify a run when reporting validation errors. The key is formatted as:
+ * `"Driver ID: <value>, Vehicle ID: <value>, Run ID: <value|<Blank>>"`.
+ * @param {Object} runOrTrip - A run or trip row object with `"Driver ID"`,
+ *   `"Vehicle ID"`, and `"Run ID"` fields.
+ * @returns {string}
+ */
 function getRunKey(runOrTrip) {
   return [
     "Driver ID: " + runOrTrip["Driver ID"],
@@ -237,6 +395,14 @@ function getRunKey(runOrTrip) {
   ].join(", ")
 }
 
+/**
+ * Builds a human-readable composite key string for a trip row, used to
+ * identify a trip when reporting validation errors. The key is formatted as:
+ * `"<Customer Name and ID>, PU Time: <H:MM a|<Blank>>"`.
+ * @param {Object} trip - A trip row object with `"Customer Name and ID"` and
+ *   `"PU Time"` fields.
+ * @returns {string}
+ */
 function getTripKey(trip) {
   const tz = getDocProp("localTimeZone")
   return [
@@ -245,6 +411,18 @@ function getTripKey(trip) {
   ].join(", ")
 }
 
+/**
+ * Moves past-date trips from the Trips sheet to Trip Review, and handles
+ * runs according to the `createRunMode` document property:
+ * - **`"default"`** — moves past-date runs from the Runs sheet to Run Review.
+ * - **`"auto"`** — calls `createRunsInReview()` to generate run records from
+ *   the moved trips.
+ * - Any other value — shows a toast error and logs the problem.
+ *
+ * A trip is considered past-date if its `"Trip Date"` is before today.
+ * A run is considered past-date if its `"Run Date"` is before today.
+ * Both use `dateToday()` for the comparison.
+ */
 function moveTripsToReview() {
   try {
     const ss              = SpreadsheetApp.getActiveSpreadsheet()
@@ -270,6 +448,20 @@ function moveTripsToReview() {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Moves fully-reviewed dates from Trip Review and Run Review to their
+ * respective Archive sheets.
+ *
+ * A date is eligible to archive if it meets one of two conditions:
+ * - **Normal completion**: the date has at least one trip and at least one run,
+ *   and no trip fails `isReviewedTrip()` and no run fails `isFullyReviewedRun()`.
+ * - **All-cancelled**: the date has trips, no runs, no incomplete trips, and no
+ *   trip has a completed trip result (e.g. an all-cancellation/weather day).
+ *
+ * Rows are moved via `moveRows()`, which appends to the archive sheet and
+ * deletes from the review sheet. An `"Archive TS"` timestamp is set on each
+ * moved row.
+ */
 function moveTripsToArchive() {
   try {
     const ss                      = SpreadsheetApp.getActiveSpreadsheet()
@@ -288,7 +480,6 @@ function moveTripsToArchive() {
       const theseRuns = runs.filter((row) => row["Run Date"].valueOf() === date)
       const incompleteTrips = theseTrips.filter((row) => !isReviewedTrip(row))
       const tripsWithCompletedTripResults = theseTrips.filter((row) => isTripWithCompletedTripResult(row))
-      //Logger.log(incompleteTrips.length)
       const incompleteRuns = theseRuns.filter((row) => !isFullyReviewedRun(row))
       // Where there are trips and runs, and no trip or run is incomplete
       if (theseTrips.length &&
@@ -316,12 +507,16 @@ function moveTripsToArchive() {
 }
 
 /**
- * Moves rows from the source sheet to the destination sheet based on a filter function.
- * @param {Sheet} sourceSheet - The sheet to move rows from.
- * @param {Sheet} destSheet - The sheet to move rows to.
- * @param {function} filter - A function to filter which rows to move.
- * @param {string} timestampColName - The name of the column to add a timestamp to.
- * @return {Array} - The rows that were moved.
+ * Moves rows matching a filter from one sheet to another, optionally
+ * stamping a timestamp column, then deletes the moved rows from the source.
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sourceSheet - The sheet to move rows from.
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} destSheet - The sheet to move rows to.
+ * @param {function(Object): boolean} filter - Predicate function; rows for which
+ *   it returns truthy are moved.
+ * @param {string} timestampColName - Column name to stamp with the current
+ *   date/time on each moved row.
+ * @returns {Object[]} The array of row objects that were moved (or `[]` on error
+ *   or if no rows matched).
  */
 function moveRows(sourceSheet, destSheet, filter, timestampColName) {
   try {
@@ -337,12 +532,23 @@ function moveRows(sourceSheet, destSheet, filter, timestampColName) {
       SpreadsheetApp.getActiveSpreadsheet().toast('Error moving data. Please check for duplicate entries.')
     }
     return rowsToMove
-  } catch(e) { 
-    logError(e) 
+  } catch(e) {
+    logError(e)
     return []
   }
 }
 
+/**
+ * Moves a single row from its current sheet to a destination sheet using
+ * `createRow()` / `safelyDeleteRow()`. Optionally merges extra field values
+ * into the row data before writing.
+ * @param {GoogleAppsScript.Spreadsheet.Range} sourceRange - A range representing
+ *   the row to move (typically a full-row range).
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} destSheet - The sheet to move the row to.
+ * @param {Object} [options]
+ * @param {Object} [options.extraFields={}] - Additional key/value pairs to merge
+ *   into the row data before it is written to the destination sheet.
+ */
 function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
   try {
     const sourceSheet = sourceRange.getSheet()
@@ -354,6 +560,13 @@ function moveRow(sourceRange, destSheet, {extraFields = {}} = {}) {
   } catch(e) { logError(e) }
 }
 
+/**
+ * Counts duplicate values in an array and returns an object containing only
+ * the values that appear more than once, mapped to their occurrence count.
+ * @param {Array} arr - The array to check for duplicates.
+ * @returns {Object.<string, number>} Map of duplicate value → count.
+ *   Only entries with count > 1 are included.
+ */
 function getDupesWithCount(arr) {
   const counts = {}
   const dupes = {}
