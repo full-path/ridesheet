@@ -1,8 +1,7 @@
 function testCreateDummyData() {
-  //const baseLocation = "2124 SE Oak St Portland OR 97214"
-  const baseLocation = "615 Cottonwood Ln, Condon, OR 97823"
-  const baseFormattedAddress = getGeocode(baseLocation,"formatted_address")
-  const baseLocationObj = getGeocode(baseLocation,"object")
+  const baseLocation = "368 38th Street, Astoria, OR 97103"
+  const baseFormattedAddress = getGeocode(baseLocation, "formatted_address")
+  const baseLocationObj = getGeocode(baseLocation, "object")
 
   const params = {
     baseFormattedAddress: baseFormattedAddress,
@@ -10,12 +9,12 @@ function testCreateDummyData() {
       lat: baseLocationObj.lat,
       lng: baseLocationObj.lng
     },
-    agencyDomain: "thedomain.org",
-    areaCode: "(541)",
+    agencyDomain: "sampledomain.org",
+    areaCode: "(503)",
     numCustomers: 10,
-    addressRadius: 30,
-    startDate: new Date("2025-10-01T00:00:00-07:00"),
-    tripDate: new Date("2025-10-06T00:00:00-07:00"),
+    addressRadius: 10,
+    startDate: new Date("2026-06-10T00:00:00-04:00"),
+    tripDate: new Date("2026-06-15T00:00:00-04:00"),
     goWindowDuration: 30,
     returnWindowDuration: 30,
     solverTimeLimitSeconds: 10,
@@ -26,7 +25,8 @@ function testCreateDummyData() {
     maxTimeFunction: (estTripHours) => {
       return Math.ceil(Math.max((estTripHours * 60) + 15, (estTripHours * 60 * 1.5) + 10))
     },
-    useCache: false
+    useCache: true,
+    addressSource: "osm"  // "osm" or "google"
   }
 
   // moveTestRecordsToReview(params)
@@ -39,19 +39,6 @@ function testCreateDummyData() {
   Logger.log("Generating home addresses...")
   const homeAddresses = generateRandomHomeAddresses(params)
   Logger.log("Home addresses generated.")
-
-  // Merge all addresses to send to the routes generator
-  const allAddresses = [
-    {"Address": baseFormattedAddress, "Default Trip Purpose": "Depot"},
-    ...poiAddresses.map(a => {
-      return {"Address": a["Address"], "Default Trip Purpose": a["Default Trip Purpose"]}
-    }), 
-    ...homeAddresses.map(a => {
-      return {"Address": a["formattedAddress"], "Default Trip Purpose": "Home"}
-    })
-  ]
-  // Logger.log(JSON.stringify(allAddresses,null,2))
-  // return
 
   Logger.log("Generating customers...")
   const customers = generateCustomers(params, homeAddresses, poiAddresses)
@@ -74,11 +61,29 @@ function testCreateDummyData() {
   Logger.log("Runs generated.")
 
   Logger.log("Generating trips...")
-  // params.useCache = false
   const trips = generateTrips(params, runs, customers, poiAddresses)
-  Logger.log("Customers generated.")
+  Logger.log("trips generated.")
+
+  // Build address → purpose lookup from known address sets
+  const addressPurposeMap = new Map()
+  addressPurposeMap.set(baseFormattedAddress, "Depot")
+  poiAddresses.forEach(a => addressPurposeMap.set(a["Address"], a["Default Trip Purpose"]))
+  homeAddresses.forEach(a => addressPurposeMap.set(a["formattedAddress"], "Home"))
+
+  // Collect only addresses referenced by actual trips, plus depot
+  const tripAddressSet = new Set([baseFormattedAddress])
+  trips.forEach(trip => {
+    if (trip["PU Address"]) tripAddressSet.add(trip["PU Address"])
+    if (trip["DO Address"]) tripAddressSet.add(trip["DO Address"])
+  })
+
+  const allAddresses = Array.from(tripAddressSet).map(addr => ({
+    "Address": addr,
+    "Default Trip Purpose": addressPurposeMap.get(addr) || "Home"
+  }))
 
   Logger.log("Generating routes...")
+  //params.useCache = false
   // params.useCache = true
   const routes = getRoutes(params, allAddresses)
   Logger.log("Routes generated.")
@@ -89,7 +94,7 @@ function testCreateDummyData() {
 }
 
 function moveTestRecordsToReview(params) {
-  const tripFilter = function(row) { 
+  const tripFilter = function(row) {
     return row["Trip Date"] && row["Trip Date"].getTime() === params.tripDate.getTime()
   }
   const runFilter = function(row) {
@@ -100,7 +105,7 @@ function moveTestRecordsToReview(params) {
 
 function getNavigableFormattedAddress(address) {
   try {
-    const allowedLocationTypes = ["premise","route","street_address"]
+    const allowedLocationTypes = ["premise", "route", "street_address"]
     const mapsResults = Maps.newGeocoder().geocode(address)
     if (mapsResults.status !== "OK") return
 
@@ -108,17 +113,17 @@ function getNavigableFormattedAddress(address) {
       //return result?.geometry?.location_type === "ROOFTOP" &&
       //["premise","route"].filter(item => result.types.includes(item)).length &&
       return result.types.filter(item => allowedLocationTypes.includes(item)).length &&
-      result.address_components.some(component => component.types.includes("street_number")) &&
-      !result?.navigation_points?.some(navPoint =>
-        navPoint.restricted_travel_modes && navPoint.restricted_travel_modes.length > 0
-      )
+        result.address_components.some(component => component.types.includes("street_number")) &&
+        !result?.navigation_points?.some(navPoint =>
+          navPoint.restricted_travel_modes && navPoint.restricted_travel_modes.length > 0
+        )
     })
     if (goodResult) {
       return goodResult.formatted_address
-    } else { 
+    } else {
       Logger.log(`Bad result: ${address}: ${mapsResults.results[0].formatted_address}`)
     }
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 function generateRandomHomeAddresses(params) {
@@ -158,7 +163,7 @@ function generateRandomHomeAddresses(params) {
   return newAddresses
 }
 
-function generateRunTemplateRows(params,drivers,vehicles) {
+function generateRunTemplateRows(params, drivers, vehicles) {
   let newRunTemplates = []
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const runTemplateSheet = ss.getSheetByName("Run Template")
@@ -167,7 +172,7 @@ function generateRunTemplateRows(params,drivers,vehicles) {
     newRunTemplates = getRangeValuesAsTable(runTemplateSheet.getDataRange())
     return newRunTemplates
   }
-  
+
   const newRunTemplateRows = []
   drivers.forEach((driver, i) => {
     newRunTemplateRows.push({
@@ -180,7 +185,7 @@ function generateRunTemplateRows(params,drivers,vehicles) {
   })
 
   clearSheet(runTemplateSheet)
-  createRows(runTemplateSheet,newRunTemplateRows)
+  createRows(runTemplateSheet, newRunTemplateRows)
   newRunTemplates = getRangeValuesAsTable(runTemplateSheet.getDataRange())
   return newRunTemplateRows
 }
@@ -208,8 +213,8 @@ function computeBoundingBox(center, radiusMiles) {
   return {
     south: center.lat - latDelta,
     north: center.lat + latDelta,
-    west:  center.lng - lngDelta,
-    east:  center.lng + lngDelta
+    west: center.lng - lngDelta,
+    east: center.lng + lngDelta
   };
 }
 
@@ -267,15 +272,24 @@ function generatePoiAddresses(params) {
     return newAddresses
   }
 
-  newAddresses.push(...getOsmAddresses(params.startingLocation, params.addressRadius, 
+  if (params.addressSource === "google") {
+    newAddresses.push(...getGooglePlacesAddresses(params.baseFormattedAddress, params.addressRadius,
+      ["hospital", "doctor", "medical_clinic", "dentist"], "Medical", 5))
+    newAddresses.push(...getGooglePlacesAddresses(params.baseFormattedAddress, params.addressRadius,
+      ["local_government_office", "lawyer", "insurance_agency", "accounting"], "Work", 5))
+    newAddresses.push(...getGooglePlacesAddresses(params.baseFormattedAddress, params.addressRadius,
+      ["church", "library", "bank", "pharmacy", "movie_theater"], "Other", 5))
+  } else {
+    newAddresses.push(...getOsmAddresses(params.startingLocation, params.addressRadius,
       '["amenity"~"clinic|hospital|doctor|dentist"]["name"]["addr:housenumber"]["addr:street"]["addr:postcode"]', "Medical", 5))
-  Utilities.sleep(1000);
-  newAddresses.push(...getOsmAddresses(params.startingLocation, params.addressRadius, 
+    Utilities.sleep(1000);
+    newAddresses.push(...getOsmAddresses(params.startingLocation, params.addressRadius,
       '["office"~"^(government|company|lawyer|insurance|accountant|charity|ngo|yes)$"]["name"]["addr:housenumber"]["addr:street"]["addr:postcode"]', "Work", 5))
-  Utilities.sleep(1000);
-  newAddresses.push(...getOsmAddresses(params.startingLocation, params.addressRadius, 
+    Utilities.sleep(1000);
+    newAddresses.push(...getOsmAddresses(params.startingLocation, params.addressRadius,
       '["amenity"~"place_of_worship|community_centre|library|bank|pharmacy|cinema"]["name"]["addr:housenumber"]["addr:street"]["addr:postcode"]', "Other", 5))
-  
+  }
+
   if ((new Set(newAddresses.map(a => a["Short Name"]))).size !== newAddresses.length) {
     const seen = {};
     newAddresses.forEach(address => {
@@ -288,8 +302,8 @@ function generatePoiAddresses(params) {
     })
   }
 
-  clearSheet(addressSheet)  
-  createRows(addressSheet,newAddresses)
+  clearSheet(addressSheet)
+  createRows(addressSheet, newAddresses)
 
   return newAddresses
 }
@@ -323,7 +337,7 @@ function getOsmAddressesOld(startLocation, radiusMiles = 50, osmQuery, purpose, 
   let osmData = {}
   try {
     osmData = JSON.parse(response.getContentText());
-  } catch(e) {
+  } catch (e) {
     log(response.getContentText())
     Logger.log(e.name + ': ' + e.message, e.stack)
     Logger.log(response.getContentText())
@@ -334,8 +348,8 @@ function getOsmAddressesOld(startLocation, radiusMiles = 50, osmQuery, purpose, 
   osmElements.forEach((elem) => {
     const tags = elem.tags
     const googleMapsQuery = `${tags["addr:housenumber"]} ${tags["addr:street"]} ${tags["addr:city"]} ${tags["addr:postcode"]}`
-    const formattedAddress = getGeocode(googleMapsQuery,"formatted_address")
-    if (formattedAddress.startsWith("Error")) Logger.log(JSON.stringify(tags,null,2))
+    const formattedAddress = getGeocode(googleMapsQuery, "formatted_address")
+    if (formattedAddress.startsWith("Error")) Logger.log(JSON.stringify(tags, null, 2))
     elem.formattedAddress = formattedAddress
   })
 
@@ -356,7 +370,7 @@ function generateVehicles(params) {
   let newVehicles = []
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const vehicleSheet = ss.getSheetByName("Vehicles")
-  
+
   if (params.useCache) {
     newVehicles = getRangeValuesAsTable(vehicleSheet.getDataRange())
     return newVehicles
@@ -383,20 +397,20 @@ function generateVehicles(params) {
   }
 
   Object.keys(vehicleTypes).forEach((vehicleType) => {
-    ["1","2","3"].forEach((num) => {
+    ["1", "2", "3"].forEach((num) => {
       let thisRow = {
         "Vehicle ID": `${vehicleType}${num}`,
         "Vehicle Name": `${vehicleType} Number ${num}`,
         "Vehicle Start Date": params.startDate,
         "Garage Address": params.baseFormattedAddress
       }
-      let thisCompleteRow = Object.assign(thisRow,vehicleTypes[vehicleType])
+      let thisCompleteRow = Object.assign(thisRow, vehicleTypes[vehicleType])
       newVehicles.push(thisCompleteRow)
     })
   })
 
   clearSheet(vehicleSheet)
-  createRows(vehicleSheet,newVehicles)
+  createRows(vehicleSheet, newVehicles)
   return newVehicles
 }
 
@@ -450,7 +464,7 @@ function generateDrivers(params) {
   ]
 
   clearSheet(driverSheet)
-  createRows(driverSheet,newDrivers)
+  createRows(driverSheet, newDrivers)
   newDrivers = getRangeValuesAsTable(driverSheet.getDataRange())
   return newDrivers
 }
@@ -472,16 +486,16 @@ function generateCustomers(params, homeAddresses, poiAddresses) {
     return newCustomers
   }
 
-  let firstNames = ["Binky","Zelda","Mango","Fuzz","Noodle","Pixel","Gizmo","Bubbles","Quasar","Nimbus",
-                      "John","Mary","William","Elizabeth","George","Margaret","Henry","Dorothy","Charles","Mildred"];
-  let lastNames  = ["McFluffle","Puddleton","Snickerdoodle","Fizzlebang","Wobble","Doodlebug","Sprinkles","Bubbleton","Twinkles","Jamboree",
-                      "Ramirez","Johnson","Brown","Jones","Nguyen","Davis","Wilson","Moore","Taylor","Anderson"];
+  let firstNames = ["Binky", "Zelda", "Mango", "Fuzz", "Noodle", "Pixel", "Gizmo", "Bubbles", "Quasar", "Nimbus",
+    "John", "Mary", "William", "Elizabeth", "George", "Margaret", "Henry", "Dorothy", "Charles", "Mildred"];
+  let lastNames = ["McFluffle", "Puddleton", "Snickerdoodle", "Fizzlebang", "Wobble", "Doodlebug", "Sprinkles", "Bubbleton", "Twinkles", "Jamboree",
+    "Ramirez", "Johnson", "Brown", "Jones", "Nguyen", "Davis", "Wilson", "Moore", "Taylor", "Anderson"];
   const serviceIDs = ss.getRangeByName("lookupServiceIds").getValues().flat().filter(v => v)
 
   for (let i = 0; i < params.numCustomers; i++) {
     const customerID = i + 1;
     const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const lastName  = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
 
     newCustomers.push({
       "Customer ID": customerID,
@@ -539,7 +553,7 @@ function generateRuns(params) {
 function generateTrips(params, runs, customers, poiAddresses) {
   let newTrips = []
   const earliestStartTime = 510 // 8:30 AM
-  const latestStartTime = 780   // 1:00 PM 
+  const latestStartTime = 780   // 1:00 PM
   const minStayDuration = 30
   const maxStayDuration = 60
   const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -607,7 +621,7 @@ function generateTrips(params, runs, customers, poiAddresses) {
       returnTrip["Customer Name and ID"] = customer["Customer Name and ID"]
       returnTrip["Trip Date"] = runDate
       returnTrip["PU Address"] = goTrip["DO Address"]
-      returnTrip["DO Address"] =  goTrip["PU Address"]
+      returnTrip["DO Address"] = goTrip["PU Address"]
       tripEstimate = getTripEstimate(goTrip["DO Address"], goTrip["PU Address"], "milesAndHours")
       returnTrip["Est Hours"] = tripEstimate.hours
       returnTrip["Est Miles"] = tripEstimate.miles
@@ -647,7 +661,7 @@ const createAddressShortName = (phrase) => {
   }
 
   // remove words that shouldn't be part of an acronym
-  const stopWords =['a', 'an', 'and', 'for', 'in', 'of', 'on', 'the']
+  const stopWords = ['a', 'an', 'and', 'for', 'in', 'of', 'on', 'the']
   const stopWordsRegex = new RegExp(`\\b(${stopWords.join('|')})\\b`, 'gi')
   const phraseWithKeyWords = phrase.replace(stopWordsRegex, '')
 
@@ -680,6 +694,13 @@ function getRandomInteger(min, max) {
  * using UrlFetchApp in Google Apps Script.
  */
 function getRoutes(params, addresses) {
+  const GOOGLE_MAPS_API_KEY = PropertiesService.getScriptProperties().getProperty('GOOGLE_MAPS_API_KEY');
+
+  if (!GOOGLE_MAPS_API_KEY) {
+    Logger.log('ERROR: GOOGLE_MAPS_API_KEY not set in Script Properties');
+    return
+  }
+
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const routeSheet = ss.getSheetByName("Routes")
   let newRoutes = []
@@ -693,14 +714,15 @@ function getRoutes(params, addresses) {
   // Incoming addresses may not be ready for geocoding. Add a "clean" address to each address obj
   addresses.forEach(a => a.cleanAddress = parseAddress(a["Address"]).geocodeAddress)
 
-  const MAX_ELEMENTS = 625
+  const MAX_WAYPOINTS_PER_REQUEST = 50
   const API_URL = 'https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix';
-  
-  // Calculate the optimal batch size for origins.
-  const batchSize = Math.floor(MAX_ELEMENTS / numAddresses)
+
+  // API limit: origins + destinations <= 50. Destinations are always all addresses,
+  // so origins per batch = 50 - numAddresses.
+  const batchSize = MAX_WAYPOINTS_PER_REQUEST - numAddresses
 
   if (batchSize < 1) {
-    throw new Error(`The number of addresses (${numAddresses}) is too large to process. Maximum is ${MAX_ELEMENTS}.`);
+    throw new Error(`The number of addresses (${numAddresses}) exceeds the Routes API limit. Maximum is ${MAX_WAYPOINTS_PER_REQUEST - 1}.`);
   }
 
   const addressesAsWaypoints = addresses.map(a => {
@@ -731,7 +753,7 @@ function getRoutes(params, addresses) {
       'method': 'post',
       'contentType': 'application/json',
       'headers': {
-        'X-Goog-Api-Key': MAPS_API_KEY,
+        'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
         'X-Goog-FieldMask': 'originIndex,destinationIndex,duration,distanceMeters,condition,status'
       },
       'payload': JSON.stringify(payload),
@@ -748,31 +770,34 @@ function getRoutes(params, addresses) {
     result.forEach(route => {
       const globalOriginIndex = i + route.originIndex
       const isSelf = globalOriginIndex === route.destinationIndex
-    
+
       if (!isSelf && route.condition === "ROUTE_EXISTS") {
         const routeToSave = {}
         routeToSave["Start Address"] = addresses[globalOriginIndex].cleanAddress
         routeToSave["End Address"] = addresses[route.destinationIndex].cleanAddress
         routeToSave["Miles"] = route.distanceMeters ? route.distanceMeters / 1609.34 : 0
-        routeToSave["Minutes"] = Math.ceil(parseInt(route.duration.slice(0,-1), 10) / 60)
+        routeToSave["Minutes"] = Math.ceil(parseInt(route.duration.slice(0, -1), 10) / 60)
         routeToSave["Default Trip Purpose"] = addresses[route.destinationIndex]["Default Trip Purpose"]
         newRoutes.push(routeToSave)
       }
     })
   }
-
   //Logger.log(JSON.stringify(newRoutes,null,2))
-  
+
   clearSheet(routeSheet)
   createRows(routeSheet, newRoutes)
 
   return newRoutes
-  
-  log(JSON.stringify(result, null, 2));
-  return result;
 }
 
 function getTripAssignments(params, trips, runs, vehicles, routes) {
+  const TRIP_ASSIGNMENT_URL = PropertiesService.getScriptProperties().getProperty('TRIP_ASSIGNMENT_URL');
+
+  if (!TRIP_ASSIGNMENT_URL) {
+    Logger.log('ERROR: TRIP_ASSIGNMENT_URL not set in Script Properties');
+    return
+  }
+
   const runsThisDay = runs.filter(run => {
     return run["Run Date"] && run["Run Date"].getTime() === params.tripDate.getTime()
   })
@@ -804,7 +829,7 @@ function getTripAssignments(params, trips, runs, vehicles, routes) {
       id: tripIn["Trip ID"],
       pickup_base: addresses.indexOf(tripIn["PU Address"]),
       dropoff_base: addresses.indexOf(tripIn["DO Address"]),
-      seats: parseInt(tripIn["Guests"] + 1,10),
+      seats: parseInt(tripIn["Guests"] + 1, 10),
       max_ride: params.maxTimeFunction(tripIn["Est Hours"])
     }
 
@@ -899,8 +924,8 @@ function getTripAssignments(params, trips, runs, vehicles, routes) {
       })
       setValuesByHeaderNames(tripsUpdate, tripsRange)
     }
-    Logger.log(JSON.stringify(solution.status, null, 2))
-    log(JSON.stringify(solution, null, 2))
+    //Logger.log(JSON.stringify(solution.status, null, 2))
+    //log(JSON.stringify(solution, null, 2))
   } catch (err) {
     Logger.log("Error: %s", err)
   }

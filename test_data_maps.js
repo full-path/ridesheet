@@ -102,15 +102,14 @@ function getGooglePlacesAddresses(startLocation, radiusMiles = 50, placeTypes, p
     return [];
   }
 
-  // Get coordinates for the starting location
-  const coords = getGeocode(startLocation, "coordinates");
-  if (!coords || coords.startsWith("Error")) {
+  const geoResult = getGeocode(startLocation, "object");
+  if (!geoResult || geoResult.status !== "OK") {
     Logger.log(`ERROR: Could not geocode starting location: ${startLocation}`);
     return [];
   }
+  const { lat, lng } = geoResult;
 
-  const radiusMeters = Math.round(radiusMiles * 1609.34); // Convert miles to meters
-  const [lat, lng] = coords.split(',').map(c => parseFloat(c.trim()));
+  const radiusMeters = Math.round(radiusMiles * 1609.34);
   
   const allPlaces = [];
   
@@ -118,12 +117,6 @@ function getGooglePlacesAddresses(startLocation, radiusMiles = 50, placeTypes, p
   for (const placeType of placeTypes) {
     const places = queryPlacesByType(lat, lng, radiusMeters, placeType, limitPerType, GOOGLE_MAPS_API_KEY);
     allPlaces.push(...places);
-    
-    // Check if we've hit the overall limit
-    if (allPlaces.length >= limitPerType * placeTypes.length) {
-      break;
-    }
-    
     Utilities.sleep(500); // Rate limiting between type queries
   }
 
@@ -131,9 +124,10 @@ function getGooglePlacesAddresses(startLocation, radiusMiles = 50, placeTypes, p
   const limitedPlaces = allPlaces.slice(0, limitPerType * placeTypes.length);
 
   const newAddresses = limitedPlaces.map((place) => {
+    const name = place.displayName?.text || "";
     return {
-      "Short Name": createAddressShortName(place.name),
-      "Address": `${place.formatted_address || place.vicinity} (${place.name})`,
+      "Short Name": createAddressShortName(name),
+      "Address": `${place.formattedAddress} (${name})`,
       "Default Trip Purpose": purpose
     }
   });
@@ -143,58 +137,43 @@ function getGooglePlacesAddresses(startLocation, radiusMiles = 50, placeTypes, p
 }
 
 function queryPlacesByType(lat, lng, radiusMeters, placeType, limit, apiKey) {
-  const endpoint = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
-  
-  let allResults = [];
-  let nextPageToken = null;
-  
-  do {
-    const params = {
-      location: `${lat},${lng}`,
-      radius: radiusMeters,
-      type: placeType,
-      key: apiKey
-    };
-    
-    if (nextPageToken) {
-      params.pagetoken = nextPageToken;
-      Utilities.sleep(2000); // Required delay for next page token
+  const endpoint = 'https://places.googleapis.com/v1/places:searchNearby';
+
+  const payload = {
+    includedTypes: [placeType],
+    maxResultCount: Math.min(limit, 20),
+    locationRestriction: {
+      circle: {
+        center: { latitude: lat, longitude: lng },
+        radius: radiusMeters
+      }
     }
-    
-    const url = endpoint + '?' + Object.keys(params).map(key => 
-      `${key}=${encodeURIComponent(params[key])}`
-    ).join('&');
-    
-    const response = UrlFetchApp.fetch(url, {
-      method: 'get',
+  };
+
+  let data = {};
+  try {
+    const response = UrlFetchApp.fetch(endpoint, {
+      method: 'post',
+      contentType: 'application/json',
+      headers: {
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'places.displayName,places.formattedAddress'
+      },
+      payload: JSON.stringify(payload),
       muteHttpExceptions: true
     });
-    
-    let data = {};
-    try {
-      data = JSON.parse(response.getContentText());
-    } catch(e) {
-      Logger.log(`Error parsing response: ${e.name}: ${e.message}`);
-      Logger.log(response.getContentText());
-      break;
+
+    const responseCode = response.getResponseCode();
+    if (responseCode !== 200) {
+      Logger.log(`API Error ${responseCode}: ${response.getContentText()}`);
+      return [];
     }
-    
-    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-      Logger.log(`API Error: ${data.status} - ${data.error_message || 'No error message'}`);
-      break;
-    }
-    
-    const results = data.results || [];
-    allResults.push(...results);
-    
-    // Check if we have enough results or if there's a next page
-    if (allResults.length >= limit || !data.next_page_token) {
-      break;
-    }
-    
-    nextPageToken = data.next_page_token;
-    
-  } while (nextPageToken && allResults.length < limit);
-  
-  return allResults.slice(0, limit);
+
+    data = JSON.parse(response.getContentText());
+  } catch(e) {
+    Logger.log(`Error fetching/parsing response: ${e.name}: ${e.message}`);
+    return [];
+  }
+
+  return (data.places || []).slice(0, limit);
 }
