@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Run record management for RideSheet.
  *
@@ -5,7 +6,7 @@
  * covering multiple trips. Two run-creation strategies exist, controlled by
  * the `createRunMode` document property:
  *
- * - **`"default"`** — Runs are pre-created by staff in the Runs sheet either manually 
+ * - **`"default"`** — Runs are pre-created by staff in the Runs sheet either manually
  *    or by using `buildRunsFromTemplate()`. Trips are later associated with runs
  *    manually or auto-matched by `completeTripRunValues()` (trips.js).
  * - **`"auto"`** — Runs are generated automatically at review time by
@@ -55,7 +56,7 @@ function updateRunDetails(runsObject) {
         runEntry.run["Scheduled Start Time"] = null
       } else {
         runEntry.run["First PU Time"] = puTrips.reduce(
-          (min, trip) => trip["PU Time"] < min ? trip["PU Time"] : min, 
+          (min, trip) => trip["PU Time"] < min ? trip["PU Time"] : min,
           puTrips[0]["PU Time"]
         )
         runEntry.run["Scheduled Start Time"] = runEntry.run["First PU Time"]
@@ -68,7 +69,7 @@ function updateRunDetails(runsObject) {
         runEntry.run["Scheduled End Time"] = null
       } else {
         runEntry.run["Last DO Time"] = doTrips.reduce(
-          (max, trip) => trip["DO Time"] > max ? trip["DO Time"] : max, 
+          (max, trip) => trip["DO Time"] > max ? trip["DO Time"] : max,
           doTrips[0]["DO Time"]
         )
         runEntry.run["Scheduled End Time"] = runEntry.run["Last DO Time"]
@@ -78,7 +79,7 @@ function updateRunDetails(runsObject) {
 
     return Object.values(runsObject).map(entry => entry.run)
 
-  } catch(e) { 
+  } catch (e) {
     logError(e)
     throw new Error(`Failed to update run details: ${e.message}`)
   }
@@ -99,47 +100,53 @@ function updateRunDetails(runsObject) {
  * `"Scheduled Start Time"`, and `"Scheduled End Time"` populated.
  * `applySheetFormatsAndValidation()` is called on the new rows when done.
  */
-function buildRunsFromTemplate() {
-  const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+function buildRunsFromTemplate(runDate) {
+  const runDateProvided = !!runDate
+  const weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
   let ss = SpreadsheetApp.getActiveSpreadsheet()
-  let runsSheet = ss.getSheetByName("Runs") 
+  let runsSheet = ss.getSheetByName("Runs")
   let runTemplateSheet = ss.getSheetByName("Run Template")
   let runs = getRangeValuesAsTable(runsSheet.getDataRange())
   let runTemplates = getRangeValuesAsTable(runTemplateSheet.getDataRange())
-  let runDateRaw = runs.reduce((latest, run) => 
-    run["Run Date"] > latest ? run["Run Date"] : latest, 
+  let runDateRaw = runs.length > 0 ? runs.reduce((latest, run) =>
+    run["Run Date"] > latest ? run["Run Date"] : latest,
     runs[0]["Run Date"]
-  )
+  ) : null
 
-  let runDate
-  if (!runDateRaw) {
-    runDate = new Date()
-  } else {
-    runDate = new Date(runDateRaw)
+  if (!runDate) {
+    if (!runDateRaw) {
+      runDate = new Date()
+    } else {
+      runDate = new Date(runDateRaw)
+    }
+    runDate.setDate(runDate.getDate() + 1)
   }
 
-  runDate.setDate(runDate.getDate() + 1) 
-  
-  const ui = SpreadsheetApp.getUi()
-  const response = ui.alert(
-    'Generate Runs', 
-    'Would you like to generate runs starting from ' + formatDate(runDate) + '? Click No to enter a custom date.',
-    ui.ButtonSet.YES_NO_CANCEL
-  )
-
+  const ui = safeGetUi()
   let startDate
-  if (response == ui.Button.YES) {
-    startDate = runDate
-  } else if (response == ui.Button.NO) {
-    const promptResult = ui.prompt(
-      'Enter Start Date',
-      'Enter the date to start generating runs from (MM/DD/YYYY):',
-      ui.ButtonSet.OK_CANCEL
+  if (ui && !runDateProvided) {
+    const response = ui.alert(
+      'Generate Runs',
+      'Would you like to generate runs starting from ' + formatDate(runDate) + '? Click No to enter a custom date.',
+      ui.ButtonSet.YES_NO_CANCEL
     )
-    if (promptResult.getSelectedButton() == ui.Button.OK) {
-      startDate = parseDate(promptResult.getResponseText())
-      if (!isValidDate(startDate)) {
-        ui.alert('Invalid date entered. Operation cancelled.')
+
+    if (response == ui.Button.YES) {
+      startDate = runDate
+    } else if (response == ui.Button.NO) {
+      const promptResult = ui.prompt(
+        'Enter Start Date',
+        'Enter the date to start generating runs from (MM/DD/YYYY):',
+        ui.ButtonSet.OK_CANCEL
+      )
+      if (promptResult.getSelectedButton() == ui.Button.OK) {
+        startDate = parseDate(promptResult.getResponseText())
+        if (!isValidDate(startDate)) {
+          ui.alert('Invalid date entered. Operation cancelled.')
+          return
+        }
+      } else {
+        ss.toast('Action cancelled')
         return
       }
     } else {
@@ -147,8 +154,7 @@ function buildRunsFromTemplate() {
       return
     }
   } else {
-    ss.toast('Action cancelled') 
-    return
+    startDate = runDate
   }
 
   const lastRow = runsSheet.getLastRow()
@@ -157,10 +163,10 @@ function buildRunsFromTemplate() {
     let currentDate = new Date(startDate)
     currentDate.setDate(startDate.getDate() + i)
     let currentDayOfWeek = weekday[currentDate.getDay()]
-    
-    const matchingTemplates = runTemplates.filter(row => 
+
+    const matchingTemplates = runTemplates.filter(row =>
       row["Days of Week"] && row["Days of Week"].includes(currentDayOfWeek)
-    ).sort((a,b) => {
+    ).sort((a, b) => {
       return a["Scheduled Start Time"] - b["Scheduled Start Time"]
     })
 
@@ -198,14 +204,14 @@ function createRunsInReview(trips) {
   try {
     let ss = SpreadsheetApp.getActiveSpreadsheet()
     let runReviewSheet = ss.getSheetByName("Run Review")
-    
+
     let newRunsOut = {}
-    
+
     trips.forEach(tripRow => {
-      let tripKey = JSON.stringify(tripRow["Trip Date"]) + 
-                    tripRow["Driver ID"] + 
-                    tripRow["Vehicle ID"]
-      
+      let tripKey = JSON.stringify(tripRow["Trip Date"]) +
+        tripRow["Driver ID"] +
+        tripRow["Vehicle ID"]
+
       if (tripKey in newRunsOut) {
         newRunsOut[tripKey].trips.push(tripRow)
       } else {
@@ -222,19 +228,19 @@ function createRunsInReview(trips) {
     })
 
     const runsToCreate = updateRunDetails(newRunsOut)
-      .sort((a,b) => a["Run Date"] - b["Run Date"])
+      .sort((a, b) => a["Run Date"] - b["Run Date"])
 
     if (runsToCreate.length > 0) {
       runsToCreate.forEach(run => {
         createRow(runReviewSheet, run)
       })
-      
+
       const lastRow = runReviewSheet.getLastRow()
       const startRow = lastRow - runsToCreate.length + 1
       applySheetFormatsAndValidation(runReviewSheet, startRow)
     }
 
-  } catch(e) { 
+  } catch (e) {
     logError(e)
     throw new Error(`Failed to create runs in review: ${e.message}`)
   }
