@@ -40,12 +40,12 @@ function isInRange(innerRange, outerRange) {
   try {
     return (
       innerRange.getSheet().getName() == outerRange.getSheet().getName() &&
-      innerRange.getRow()             >= outerRange.getRow() &&
-      innerRange.getLastRow()         <= outerRange.getLastRow() &&
-      innerRange.getColumn()          >= outerRange.getColumn() &&
-      innerRange.getLastColumn()      <= outerRange.getLastColumn()
+      innerRange.getRow() >= outerRange.getRow() &&
+      innerRange.getLastRow() <= outerRange.getLastRow() &&
+      innerRange.getColumn() >= outerRange.getColumn() &&
+      innerRange.getLastColumn() <= outerRange.getLastColumn()
     )
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -59,12 +59,12 @@ function rangesOverlap(firstRange, secondRange) {
   try {
     return (
       firstRange.getSheet().getName() === secondRange.getSheet().getName() &&
-      firstRange.getRow()              <= secondRange.getLastRow()         &&
-      firstRange.getLastRow()          >= secondRange.getRow()             &&
-      firstRange.getColumn()           <= secondRange.getLastColumn()      &&
-      firstRange.getLastColumn()       >= secondRange.getColumn()
+      firstRange.getRow() <= secondRange.getLastRow() &&
+      firstRange.getLastRow() >= secondRange.getRow() &&
+      firstRange.getColumn() <= secondRange.getLastColumn() &&
+      firstRange.getLastColumn() >= secondRange.getColumn()
     )
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -77,7 +77,7 @@ function getFullRow(range) {
   try {
     const rowPosition = range.getRow()
     return range.getSheet().getRange("A" + rowPosition + ":" + rowPosition)
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -88,7 +88,7 @@ function getFullRow(range) {
 function getFullRows(range) {
   try {
     return range.getSheet().getRange("A" + range.getRow() + ":" + range.getLastRow())
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -107,7 +107,7 @@ function findFirstRowByHeaderNames(sheet, filter) {
     if (matchingRows.length > 0) {
       return matchingRows[0]
     }
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -128,19 +128,21 @@ function findFirstRowByHeaderNames(sheet, filter) {
  *   overwriting existing content. When `false`, rows are appended after the last used row.
  * @returns {boolean} `true` if rows were written successfully, `false` otherwise.
  */
-function createRows(destSheet, data, timestampColName, overwrite=false) {
+function createRows(destSheet, data, timestampColName, overwrite = false) {
+  if (!data || data.length === 0) return true
   try {
     const timestamp = new Date()
     let destColumnNames = getSheetHeaderNames(destSheet)
     let sourceColumnNames = Object.keys(data[0])
     let missingDestColumns = sourceColumnNames.reduce((a, c) => {
-      if (!destColumnNames.includes(c) && c.slice(0,1) !== "_") a.push(c)
+      if (!destColumnNames.includes(c) && c.slice(0, 1) !== "_") a.push(c)
       return a
     }, [])
     if (missingDestColumns.length) {
-      SpreadsheetApp.getUi().alert(
-        `Sheet "${destSheet.getSheetName()}" is missing the column${missingDestColumns.length === 1 ? "" : "s"} ${missingDestColumns.map((e) => '"' + e + '"').join(", ")}.
-        Rows will not be moved to the "${destSheet.getSheetName()}" sheet.`)
+      let msg = `Sheet "${destSheet.getSheetName()}" is missing the column${missingDestColumns.length === 1 ? "" : "s"} ${missingDestColumns.map((e) => '"' + e + '"').join(", ")}.
+        Rows will not be moved to the "${destSheet.getSheetName()}" sheet.`
+      log(msg)
+      safeGetUi()?.alert(msg)
       return false
     }
     let values = data.map(row => {
@@ -148,7 +150,7 @@ function createRows(destSheet, data, timestampColName, overwrite=false) {
         if (timestampColName && colName === timestampColName) {
           return timestamp
         } else {
-          return isBlankCell(row[colName]) ? null: row[colName]
+          return isBlankCell(row[colName]) ? null : row[colName]
         }
       })
     })
@@ -157,9 +159,9 @@ function createRows(destSheet, data, timestampColName, overwrite=false) {
     newRows.setValues(values)
     applySheetFormatsAndValidation(destSheet, firstRow)
     return true
-  } catch(e) {
-      logError(e)
-      return false
+  } catch (e) {
+    logError(e)
+    return false
   }
 }
 
@@ -190,7 +192,7 @@ function createRows(destSheet, data, timestampColName, overwrite=false) {
  * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet - The sheet to apply the rules to.
  * @param {number} [startRow=2] - The 1-based row from which formatting is applied downward.
  */
-function applySheetFormatsAndValidation(sheet, startRow=2) {
+function applySheetFormatsAndValidation(sheet, startRow = 2) {
   let sheetName = sheet.getName()
   let rules = getConfiguredColumns()[sheetName]
   let configuredHeaderNames = Object.keys(rules)
@@ -243,7 +245,7 @@ function createRow(destSheet, data) {
     // fixRowNumberFormatting(newRow)
     // fixRowDataValidation(newRow)
     return true
-  } catch(e) {
+  } catch (e) {
     logError(e)
     return false
   }
@@ -268,9 +270,9 @@ function safelyDeleteRows(sheet, data) {
   }
   let rowsToDelete = data.map(row => {
     let offset = row._rowIndex + 1
-    return { deleteDimension: { range: { sheetId, startIndex: offset, endIndex: offset + 1, dimension: "ROWS"}}}
-    }).reverse()
-  Sheets.Spreadsheets.batchUpdate({requests: rowsToDelete}, ss.getId())
+    return { deleteDimension: { range: { sheetId, startIndex: offset, endIndex: offset + 1, dimension: "ROWS" } } }
+  }).reverse()
+  Sheets.Spreadsheets.batchUpdate({ requests: rowsToDelete }, ss.getId())
 }
 
 /**
@@ -323,7 +325,7 @@ const defaultColumnFilter = colHeader => {
  * @param {number} [colOffset=0] - Number of columns from the right end to leave in place;
  *   new columns are inserted before the last `colOffset` columns.
  */
-function createColumns(sheet, dataRow, columnFilter=defaultColumnFilter, colOffset=0) {
+function createColumns(sheet, dataRow, columnFilter = defaultColumnFilter, colOffset = 0) {
   let columnNames = getSheetHeaderNames(sheet)
   let dataCols = Object.keys(dataRow).filter(colHeader => columnFilter(colHeader))
   dataCols.forEach((col) => {
@@ -378,7 +380,7 @@ function testRowFormat() {
  *   `_rowPosition` and `_rowIndex` metadata fields. Returns `[]` if the range is empty
  *   or contains only the header row.
  */
-function getRangeValuesAsTable(range, {headerRowPosition = 1, includeFormulaValues = true} = {}) {
+function getRangeValuesAsTable(range, { headerRowPosition = 1, includeFormulaValues = true } = {}) {
   try {
     let topDataRowPosition = range.getRow()
     let values = range.getValues()
@@ -401,8 +403,8 @@ function getRangeValuesAsTable(range, {headerRowPosition = 1, includeFormulaValu
         return []
       }
     } else if (topDataRowPosition > headerRowPosition) {
-      rangeHeaderNames = getRangeHeaderNames(range, {headerRowPosition: headerRowPosition})
-      rangeHeaderFormulas = getRangeHeaderFormulas(range, {headerRowPosition: headerRowPosition})
+      rangeHeaderNames = getRangeHeaderNames(range, { headerRowPosition: headerRowPosition })
+      rangeHeaderFormulas = getRangeHeaderFormulas(range, { headerRowPosition: headerRowPosition })
     }
     let result = values.map((row, rowIndex) => {
       let rowObject = {}
@@ -424,7 +426,7 @@ function getRangeValuesAsTable(range, {headerRowPosition = 1, includeFormulaValu
       return rowObject
     })
     return result
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -443,7 +445,7 @@ function getDisplayValueByHeaderName(headerName, range) {
     } else {
       return range.getDisplayValues()[0][columnIndex]
     }
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -462,7 +464,7 @@ function getValueByHeaderName(headerName, range) {
     } else {
       return null
     }
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -487,10 +489,10 @@ function getValueByHeaderName(headerName, range) {
  *   the full range without narrowing.
  * @returns {GoogleAppsScript.Spreadsheet.Range} The original `range` (enables chaining).
  */
-function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1, overwriteAll = false} = {}) {
+function setValuesByHeaderNames(newValues, range, { headerRowPosition = 1, overwriteAll = false } = {}) {
   try {
-    const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {headerRowPosition: headerRowPosition})
-    const rangeHeaderNames = getRangeHeaderNames(range, {headerRowPosition: headerRowPosition})
+    const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), { headerRowPosition: headerRowPosition })
+    const rangeHeaderNames = getRangeHeaderNames(range, { headerRowPosition: headerRowPosition })
     const topRangeRowPosition = range.getRow()
     const topDataRowPosition = (topRangeRowPosition > headerRowPosition) ? topRangeRowPosition : headerRowPosition + 1
     const initialNumRows = range.getLastRow() - topDataRowPosition + 1
@@ -506,7 +508,7 @@ function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1, overwr
     let narrowedHeaderFormulas
     let narrowedNewValuesToApply
     if (overwriteAll) {
-      narrowedRange = range.getSheet().getRange(topDataRowPosition,range.getColumn(), initialNumRows, range.getNumColumns())
+      narrowedRange = range.getSheet().getRange(topDataRowPosition, range.getColumn(), initialNumRows, range.getNumColumns())
       narrowedRangeHeaderNames = rangeHeaderNames
       narrowedRangeValues = Array(initialNumRows).fill(null).map(row => Array(range.getNumColumns()).fill(null))
       narrowedNewValuesToApply = newValuesToApply
@@ -534,7 +536,7 @@ function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1, overwr
       // Find the smallest series of columns that will update all the columns that need to be updated in one update action
       const headerNamePositions = headerNamesInNewValues.filter(
         headerName => rangeHeaderNames.includes(headerName)
-        ).map(headerName => sheetHeaderNames.indexOf(headerName) + 1)
+      ).map(headerName => sheetHeaderNames.indexOf(headerName) + 1)
       // If none of the header names are in the range passed in, quit now
       if (headerNamePositions.length === 0) return range
       const firstColumnPosition = Math.min(...headerNamePositions)
@@ -543,7 +545,7 @@ function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1, overwr
       // PREP RANGE AND DATA
       // Create the narrowed range, based on narrowed row and column data
       narrowedRange = range.getSheet().getRange(firstRowPosition, firstColumnPosition, numRows, numColumns)
-      narrowedRangeHeaderNames = getRangeHeaderNames(narrowedRange, {headerRowPosition: headerRowPosition})
+      narrowedRangeHeaderNames = getRangeHeaderNames(narrowedRange, { headerRowPosition: headerRowPosition })
       narrowedRangeValues = narrowedRange.getValues()
       narrowedRangeFormulas = narrowedRange.getFormulas()
 
@@ -552,7 +554,7 @@ function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1, overwr
       // There's no way to easily discern when a two-dimensional array formula is being used for
       // columns not directly under the source formula, so as a workaround, the function will
       // also check to see if the "|" (pipe) character is the first character of a header value.
-      narrowedHeaderFormulas = getRangeHeaderFormulas(narrowedRange, {headerRowPosition: headerRowPosition})
+      narrowedHeaderFormulas = getRangeHeaderFormulas(narrowedRange, { headerRowPosition: headerRowPosition })
       if (narrowedHeaderFormulas.some((formula) => formula !== "")) {
         const narrowedRangeValuesWithoutFormulaValues = narrowedRangeValues.map((row, rowIndex) => {
           return row.map((value, columnIndex) => {
@@ -587,7 +589,7 @@ function setValuesByHeaderNames(newValues, range, {headerRowPosition = 1, overwr
     narrowedRange.setValues(narrowedRangeValues)
     // Return the original range, for chaining
     return range
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -603,7 +605,7 @@ function appendValuesByHeaderNames(values, sheet) {
       const rowArray = sheetHeaderColumnNames.map(colName => row[colName])
       appendRowWithFormatting(sheet, rowArray)
     })
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -619,7 +621,7 @@ function appendValuesByHeaderNames(values, sheet) {
  * @param {number} [options.headerRowPosition=1] - The 1-based row number of the header row.
  * @returns {string[]} Array of header name strings, one per column.
  */
-function getSheetHeaderNames(sheet, {forceRefresh = false, headerRowPosition = 1} = {}) {
+function getSheetHeaderNames(sheet, { forceRefresh = false, headerRowPosition = 1 } = {}) {
   try {
     const sheetName = sheet.getName()
     if (!cachedHeaderNames[sheetName] || forceRefresh) {
@@ -630,7 +632,7 @@ function getSheetHeaderNames(sheet, {forceRefresh = false, headerRowPosition = 1
       cachedHeaderFormulas[sheetName] = headerFormulas
     }
     return cachedHeaderNames[sheetName]
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -644,11 +646,11 @@ function getSheetHeaderNames(sheet, {forceRefresh = false, headerRowPosition = 1
  * @param {boolean} [options.overwriteAll=false] - Passed through to `setValuesByHeaderNames()`.
  * @returns {GoogleAppsScript.Spreadsheet.Range} The updated range.
  */
-function setValuesForRow(newValues, rowNumber, sheet, {headerRowPosition = 1, overwriteAll = false} = {}) {
+function setValuesForRow(newValues, rowNumber, sheet, { headerRowPosition = 1, overwriteAll = false } = {}) {
   try {
     const range = sheet.getRange(rowNumber + ":" + rowNumber)
-    return setValuesByHeaderNames([newValues], range, {headerRowPosition: headerRowPosition, overwriteAll: overwriteAll})
-  } catch(e) { logError(e) }
+    return setValuesByHeaderNames([newValues], range, { headerRowPosition: headerRowPosition, overwriteAll: overwriteAll })
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -661,12 +663,12 @@ function setValuesForRow(newValues, rowNumber, sheet, {headerRowPosition = 1, ov
  * @param {number} [options.headerRowPosition=1] - The 1-based row number of the header row.
  * @returns {string[]} Array of header name strings for the columns covered by `range`.
  */
-function getRangeHeaderNames(range, {forceRefresh = false, headerRowPosition = 1} = {}) {
+function getRangeHeaderNames(range, { forceRefresh = false, headerRowPosition = 1 } = {}) {
   try {
-    const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), {forceRefresh: forceRefresh, headerRowPosition: headerRowPosition})
+    const sheetHeaderNames = getSheetHeaderNames(range.getSheet(), { forceRefresh: forceRefresh, headerRowPosition: headerRowPosition })
     const rangeStartColumnIndex = range.getColumn() - 1
     return sheetHeaderNames.slice(rangeStartColumnIndex, rangeStartColumnIndex + range.getWidth())
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -679,12 +681,12 @@ function getRangeHeaderNames(range, {forceRefresh = false, headerRowPosition = 1
  * @param {number} [options.headerRowPosition=1] - The 1-based row number of the header row.
  * @returns {string[]} Array of formula strings, one per column. Empty string for non-formula cells.
  */
-function getSheetHeaderFormulas(sheet, {forceRefresh = false, headerRowPosition = 1} = {}) {
+function getSheetHeaderFormulas(sheet, { forceRefresh = false, headerRowPosition = 1 } = {}) {
   try {
     const sheetName = sheet.getName()
-    getSheetHeaderNames(sheet, {forceRefresh: forceRefresh, headerRowPosition: headerRowPosition})
+    getSheetHeaderNames(sheet, { forceRefresh: forceRefresh, headerRowPosition: headerRowPosition })
     return cachedHeaderFormulas[sheetName]
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -697,12 +699,12 @@ function getSheetHeaderFormulas(sheet, {forceRefresh = false, headerRowPosition 
  * @param {number} [options.headerRowPosition=1] - The 1-based row number of the header row.
  * @returns {string[]} Array of formula strings for the columns in `range`.
  */
-function getRangeHeaderFormulas(range, {forceRefresh = false, headerRowPosition = 1} = {}) {
+function getRangeHeaderFormulas(range, { forceRefresh = false, headerRowPosition = 1 } = {}) {
   try {
-    const sheetHeaderFormulas = getSheetHeaderFormulas(range.getSheet(), {forceRefresh: forceRefresh, headerRowPosition: headerRowPosition})
+    const sheetHeaderFormulas = getSheetHeaderFormulas(range.getSheet(), { forceRefresh: forceRefresh, headerRowPosition: headerRowPosition })
     const rangeStartColumnIndex = range.getColumn() - 1
     return sheetHeaderFormulas.slice(rangeStartColumnIndex, rangeStartColumnIndex + range.getWidth())
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -716,7 +718,7 @@ function getMaxValueInRange(range) {
     let values = range.getValues().flat().filter(Number.isFinite)
     if (!values.length) return null
     return values.reduce((a, b) => Math.max(a, b))
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -733,7 +735,7 @@ function applyFormats(formatGroups, sheet) {
       const ranges = formatGroups[groupName].ranges
       if (ranges.length) formatGroups[groupName].formats(sheet.getRangeList(ranges))
     })
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -753,7 +755,7 @@ function getColumnLettersFromPosition(colPosition) {
       remainder = Math.floor(remainder / letterCount) - 1
     }
     return columnLetters.join("")
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -810,7 +812,7 @@ function clearSpillBlockages(e) {
         const spillColumnCount = getSpillColumnCount(headerFormulas[i])
         const spillRowCount = sheet.getLastRow() - 1
         if (spillColumnCount > 0 && spillRowCount > 0) {
-          const rangeToClear = sheet.getRange(2,i+1,spillRowCount,spillColumnCount)
+          const rangeToClear = sheet.getRange(2, i + 1, spillRowCount, spillColumnCount)
           rangeToClear.clearContent()
           blockagesCleared++
         }
@@ -822,9 +824,9 @@ function clearSpillBlockages(e) {
         `Data blocking ${blockagesCleared === 1 ? "a" : blockagesCleared} calculated column${blockagesCleared === 1 ? "" : "s"} has been cleared.`
       )
       // Refresh the header name and formula caches for any calls after this that rely on it.
-      getSheetHeaderNames(sheet,{forceRefresh: true})
+      getSheetHeaderNames(sheet, { forceRefresh: true })
     }
-  } catch(e) { logError(e) }
+  } catch (e) { logError(e) }
 }
 
 /**
@@ -885,7 +887,7 @@ function getSpillColumnCount(formula) {
       }
     }
     return commas + 1
-  } catch(e) {
+  } catch (e) {
     logError(e)
     return -1
   }
@@ -933,7 +935,7 @@ function findTopLevelSemicolon(formula, startPos) {
       }
     }
     return -1
-  } catch(e) {
+  } catch (e) {
     logError(e)
     return -1
   }
