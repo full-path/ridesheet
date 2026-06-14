@@ -419,23 +419,29 @@ function getTripKey(trip) {
  *   the moved trips.
  * - Any other value — shows a toast error and logs the problem.
  *
- * A trip is considered past-date if its `"Trip Date"` is before today.
- * A run is considered past-date if its `"Run Date"` is before today.
- * Both use `dateToday()` for the comparison.
+ * A trip is eligible if its `"Trip Date"` is before today, or if it has any
+ * value in `"Trip Result"`.
+ * A run is eligible if its combined `"Run Date"` + `"Scheduled End Time"` is
+ * before now; if `"Scheduled End Time"` is blank, falls back to date-only
+ * comparison using `dateToday()`.
  */
 function moveTripsToReview() {
   try {
     const ss              = SpreadsheetApp.getActiveSpreadsheet()
     const tripSheet       = ss.getSheetByName("Trips")
     const tripReviewSheet = ss.getSheetByName("Trip Review")
-    const tripFilter      = function(row) { return row["Trip Date"] && row["Trip Date"] < dateToday() }
+    const tripFilter      = function(row) { return row["Trip Date"] && (row["Trip Date"] < dateToday() || row["Trip Result"]) }
     const movedTrips      = moveRows(tripSheet, tripReviewSheet, tripFilter, "Review TS")
 
     const runMode = getDocProp("createRunMode")
     if (runMode === "default") {
       const runSheet        = ss.getSheetByName("Runs")
       const runReviewSheet  = ss.getSheetByName("Run Review")
-      const runFilter       = function(row) { return row["Run Date"] && row["Run Date"] < dateToday() }
+      const runFilter       = function(row) {
+        if (!row["Run Date"]) return false
+        if (row["Scheduled End Time"]) return combineDateAndTime(row["Run Date"], row["Scheduled End Time"]) < new Date()
+        return row["Run Date"] < dateToday()
+      }
       moveRows(runSheet, runReviewSheet, runFilter, "Review TS")
     }
     else if (runMode === "auto") {
