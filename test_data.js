@@ -1,5 +1,31 @@
+/**
+ * @fileoverview End-to-end dummy data generation for RideSheet demos and testing.
+ *
+ * The main entry point is `testCreateDummyData()`, which orchestrates generation of the
+ * full data set: POI addresses, home addresses, customers, vehicles, drivers, run templates,
+ * runs, trips, route matrices, and trip assignments.
+ *
+ * Most generator functions accept a shared `params` configuration object (see
+ * `testCreateDummyData` for the full structure) and support a `params.useCache` flag.
+ * When `useCache` is `true`, the function reads existing data from the corresponding
+ * spreadsheet sheet rather than regenerating it — useful for partial re-runs during
+ * development.
+ *
+ * POI address lookup is delegated to test_data_maps.js; the strategy is selected by
+ * `params.addressSource` (`"nominatim"`, `"osm"`, `"google"`, or `"geocode"`).
+ */
+
+/**
+ * Orchestrates generation of a complete RideSheet demo data set and writes each
+ * entity type to its corresponding spreadsheet sheet. Logs progress at each stage.
+ *
+ * Configuration is defined inline via the `params` object, including base location,
+ * number of customers, trip date, solver settings, and address source strategy.
+ * After generating trips, assembles a route matrix for all referenced addresses and
+ * submits trips to the assignment solver via `getTripAssignments`.
+ */
 function testCreateDummyData() {
-  const baseLocation = "368 38th Street, Astoria, OR 97103"
+  const baseLocation = "108 SW Frazer Ave, Pendleton, OR 97801"
   const baseFormattedAddress = getGeocode(baseLocation, "formatted_address")
   const baseLocationObj = getGeocode(baseLocation, "object")
 
@@ -25,12 +51,9 @@ function testCreateDummyData() {
     maxTimeFunction: (estTripHours) => {
       return Math.ceil(Math.max((estTripHours * 60) + 15, (estTripHours * 60 * 1.5) + 10))
     },
-    useCache: true,
-    addressSource: "osm"  // "osm" or "google"
+    useCache: false,
+    addressSource: "nominatim"  // "nominatim", "osm", "google", or "geocode"
   }
-
-  // moveTestRecordsToReview(params)
-  // return
 
   Logger.log("Generating POI addresses...")
   const poiAddresses = generatePoiAddresses(params)
@@ -93,6 +116,11 @@ function testCreateDummyData() {
   Logger.log("Assignment results received...")
 }
 
+/**
+ * Moves trips and runs for the date specified in `params.tripDate` into the review
+ * workflow by delegating to `moveTripsToReview` with date-matching filters.
+ * @param {Object} params - Generation parameters; uses `params.tripDate` (Date).
+ */
 function moveTestRecordsToReview(params) {
   const tripFilter = function(row) {
     return row["Trip Date"] && row["Trip Date"].getTime() === params.tripDate.getTime()
@@ -103,6 +131,15 @@ function moveTestRecordsToReview(params) {
   moveTripsToReview(tripFilter, runFilter)
 }
 
+/**
+ * Geocodes an address and returns the formatted address only if it resolves to a
+ * navigable street location. Results are filtered to `premise`, `route`, or
+ * `street_address` types and must include a street number and have no restricted
+ * travel modes on their navigation points.
+ * @param {string} address - Address string or `"lat,lng"` coordinate pair to geocode.
+ * @returns {string|undefined} The formatted address if a navigable result is found,
+ *   or `undefined` if no suitable result exists.
+ */
 function getNavigableFormattedAddress(address) {
   try {
     const allowedLocationTypes = ["premise", "route", "street_address"]
@@ -126,6 +163,19 @@ function getNavigableFormattedAddress(address) {
   } catch (e) { logError(e) }
 }
 
+/**
+ * Generates `params.numCustomers` random home addresses within `params.addressRadius`
+ * miles of `params.startingLocation`. Each candidate point is reverse-geocoded through
+ * `getNavigableFormattedAddress`; points that don't resolve to a navigable street are
+ * discarded and retried. Distance sampling is weighted so that most addresses fall
+ * within the inner half of the radius.
+ *
+ * When `params.useCache` is `true`, returns addresses already in the Customers sheet
+ * column I instead of generating new ones.
+ * @param {Object} params - Generation parameters; uses `startingLocation`, `addressRadius`,
+ *   `numCustomers`, and `useCache`.
+ * @returns {Object[]} Array of address objects, each with a `formattedAddress` string property.
+ */
 function generateRandomHomeAddresses(params) {
   let newAddresses = []
 
@@ -163,6 +213,17 @@ function generateRandomHomeAddresses(params) {
   return newAddresses
 }
 
+/**
+ * Creates one run template row per driver, pairing each driver with the vehicle at
+ * the same index, set to run Monday–Saturday 8 AM–6 PM. Clears the Run Template sheet,
+ * writes the new rows, then returns the raw row objects (not the re-read sheet data).
+ *
+ * When `params.useCache` is `true`, returns the existing Run Template sheet data instead.
+ * @param {Object} params - Generation parameters; uses `useCache`.
+ * @param {Object[]} drivers - Driver records as returned by `generateDrivers`.
+ * @param {Object[]} vehicles - Vehicle records as returned by `generateVehicles`.
+ * @returns {Object[]} Array of run template row objects written to the sheet.
+ */
 function generateRunTemplateRows(params, drivers, vehicles) {
   let newRunTemplates = []
   const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -190,19 +251,29 @@ function generateRunTemplateRows(params, drivers, vehicles) {
   return newRunTemplateRows
 }
 
+/**
+ * Converts degrees to radians.
+ * @param {number} deg
+ * @returns {number}
+ */
 function toRadians(deg) {
   return deg * Math.PI / 180;
 }
 
+/**
+ * Converts radians to degrees.
+ * @param {number} rad
+ * @returns {number}
+ */
 function toDegrees(rad) {
   return rad * 180 / Math.PI;
 }
 
 /**
- * Compute bounding box around a center point in miles
- * @param {{lat:number, lng:number}} center
- * @param {number} radiusMiles
- * @return {{south:number, west:number, north:number, east:number}}
+ * Computes a latitude/longitude bounding box around a center point.
+ * @param {{lat: number, lng: number}} center - Center coordinate.
+ * @param {number} radiusMiles - Box half-extent in miles.
+ * @returns {{south: number, west: number, north: number, east: number}}
  */
 function computeBoundingBox(center, radiusMiles) {
   const milesPerDegLat = 69;
@@ -219,11 +290,12 @@ function computeBoundingBox(center, radiusMiles) {
 }
 
 /**
- * Generate a random point within a circle of given radius (miles) around a center
- * @param {{lat:number, lng:number}} center
- * @param {number} radiusMiles
- * @param {function} [sampleRadiusFn]  Optional function returning a random distance in miles
- * @return {{lat:number, lng:number}}
+ * Returns a random point within `radiusMiles` of `center`, using a uniform bearing.
+ * @param {{lat: number, lng: number}} center - Center coordinate.
+ * @param {number} radiusMiles - Maximum distance from center in miles.
+ * @param {function} [sampleRadiusFn] - Optional function `(radiusMiles) => distanceMiles`
+ *   for non-uniform distance sampling; defaults to uniform random.
+ * @returns {{lat: number, lng: number}}
  */
 function randomPointInRadius(center, radiusMiles, sampleRadiusFn) {
   // Determine distance: use provided sampler or uniform distribution
@@ -248,7 +320,8 @@ function randomPointInRadius(center, radiusMiles, sampleRadiusFn) {
 }
 
 /**
- * Shuffle an array in place (Fisher–Yates)
+ * Shuffles an array in place using the Fisher–Yates algorithm.
+ * @param {Array} arr - The array to shuffle.
  */
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -257,6 +330,24 @@ function shuffleArray(arr) {
   }
 }
 
+/**
+ * Generates a set of POI (point-of-interest) addresses for Medical, Work, and Other
+ * trip purposes, then writes them to the Addresses sheet. The address lookup strategy
+ * is selected by `params.addressSource`:
+ * - `"google"` — Google Places API v1
+ * - `"geocode"` — Google Maps geocoder fishing
+ * - `"nominatim"` — OpenStreetMap Nominatim (default)
+ * - anything else — Overpass API
+ *
+ * Deduplicates short names after collection: if two addresses produce the same short
+ * name, a numeric suffix is appended to the later one.
+ *
+ * When `params.useCache` is `true`, returns addresses already in the Addresses sheet
+ * columns B–C instead of generating new ones.
+ * @param {Object} params - Generation parameters; uses `addressSource`, `startingLocation`,
+ *   `baseFormattedAddress`, `addressRadius`, and `useCache`.
+ * @returns {Object[]} Address objects with `Short Name`, `Address`, and `Default Trip Purpose`.
+ */
 function generatePoiAddresses(params) {
   let newAddresses = []
   const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -279,6 +370,32 @@ function generatePoiAddresses(params) {
       ["local_government_office", "lawyer", "insurance_agency", "accounting"], "Work", 5))
     newAddresses.push(...getGooglePlacesAddresses(params.baseFormattedAddress, params.addressRadius,
       ["church", "library", "bank", "pharmacy", "movie_theater"], "Other", 5))
+  } else if (params.addressSource === "geocode") {
+    newAddresses.push(...getGeocodeFishedAddresses(params.startingLocation, params.addressRadius,
+      ["hospital", "medical clinic", "pharmacy", "dentist"], "Medical", 5))
+    Utilities.sleep(1000)
+    newAddresses.push(...getGeocodeFishedAddresses(params.startingLocation, params.addressRadius,
+      ["city hall", "library", "post office", "senior center"], "Work", 5))
+    Utilities.sleep(1000)
+    newAddresses.push(...getGeocodeFishedAddresses(params.startingLocation, params.addressRadius,
+      ["church", "grocery store", "bank", "movie theater"], "Other", 5))
+  } else if (params.addressSource === "nominatim") {
+    newAddresses.push(...getNominatimAddresses(params.startingLocation, params.addressRadius,
+      [{ key: "amenity", value: "hospital" }, { key: "amenity", value: "clinic" },
+      { key: "amenity", value: "pharmacy" }, { key: "amenity", value: "dentist" },
+      { key: "amenity", value: "doctors" }],
+      "Medical", 5))
+    Utilities.sleep(1000)
+    newAddresses.push(...getNominatimAddresses(params.startingLocation, params.addressRadius,
+      [{ key: "amenity", value: "townhall" }, { key: "amenity", value: "library" },
+      { key: "amenity", value: "post_office" }, { key: "amenity", value: "social_facility" }],
+      "Work", 5))
+    Utilities.sleep(1000)
+    newAddresses.push(...getNominatimAddresses(params.startingLocation, params.addressRadius,
+      [{ key: "amenity", value: "place_of_worship" }, { key: "amenity", value: "bank" },
+      { key: "amenity", value: "community_centre" }, { key: "shop", value: "supermarket" },
+      { key: "amenity", value: "cinema" }],
+      "Other", 5))
   } else {
     newAddresses.push(...getOsmAddresses(params.startingLocation, params.addressRadius,
       '["amenity"~"clinic|hospital|doctor|dentist"]["name"]["addr:housenumber"]["addr:street"]["addr:postcode"]', "Medical", 5))
@@ -308,64 +425,16 @@ function generatePoiAddresses(params) {
   return newAddresses
 }
 
-function getOsmAddressesOld(startLocation, radiusMiles = 50, osmQuery, purpose, limit) {
-  const bboxObj = computeBoundingBox(startLocation, radiusMiles);
-  const bbox = `${bboxObj.south},${bboxObj.west},${bboxObj.north},${bboxObj.east}`;
-
-  const endpoint = 'https://overpass-api.de/api/interpreter';
-  // const endpoint = 'https://overpass.private.coffee/api/interpreter'
-
-  const overpassQL = `
-    [out:json][timeout:60];
-    (
-      node${osmQuery}(${bbox});
-      way${osmQuery}(${bbox});
-      relation${osmQuery}(${bbox});
-    );
-    out tags ${limit};
-  `;
-
-  // Logger.log(overpassQL)
-
-  const response = UrlFetchApp.fetch(endpoint, {
-    method: 'post',
-    payload: { data: overpassQL },
-    muteHttpExceptions: true
-  });
-  //Utilities.sleep(1000);
-
-  let osmData = {}
-  try {
-    osmData = JSON.parse(response.getContentText());
-  } catch (e) {
-    log(response.getContentText())
-    Logger.log(e.name + ': ' + e.message, e.stack)
-    Logger.log(response.getContentText())
-    return []
-  }
-
-  const osmElements = osmData.elements || [];
-  osmElements.forEach((elem) => {
-    const tags = elem.tags
-    const googleMapsQuery = `${tags["addr:housenumber"]} ${tags["addr:street"]} ${tags["addr:city"]} ${tags["addr:postcode"]}`
-    const formattedAddress = getGeocode(googleMapsQuery, "formatted_address")
-    if (formattedAddress.startsWith("Error")) Logger.log(JSON.stringify(tags, null, 2))
-    elem.formattedAddress = formattedAddress
-  })
-
-  const shortNames = []
-  const newAddresses = osmElements.map((elem) => {
-    return {
-      "Short Name": createAddressShortName(elem.tags.name),
-      "Address": `${elem.formattedAddress} (${elem.tags.name})`,
-      "Default Trip Purpose": purpose
-    }
-  })
-
-  Logger.log(`Received ${newAddresses.length} ${purpose} addresses`)
-  return newAddresses
-}
-
+/**
+ * Generates a fixed fleet of six vehicles (three Buses and three Vans, numbered 1–3)
+ * with predefined capacity and accessibility attributes, then writes them to the
+ * Vehicles sheet.
+ *
+ * When `params.useCache` is `true`, returns the existing Vehicles sheet data instead.
+ * @param {Object} params - Generation parameters; uses `startDate`, `baseFormattedAddress`,
+ *   and `useCache`.
+ * @returns {Object[]} Vehicle records with keys matching Vehicles sheet columns.
+ */
 function generateVehicles(params) {
   let newVehicles = []
   const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -414,6 +483,15 @@ function generateVehicles(params) {
   return newVehicles
 }
 
+/**
+ * Generates a fixed roster of six drivers with fictional names and email addresses
+ * under `params.agencyDomain`, then writes them to the Drivers sheet.
+ *
+ * When `params.useCache` is `true`, returns the existing Drivers sheet data instead.
+ * @param {Object} params - Generation parameters; uses `agencyDomain`, `startDate`,
+ *   and `useCache`.
+ * @returns {Object[]} Driver records with keys matching Drivers sheet columns.
+ */
 function generateDrivers(params) {
   let newDrivers = []
   const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -470,11 +548,16 @@ function generateDrivers(params) {
 }
 
 /**
- * Generate fake customers for dummy data
- * @param {{lat:number, lng:number}} startLocation - Starting location for customer generation
- * @param {number} numCustomers - Number of customers to generate
- * @param {{Medical:Object[], Work:Object[], Other:Object[]}} poiPool - Pool of points of interest
- * @return {Object[]} Array of customer records with keys matching spreadsheet columns
+ * Generates `params.numCustomers` customers with randomised names, phone numbers, and
+ * a home address from `homeAddresses`. Assigns a random default DO address from
+ * `poiAddresses` and a random service ID from the `lookupServiceIds` named range.
+ * Writes results to the Customers sheet.
+ *
+ * When `params.useCache` is `true`, returns the existing Customers sheet data instead.
+ * @param {Object} params - Generation parameters; uses `numCustomers`, `areaCode`, and `useCache`.
+ * @param {Object[]} homeAddresses - Home address objects as returned by `generateRandomHomeAddresses`.
+ * @param {Object[]} poiAddresses - POI address objects as returned by `generatePoiAddresses`.
+ * @returns {Object[]} Customer records with keys matching Customers sheet columns.
  */
 function generateCustomers(params, homeAddresses, poiAddresses) {
   let newCustomers = []
@@ -517,11 +600,13 @@ function generateCustomers(params, homeAddresses, poiAddresses) {
 }
 
 /**
- * Generate runs for dummy data
- * @param {string} startDateStr - Start date in MM/DD/YYYY format
- * @param {string[]} driverIDs - Array of driver IDs
- * @param {string[]} vehicleIDs - Array of vehicle IDs
- * @return {Object[]} Array of run records with keys matching spreadsheet columns
+ * Generates one week of run records from the Run Template sheet starting on the first
+ * Monday on or after `params.startDate`. Clears the Runs sheet, calls
+ * `buildRunsFromTemplate`, then re-reads the sheet to return the written records.
+ *
+ * When `params.useCache` is `true`, returns the existing Runs sheet data instead.
+ * @param {Object} params - Generation parameters; uses `startDate` and `useCache`.
+ * @returns {Object[]} Run records with keys matching Runs sheet columns.
  */
 function generateRuns(params) {
   let newRuns = []
@@ -544,11 +629,18 @@ function generateRuns(params) {
 }
 
 /**
- * Generate trips for dummy data
- * @param {Object[]} runs - Array of run records
- * @param {Object[]} customers - Array of customer records
- * @param {{Medical:Object[], Work:Object[], Other:Object[]}} poiAddresses - Pool of points of interest
- * @return {Object[]} Array of trip records with keys matching spreadsheet columns
+ * Generates a go-trip and a return-trip for every customer on `params.tripDate`.
+ * Go-trip pickup times are sampled uniformly between 8:30 AM and 1:00 PM; return
+ * trips are scheduled after a random 30–60 minute stay at the destination.
+ * Writes all trips to the Trips sheet.
+ *
+ * When `params.useCache` is `true`, returns the existing Trips sheet data instead.
+ * @param {Object} params - Generation parameters; uses `tripDate`, `goWindowDuration`,
+ *   `returnWindowDuration`, and `useCache`.
+ * @param {Object[]} runs - Run records as returned by `generateRuns`.
+ * @param {Object[]} customers - Customer records as returned by `generateCustomers`.
+ * @param {Object[]} poiAddresses - POI address objects as returned by `generatePoiAddresses`.
+ * @returns {Object[]} Trip records with keys matching Trips sheet columns.
  */
 function generateTrips(params, runs, customers, poiAddresses) {
   let newTrips = []
@@ -645,15 +737,23 @@ function generateTrips(params, runs, customers, poiAddresses) {
   return newTrips
 }
 
-// helper random between min and max inclusive
+/**
+ * Returns a random integer between `min` and `max`, inclusive.
+ * @param {number} min - Lower bound (inclusive).
+ * @param {number} max - Upper bound (inclusive).
+ * @returns {number}
+ */
 function randBetween(min, max) {
   return Math.floor(min + Math.random() * (max - min + 1));
 }
 
 /**
- * Creates an acronym using a regular expression.
- * @param {string} phrase The input string of words.
- * @returns {string} The resulting acronym in uppercase.
+ * Converts a place name into a short identifier. Stop words (`a`, `an`, `and`,
+ * `for`, `in`, `of`, `on`, `the`) are removed, then the initial letter of each
+ * remaining word is joined and uppercased. If only one word remains after filtering,
+ * that word is returned as-is instead of a single-letter acronym.
+ * @param {string} phrase - The place name to abbreviate (e.g. `"CHI Saint Anthony Hospital"`).
+ * @returns {string} Short identifier (e.g. `"CSAH"`), or `''` if `phrase` is empty or not a string.
  */
 const createAddressShortName = (phrase) => {
   if (!phrase || typeof phrase !== 'string') {
@@ -675,14 +775,12 @@ const createAddressShortName = (phrase) => {
   }
 };
 
-function testGetTimeObject() {
-  minutesPastMidnight = 719
-  const testRange = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Lookups").getRange("G2")
-  testRange.setValue(getTimeString(minutesPastMidnight))
-  Logger.log(getTimeString(minutesPastMidnight))
-  log(getTimeString(minutesPastMidnight))
-}
-
+/**
+ * Returns a random integer between `min` and `max`, inclusive, using `Math.floor`.
+ * @param {number} min - Lower bound (inclusive).
+ * @param {number} max - Upper bound (inclusive).
+ * @returns {number}
+ */
 function getRandomInteger(min, max) {
   min = Math.ceil(min)
   max = Math.floor(max)
@@ -690,8 +788,18 @@ function getRandomInteger(min, max) {
 }
 
 /**
- * Calls the Google Maps Routes API computeRouteMatrix method
- * using UrlFetchApp in Google Apps Script.
+ * Builds a full route matrix for all `addresses` using the Google Maps Routes API
+ * (`computeRouteMatrix`). Addresses are batched to stay within the API's 50-waypoint
+ * limit (origins + destinations ≤ 50 per request). Results are written to the Routes
+ * sheet and returned as an array of route records.
+ *
+ * Requires `GOOGLE_MAPS_API_KEY` in Script Properties. When `params.useCache` is `true`,
+ * returns the existing Routes sheet data instead.
+ * @param {Object} params - Generation parameters; uses `useCache`.
+ * @param {Object[]} addresses - Address objects with an `"Address"` string property.
+ *   Each address is cleaned via `parseAddress` before sending to the API.
+ * @returns {Object[]|undefined} Route records with `Start Address`, `End Address`, `Miles`,
+ *   `Minutes`, and `Default Trip Purpose`, or `undefined` if `GOOGLE_MAPS_API_KEY` is missing.
  */
 function getRoutes(params, addresses) {
   const GOOGLE_MAPS_API_KEY = PropertiesService.getScriptProperties().getProperty('GOOGLE_MAPS_API_KEY');
@@ -790,6 +898,23 @@ function getRoutes(params, addresses) {
   return newRoutes
 }
 
+/**
+ * Submits trips and runs for `params.tripDate` to the external trip-assignment solver
+ * (URL from `TRIP_ASSIGNMENT_URL` in Script Properties). Constructs a time matrix from
+ * `routes`, packages vehicles and trips into the solver's request format, and — when a
+ * solution is found — writes `Sched PU Time`, `Sched DO Time`, `Vehicle ID`, and
+ * `Driver ID` back to the Trips sheet.
+ *
+ * Trip time windows are derived from `Appt Time` (go-trips) or `PU Time` (return trips).
+ * @param {Object} params - Generation parameters; uses `tripDate`, `goWindowDuration`,
+ *   `returnWindowDuration`, `defaultPickupService`, `defaultDropoffService`,
+ *   `solverTimeLimitSeconds`, `maxSlackVehicleMinutes`, `defaultPenalty`,
+ *   `maxTimeFunction`, and `baseFormattedAddress`.
+ * @param {Object[]} trips - Trip records as returned by `generateTrips`.
+ * @param {Object[]} runs - Run records as returned by `generateRuns`.
+ * @param {Object[]} vehicles - Vehicle records as returned by `generateVehicles`.
+ * @param {Object[]} routes - Route records as returned by `getRoutes`.
+ */
 function getTripAssignments(params, trips, runs, vehicles, routes) {
   const TRIP_ASSIGNMENT_URL = PropertiesService.getScriptProperties().getProperty('TRIP_ASSIGNMENT_URL');
 
@@ -932,12 +1057,22 @@ function getTripAssignments(params, trips, runs, vehicles, routes) {
 
 }
 
+/**
+ * Returns the number of minutes elapsed since midnight for a given Date object.
+ * @param {Date} dateObject - A Date whose hours and minutes are read in local time.
+ * @returns {number} Minutes past midnight (0–1439).
+ */
 function getMinutesPastMidnight(dateObject) {
   const hours = dateObject.getHours();
   const minutes = dateObject.getMinutes();
   return (hours * 60) + minutes;
 }
 
+/**
+ * Converts a minutes-past-midnight value to a 12-hour time string (e.g. `"2:05 PM"`).
+ * @param {number} minutesPastMidnight - Minutes elapsed since midnight (0–1439).
+ * @returns {string} Formatted time string in `"H:MM AM/PM"` format.
+ */
 function getTimeString(minutesPastMidnight) {
   const hours = Math.floor(minutesPastMidnight / 60)
   const minutes = Math.floor(minutesPastMidnight % 60)
