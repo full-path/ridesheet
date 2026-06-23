@@ -16,6 +16,28 @@
  */
 
 /**
+ * Resolves the IANA timezone identifier for a lat/lng coordinate using the
+ * Google Maps Time Zone API. Returns `null` if the API key is absent or the
+ * request fails, so callers can skip the check gracefully.
+ * @param {number} lat - Latitude.
+ * @param {number} lng - Longitude.
+ * @returns {string|null} IANA timezone string (e.g. `"America/Los_Angeles"`), or `null`.
+ */
+function getTimezoneForLatLng(lat, lng) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty("GOOGLE_MAPS_API_KEY")
+  if (!apiKey) return null
+  const timestamp = Math.floor(Date.now() / 1000)
+  const url =
+    `https://maps.googleapis.com/maps/api/timezone/json` +
+    `?location=${lat},${lng}&timestamp=${timestamp}&key=${apiKey}`
+  try {
+    const result = JSON.parse(UrlFetchApp.fetch(url, { muteHttpExceptions: true }).getContentText())
+    if (result.status === "OK") return result.timeZoneId
+  } catch(e) { logError(e) }
+  return null
+}
+
+/**
  * Orchestrates generation of a complete RideSheet demo data set and writes each
  * entity type to its corresponding spreadsheet sheet. Logs progress at each stage.
  *
@@ -25,9 +47,41 @@
  * submits trips to the assignment solver via `getTripAssignments`.
  */
 function testCreateDummyData() {
+  // Fail fast if the Apps Script project timezone doesn't match localTimeZone.
+  // JS Date methods (.getDay(), .setDate(), etc.) operate in the script timezone,
+  // so a mismatch silently produces wrong weekday calculations and date boundaries.
+  const localTZ = getDocProp("localTimeZone")
+  const scriptTZ = Session.getScriptTimeZone()
+  if (scriptTZ !== localTZ) {
+    SpreadsheetApp.getUi().alert(
+      "Timezone Mismatch — Cannot Continue",
+      `The Apps Script project timezone ('${scriptTZ}') does not match the localTimeZone ` +
+      `document property ('${localTZ}').\n\n` +
+      `Fix it via: Extensions → Apps Script → Project Settings → Time zone. ` +
+      `Then re-run testCreateDummyData().`,
+      SpreadsheetApp.getUi().ButtonSet.OK
+    )
+    return
+  }
+
   const baseLocation = "108 SW Frazer Ave, Pendleton, OR 97801"
   const baseFormattedAddress = getGeocode(baseLocation, "formatted_address")
   const baseLocationObj = getGeocode(baseLocation, "object")
+
+  // Fail fast if baseLocation is in a different timezone than localTimeZone.
+  // Skipped silently when the Time Zone API is unavailable (getTimezoneForLatLng returns null).
+  const baseLocationTZ = getTimezoneForLatLng(baseLocationObj.lat, baseLocationObj.lng)
+  if (baseLocationTZ && baseLocationTZ !== localTZ) {
+    SpreadsheetApp.getUi().alert(
+      "Timezone Mismatch — Cannot Continue",
+      `The baseLocation timezone ('${baseLocationTZ}') does not match the localTimeZone ` +
+      `document property ('${localTZ}').\n\n` +
+      `Either update the localTimeZone property to '${baseLocationTZ}', or change baseLocation ` +
+      `to an address in the '${localTZ}' timezone.`,
+      SpreadsheetApp.getUi().ButtonSet.OK
+    )
+    return
+  }
 
   const params = {
     baseFormattedAddress: baseFormattedAddress,
@@ -39,8 +93,8 @@ function testCreateDummyData() {
     areaCode: "(503)",
     numCustomers: 10,
     addressRadius: 10,
-    startDate: new Date("2026-06-10T00:00:00-04:00"),
-    tripDate: new Date("2026-06-15T00:00:00-04:00"),
+    startDate: Utilities.parseDate("2026-06-10 00:00:00", localTZ, "yyyy-MM-dd HH:mm:ss"),
+    tripDate: Utilities.parseDate("2026-06-15 00:00:00", localTZ, "yyyy-MM-dd HH:mm:ss"),
     goWindowDuration: 30,
     returnWindowDuration: 30,
     solverTimeLimitSeconds: 10,
