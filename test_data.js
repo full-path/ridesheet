@@ -16,28 +16,6 @@
  */
 
 /**
- * Resolves the IANA timezone identifier for a lat/lng coordinate using the
- * Google Maps Time Zone API. Returns `null` if the API key is absent or the
- * request fails, so callers can skip the check gracefully.
- * @param {number} lat - Latitude.
- * @param {number} lng - Longitude.
- * @returns {string|null} IANA timezone string (e.g. `"America/Los_Angeles"`), or `null`.
- */
-function getTimezoneForLatLng(lat, lng) {
-  const apiKey = PropertiesService.getScriptProperties().getProperty("GOOGLE_MAPS_API_KEY")
-  if (!apiKey) return null
-  const timestamp = Math.floor(Date.now() / 1000)
-  const url =
-    `https://maps.googleapis.com/maps/api/timezone/json` +
-    `?location=${lat},${lng}&timestamp=${timestamp}&key=${apiKey}`
-  try {
-    const result = JSON.parse(UrlFetchApp.fetch(url, { muteHttpExceptions: true }).getContentText())
-    if (result.status === "OK") return result.timeZoneId
-  } catch(e) { logError(e) }
-  return null
-}
-
-/**
  * Orchestrates generation of a complete RideSheet demo data set and writes each
  * entity type to its corresponding spreadsheet sheet. Logs progress at each stage.
  *
@@ -53,14 +31,15 @@ function testCreateDummyData() {
   const localTZ = getDocProp("localTimeZone")
   const scriptTZ = Session.getScriptTimeZone()
   if (scriptTZ !== localTZ) {
-    SpreadsheetApp.getUi().alert(
-      "Timezone Mismatch — Cannot Continue",
+    const msg =
+      `Timezone Mismatch — Cannot Continue\n` +
       `The Apps Script project timezone ('${scriptTZ}') does not match the localTimeZone ` +
-      `document property ('${localTZ}').\n\n` +
+      `document property ('${localTZ}'). ` +
       `Fix it via: Extensions → Apps Script → Project Settings → Time zone. ` +
-      `Then re-run testCreateDummyData().`,
-      SpreadsheetApp.getUi().ButtonSet.OK
-    )
+      `Then re-run testCreateDummyData().`
+    log(msg)
+    Logger.log(msg)
+    safeGetUi()?.alert(msg)
     return
   }
 
@@ -72,14 +51,15 @@ function testCreateDummyData() {
   // Skipped silently when the Time Zone API is unavailable (getTimezoneForLatLng returns null).
   const baseLocationTZ = getTimezoneForLatLng(baseLocationObj.lat, baseLocationObj.lng)
   if (baseLocationTZ && baseLocationTZ !== localTZ) {
-    SpreadsheetApp.getUi().alert(
-      "Timezone Mismatch — Cannot Continue",
+    const msg =
+      `Timezone Mismatch — Cannot Continue\n` +
       `The baseLocation timezone ('${baseLocationTZ}') does not match the localTimeZone ` +
-      `document property ('${localTZ}').\n\n` +
+      `document property ('${localTZ}'). ` +
       `Either update the localTimeZone property to '${baseLocationTZ}', or change baseLocation ` +
-      `to an address in the '${localTZ}' timezone.`,
-      SpreadsheetApp.getUi().ButtonSet.OK
-    )
+      `to an address in the '${localTZ}' timezone.`
+    log(msg)
+    Logger.log(msg)
+    safeGetUi()?.alert(msg)
     return
   }
 
@@ -168,6 +148,28 @@ function testCreateDummyData() {
   Logger.log("Generating assignments...")
   const assignments = getTripAssignments(params, trips, runs, vehicles, routes)
   Logger.log("Assignment results received...")
+}
+
+/**
+ * Resolves the IANA timezone identifier for a lat/lng coordinate using the
+ * Google Maps Time Zone API. Returns `null` if the API key is absent or the
+ * request fails, so callers can skip the check gracefully.
+ * @param {number} lat - Latitude.
+ * @param {number} lng - Longitude.
+ * @returns {string|null} IANA timezone string (e.g. `"America/Los_Angeles"`), or `null`.
+ */
+function getTimezoneForLatLng(lat, lng) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty("GOOGLE_MAPS_API_KEY")
+  if (!apiKey) return null
+  const timestamp = Math.floor(Date.now() / 1000)
+  const url =
+    `https://maps.googleapis.com/maps/api/timezone/json` +
+    `?location=${lat},${lng}&timestamp=${timestamp}&key=${apiKey}`
+  try {
+    const result = JSON.parse(UrlFetchApp.fetch(url, { muteHttpExceptions: true }).getContentText())
+    if (result.status === "OK") return result.timeZoneId
+  } catch (e) { logError(e) }
+  return null
 }
 
 /**
