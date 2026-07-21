@@ -17,7 +17,7 @@
  */
 
 /** @type {string} The current version of RideSheet. */
-const SCRIPT_VERSION = "1.0.2"
+const SCRIPT_VERSION = "deployment test"
 
 /** @type {boolean} Set to true to log timing information to the Debug Log sheet on each onEdit call. */
 const debugLogging                       = false
