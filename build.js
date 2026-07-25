@@ -559,6 +559,7 @@ function repairSheets() {
   fixSheetNames()
   fixNumberFormatting()
   fixDataValidation()
+  fixFrozenRows()
 }
 
 /**
@@ -830,6 +831,20 @@ function fixAllHeaderNames() {
     const range = getFullRow(sheet.getRange("A1"))
     fixHeaderNames(range)
   })
+}
+
+/**
+ * Ensures every configured sheet with a header row has exactly one frozen row.
+ * Called by `repairSheets()` and `onOpen()`.
+ */
+function fixFrozenRows() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    getConfiguredSheetsWithHeaders().forEach(sheetName => {
+      const sheet = ss.getSheetByName(sheetName)
+      if (sheet && sheet.getFrozenRows() !== 1) sheet.setFrozenRows(1)
+    })
+  } catch(e) { logError(e) }
 }
 
 /**
