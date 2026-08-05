@@ -37,6 +37,9 @@ function onOpen(e) {
   try {
     buildNamedRanges()
   } catch(e) { logError(e) }
+  try {
+    fixFrozenRows()
+  } catch(e) { logError(e) }
   checkTimezone()
   log("onOpen duration:",(new Date()) - startTime)
 }
