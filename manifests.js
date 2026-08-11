@@ -161,8 +161,12 @@ function createManifests(templateDocId, groupedManifestData, fileNameFunction) {
     groupedManifestData.forEach(manifestGroup => {
       const manifestFileName = fileNameFunction(manifestGroup)
       const manifestDocId = createManifest(manifestGroup, templateDoc, manifestFileName, manifestFolderId)
+      let pdfFileId = null
       if (getDocProp("createManifestPdf")) {
-        createPdfFromDocFile(manifestDocId, manifestFileName, manifestFolderId)
+        pdfFileId = createPdfFromDocFile(manifestDocId, manifestFileName, manifestFolderId)
+      }
+      if (getDocProp("sendManifestToDriver")) {
+        emailManifestToDriver(manifestGroup, manifestDocId, pdfFileId, manifestFileName)
       }
       if (!getDocProp("keepManifestDoc")) {
         Drive.Files.update({ trashed: true }, manifestDocId, null, { supportsAllDrives: true })
@@ -274,6 +278,57 @@ function createPdfFromDocFile(manifestDocId, manifestFileName, manifestFolderId)
       supportsAllDrives: true
     })
   return createdPdfFile.id
+}
+
+/**
+ * Sends a driver manifest to the driver's email address as an attachment.
+ * If a PDF was already created (`pdfFileId` is non-null), its blob is reused.
+ * Otherwise the Google Doc is exported as a Word (.docx) file.
+ * Does nothing if the manifest group has no driver email address.
+ * @param {Object} manifestGroup - A run group from `groupManifestDataByRun()`.
+ * @param {string} manifestDocId - The Drive file ID of the manifest Google Doc.
+ * @param {string|null} pdfFileId - The Drive file ID of the PDF, or null if no PDF was created.
+ * @param {string} manifestFileName - The base file name used for the attachment.
+ */
+function emailManifestToDriver(manifestGroup, manifestDocId, pdfFileId, manifestFileName) {
+  try {
+    const driverEmail = manifestGroup["Driver Email"]
+    if (!driverEmail) return
+
+    const subject = applyEmailTemplate(manifestEmailSubject, manifestGroup)
+    const body = applyEmailTemplate(manifestEmailBody, manifestGroup)
+
+    let attachmentBlob
+    if (pdfFileId) {
+      attachmentBlob = DriveApp.getFileById(pdfFileId).getBlob().setName(manifestFileName + ".pdf")
+    } else {
+      const url = 'https://www.googleapis.com/drive/v3/files/' + manifestDocId + '/export?mimeType=application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      attachmentBlob = UrlFetchApp.fetch(url, { headers: { 'Authorization': 'Bearer ' + ScriptApp.getOAuthToken() } })
+        .getBlob()
+        .setName(manifestFileName + ".docx")
+    }
+
+    MailApp.sendEmail({ to: driverEmail, subject: subject, body: body, attachments: [attachmentBlob] })
+  } catch(e) {
+    logError(e)
+  }
+}
+
+/**
+ * Replaces template placeholders in an email subject or body string.
+ * Supported placeholders:
+ * - `{Driver Name}` — replaced with the driver's name from the manifest group.
+ * - `{Trip Date}` — replaced with the formatted trip date.
+ * - `{h:mm am/pm}` — replaced with the current time in h:mm AM/PM format.
+ * @param {string} template - The template string containing placeholders.
+ * @param {Object} manifestGroup - A run group from `groupManifestDataByRun()`.
+ * @returns {string} The template with all placeholders substituted.
+ */
+function applyEmailTemplate(template, manifestGroup) {
+  return template
+    .replace(/\{Driver Name\}/g, manifestGroup["Driver Name"] || "")
+    .replace(/\{Trip Date\}/g, formatDate(manifestGroup["Trip Date"]) || "")
+    .replace(/\{h:mm am\/pm\}/g, formatDate(new Date(), null, "h:mm aa"))
 }
 
 /**
