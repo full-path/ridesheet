@@ -161,12 +161,11 @@ function createManifests(templateDocId, groupedManifestData, fileNameFunction) {
     groupedManifestData.forEach(manifestGroup => {
       const manifestFileName = fileNameFunction(manifestGroup)
       const manifestDocId = createManifest(manifestGroup, templateDoc, manifestFileName, manifestFolderId)
-      let pdfFileId = null
       if (getDocProp("createManifestPdf")) {
-        pdfFileId = createPdfFromDocFile(manifestDocId, manifestFileName, manifestFolderId)
+        createPdfFromDocFile(manifestDocId, manifestFileName, manifestFolderId)
       }
       if (getDocProp("sendManifestToDriver")) {
-        emailManifestToDriver(manifestGroup, manifestDocId, pdfFileId, manifestFileName)
+        emailManifestToDriver(manifestGroup, manifestDocId, manifestFileName)
       }
       if (!getDocProp("keepManifestDoc")) {
         Drive.Files.update({ trashed: true }, manifestDocId, null, { supportsAllDrives: true })
@@ -281,16 +280,14 @@ function createPdfFromDocFile(manifestDocId, manifestFileName, manifestFolderId)
 }
 
 /**
- * Sends a driver manifest to the driver's email address as an attachment.
- * If a PDF was already created (`pdfFileId` is non-null), its blob is reused.
- * Otherwise the Google Doc is exported as a Word (.docx) file.
+ * Sends a driver manifest to the driver's email address as a PDF attachment.
+ * Exports the manifest Google Doc as PDF via the Drive export API.
  * Does nothing if the manifest group has no driver email address.
  * @param {Object} manifestGroup - A run group from `groupManifestDataByRun()`.
  * @param {string} manifestDocId - The Drive file ID of the manifest Google Doc.
- * @param {string|null} pdfFileId - The Drive file ID of the PDF, or null if no PDF was created.
  * @param {string} manifestFileName - The base file name used for the attachment.
  */
-function emailManifestToDriver(manifestGroup, manifestDocId, pdfFileId, manifestFileName) {
+function emailManifestToDriver(manifestGroup, manifestDocId, manifestFileName) {
   try {
     const driverEmail = manifestGroup["Driver Email"]
     if (!driverEmail) return
@@ -298,15 +295,10 @@ function emailManifestToDriver(manifestGroup, manifestDocId, pdfFileId, manifest
     const subject = applyEmailTemplate(manifestEmailSubject, manifestGroup)
     const body = applyEmailTemplate(manifestEmailBody, manifestGroup)
 
-    let attachmentBlob
-    if (pdfFileId) {
-      attachmentBlob = DriveApp.getFileById(pdfFileId).getBlob().setName(manifestFileName + ".pdf")
-    } else {
-      const url = 'https://www.googleapis.com/drive/v3/files/' + manifestDocId + '/export?mimeType=application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      attachmentBlob = UrlFetchApp.fetch(url, { headers: { 'Authorization': 'Bearer ' + ScriptApp.getOAuthToken() } })
-        .getBlob()
-        .setName(manifestFileName + ".docx")
-    }
+    const url = 'https://www.googleapis.com/drive/v3/files/' + manifestDocId + '/export?mimeType=application/pdf'
+    const attachmentBlob = UrlFetchApp.fetch(url, { headers: { 'Authorization': 'Bearer ' + ScriptApp.getOAuthToken() } })
+      .getBlob()
+      .setName(manifestFileName + ".pdf")
 
     MailApp.sendEmail({ to: driverEmail, subject: subject, body: body, attachments: [attachmentBlob] })
   } catch(e) {
