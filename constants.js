@@ -146,7 +146,7 @@ const defaultDocumentProperties = {
   sendManifestToDriver: {
     type: "boolean",
     value: false,
-    description: "When creating manifests, email each manifest to the driver as a PDF attachment?"
+    description: "Automatically email each manifest to the driver as a PDF attachment when manifests are created?"
   },
   geocoderBoundNeLatitude: {
     type: "number",
