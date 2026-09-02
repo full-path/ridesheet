@@ -392,7 +392,23 @@ const defaultColumns = {
         helpText: "Value must be a valid time.",
       },
     },
+    "|PU|": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupAddressShortNames",
+        showDropdown: false,
+        allowInvalid: false
+      },
+    },
     "PU Address": {},
+    "|DO|": {
+      dataValidation: {
+        criteriaType: "VALUE_IN_RANGE",
+        namedRange: "lookupAddressShortNames",
+        showDropdown: false,
+        allowInvalid: false
+      },
+    },
     "DO Address": {},
     "Driver ID": {
       dataValidation: {
@@ -1082,6 +1098,9 @@ const defaultColumns = {
     "Address": {},
   },
   "Lookups": {
+    "Address Short Names": {
+      headerFormula: `={"Address Short Names";QUERY(queryAddresses,"SELECT Col1 WHERE Col1 IS NOT NULL ORDER BY Col1",0)}`,
+    },
     "Customer Names and IDs": {
       headerFormula: `={"Customer Names and IDs";QUERY({queryCustomerNameAndId,queryCustomerEndDate},"SELECT Col1 WHERE Col1 IS NOT NULL AND Col2 IS NULL ORDER BY Col1",0)}`
     },
@@ -1123,6 +1142,14 @@ const defaultColumns = {
  * @type {Object.<string, {sheetName: string, headerName?: string, startHeaderName?: string, endHeaderName?: string, headerOnly?: boolean, allRows?: boolean}>}
  */
 const defaultNamedRanges = {
+  "codeExpandAddress1": {
+    "sheetName":"Trips",
+    "headerName":"|PU|"
+  },
+  "codeExpandAddress2": {
+    "sheetName":"Trips",
+    "headerName":"|DO|"
+  },
   "codeFillHoursAndMiles1": {
     "sheetName":"Trips",
     "headerName":"PU Address"
@@ -1211,6 +1238,10 @@ const defaultNamedRanges = {
     "sheetName":"Trips",
     "headerName":"Appt Time"
   },
+  "lookupAddressShortNames": {
+    "sheetName":"Lookups",
+    "headerName":"Address Short Names"
+  },
   "lookupCustomerNames": {
     "sheetName":"Lookups",
     "headerName":"Customer Names and IDs"
@@ -1234,6 +1265,10 @@ const defaultNamedRanges = {
   "lookupTripResults": {
     "sheetName":"Lookups",
     "headerName":"Trip Results"
+  },
+  "queryAddresses": {
+    "sheetName":"Addresses",
+    "headerName":"Short Name"
   },
   "queryCustomerNameAndId": {
     "sheetName":"Customers",

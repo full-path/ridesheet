@@ -33,6 +33,7 @@
  * - `codeSetCustomerKey`     → `setCustomerKeyOnEdit` (callOncePerRow: true)
  * - `codeScanForDuplicates`  → `scanForDuplicatesOnEdit` (callOncePerRow: false)
  * - `codeUpdateTripTimes`    → `updateTripTimesOnEdit` (callOncePerRow: true)
+ * - `codeExpandAddress`      → `expandAddressOnEdit` (callOncePerRow: true)
  */
 
 /**
@@ -89,6 +90,10 @@ const rangeTriggers = {
   },
   codeUpdateTripTimes: {
     functionCall: updateTripTimesOnEdit,
+    callOncePerRow: true
+  },
+  codeExpandAddress: {
+    functionCall: expandAddressOnEdit,
     callOncePerRow: true
   }
 }
@@ -230,6 +235,33 @@ function formatAddressOnEdit(range) {
       range.setBackground(null)
     }
   } catch(e) { logError(e) }
+}
+
+/**
+ * Expands a short name typed into a `|PU|`/`|DO|` helper cell into the full
+ * address in the cell to its right, looked up via `getAddressByShortName()`.
+ * On success, clears the helper cell and the address cell's note/background,
+ * then recalculates hours/miles for the trip row.
+ * @param {GoogleAppsScript.Spreadsheet.Range} range - The edited `|PU|`/`|DO|` helper cell.
+ */
+function expandAddressOnEdit(range) {
+  const shortName = range.getValue()
+  if (shortName?.toString().trim()) {
+    try {
+      const targetSheet = range.getSheet()
+      const targetRange = targetSheet.getRange(range.getRow(), range.getColumn(), 1, 2)
+      const result = getAddressByShortName(shortName)
+      if (result) {
+        targetRange.setValues([["",result]]).setNotes([["",""]]).setBackground(null)
+        fillHoursAndMilesOnEdit(range)
+        return true
+      }
+      return false
+    } catch(e) {
+      logError(e)
+      return false
+    }
+  }
 }
 
 /**
