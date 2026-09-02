@@ -100,6 +100,106 @@ function createManifestsByRunForDate() {
 }
 
 /**
+ * Entry point for emailing driver manifests for all runs on a chosen date.
+ *
+ * Prompts the user for a date (defaulting to the date of the active cell if
+ * in the Trips or Runs sheet, otherwise tomorrow). Generates manifests from
+ * scratch using the manifest template and emails each one to its driver as a
+ * PDF attachment, regardless of the `sendManifestToDriver` document property.
+ * Respects the `createManifestPdf` and `keepManifestDoc` document properties.
+ * Shows a toast with the count of manifests emailed on completion.
+ */
+function emailManifestsByRunForDate() {
+  try {
+    const templateDocId = getDocProp("driverManifestTemplateDocId")
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const activeSheet = ss.getActiveSheet()
+    const ui = safeGetUi()
+    let defaultDate
+    let date
+    let runDate
+    if (activeSheet.getName() == "Trips") {
+      runDate = getValueByHeaderName("Trip Date", getFullRows(activeSheet.getActiveCell()))
+    } else if (activeSheet.getName() == "Runs") {
+      runDate = getValueByHeaderName("Run Date", getFullRows(activeSheet.getActiveCell()))
+    } else {
+      runDate = dateOnly(dateAdd(new Date(), 1))
+    }
+
+    if (isValidDate(runDate)) {
+      defaultDate = runDate
+    } else {
+      defaultDate = dateOnly(dateAdd(new Date(), 1))
+    }
+
+    if (ui) {
+      let promptResult = ui.prompt("Email Driver Manifests",
+          "Enter date for manifests. Leave blank for " + formatDate(defaultDate, null, null),
+          ui.ButtonSet.OK_CANCEL)
+      if (promptResult.getSelectedButton() !== ui.Button.OK) {
+        ss.toast("Action cancelled as requested.")
+        return
+      }
+      if (promptResult.getResponseText() == "") {
+        date = defaultDate
+      } else {
+        date = parseDate(promptResult.getResponseText(), "Invalid Date")
+      }
+      if (!isValidDate(date)) {
+        ss.toast("Invalid date, action cancelled.")
+        return
+      }
+    } else {
+      date = defaultDate
+    }
+
+    const dateFilter = createDateFilterForManifestData(date)
+    const manifestData = getManifestData(dateFilter)
+    const groupedManifestData = groupManifestDataByRun(manifestData)
+    const manifestCount = emailManifests(templateDocId, groupedManifestData, getManifestFileNameByRun)
+    ss.toast(manifestCount + " emailed.", "Manifest email complete.")
+  } catch(e) { logError(e) }
+}
+
+/**
+ * Generates manifests from the template and emails each one to its driver.
+ *
+ * Unlike `createManifests()`, this always sends the email regardless of the
+ * `sendManifestToDriver` document property. Respects `createManifestPdf` and
+ * `keepManifestDoc` as usual.
+ * @param {string} templateDocId - The Drive file ID of the manifest template Doc.
+ * @param {Object[]} groupedManifestData - Array of run-grouped manifest objects,
+ *   as returned by `groupManifestDataByRun()`.
+ * @param {function(Object): string} fileNameFunction - Called with each manifest
+ *   group to produce the file name for the created Doc (and PDF).
+ * @returns {number} The number of manifests emailed.
+ */
+function emailManifests(templateDocId, groupedManifestData, fileNameFunction) {
+  try {
+    const manifestFolderId = getDocProp("driverManifestFolderId")
+    const templateDoc = DocumentApp.openById(templateDocId)
+    prepareTemplate(templateDocId)
+
+    let manifestCount = 0
+    groupedManifestData.forEach(manifestGroup => {
+      const manifestFileName = fileNameFunction(manifestGroup)
+      const manifestDocId = createManifest(manifestGroup, templateDoc, manifestFileName, manifestFolderId)
+      emailManifestToDriver(manifestGroup, manifestDocId, manifestFileName)
+      if (getDocProp("createManifestPdf")) {
+        createPdfFromDocFile(manifestDocId, manifestFileName, manifestFolderId)
+      }
+      if (!getDocProp("keepManifestDoc")) {
+        Drive.Files.update({ trashed: true }, manifestDocId, null, { supportsAllDrives: true })
+      }
+      manifestCount++
+    })
+    return manifestCount
+  } catch(e) {
+    logError(e)
+  }
+}
+
+/**
  * Entry point for creating manifests for a user-selected set of trip rows.
  *
  * Reads all selected rows from the active sheet, validates that they contain
@@ -163,6 +263,9 @@ function createManifests(templateDocId, groupedManifestData, fileNameFunction) {
       const manifestDocId = createManifest(manifestGroup, templateDoc, manifestFileName, manifestFolderId)
       if (getDocProp("createManifestPdf")) {
         createPdfFromDocFile(manifestDocId, manifestFileName, manifestFolderId)
+      }
+      if (getDocProp("sendManifestToDriver")) {
+        emailManifestToDriver(manifestGroup, manifestDocId, manifestFileName)
       }
       if (!getDocProp("keepManifestDoc")) {
         Drive.Files.update({ trashed: true }, manifestDocId, null, { supportsAllDrives: true })
@@ -274,6 +377,50 @@ function createPdfFromDocFile(manifestDocId, manifestFileName, manifestFolderId)
       supportsAllDrives: true
     })
   return createdPdfFile.id
+}
+
+/**
+ * Sends a driver manifest to the driver's email address as a PDF attachment.
+ * Exports the manifest Google Doc as PDF via the Drive export API.
+ * Does nothing if the manifest group has no driver email address.
+ * @param {Object} manifestGroup - A run group from `groupManifestDataByRun()`.
+ * @param {string} manifestDocId - The Drive file ID of the manifest Google Doc.
+ * @param {string} manifestFileName - The base file name used for the attachment.
+ */
+function emailManifestToDriver(manifestGroup, manifestDocId, manifestFileName) {
+  try {
+    const driverEmail = manifestGroup["Driver Email"]
+    if (!driverEmail) return
+
+    const subject = applyEmailTemplate(manifestEmailSubject, manifestGroup)
+    const body = applyEmailTemplate(manifestEmailBody, manifestGroup)
+
+    const url = 'https://www.googleapis.com/drive/v3/files/' + manifestDocId + '/export?mimeType=application/pdf'
+    const attachmentBlob = UrlFetchApp.fetch(url, { headers: { 'Authorization': 'Bearer ' + ScriptApp.getOAuthToken() } })
+      .getBlob()
+      .setName(manifestFileName + ".pdf")
+
+    MailApp.sendEmail({ to: driverEmail, subject: subject, body: body, attachments: [attachmentBlob] })
+  } catch(e) {
+    logError(e)
+  }
+}
+
+/**
+ * Replaces template placeholders in an email subject or body string.
+ * Supported placeholders:
+ * - `{Driver Name}` — replaced with the driver's name from the manifest group.
+ * - `{Trip Date}` — replaced with the formatted trip date.
+ * - `{h:mm am/pm}` — replaced with the current time in h:mm AM/PM format.
+ * @param {string} template - The template string containing placeholders.
+ * @param {Object} manifestGroup - A run group from `groupManifestDataByRun()`.
+ * @returns {string} The template with all placeholders substituted.
+ */
+function applyEmailTemplate(template, manifestGroup) {
+  return template
+    .replace(/\{Driver Name\}/g, manifestGroup["Driver Name"] || "")
+    .replace(/\{Trip Date\}/g, formatDate(manifestGroup["Trip Date"]) || "")
+    .replace(/\{h:mm am\/pm\}/g, formatDate(new Date(), null, "h:mm aa"))
 }
 
 /**

@@ -40,6 +40,7 @@ function buildMenus() {
   menu.addItem('Add stop', 'addStop')
   menu.addItem('Create manifests for day', 'createManifestsByRunForDate')
   menu.addItem('Create manifests for selected trips', 'createSelectedManifestsByRun')
+  menu.addItem('Email driver manifests', 'emailManifestsByRunForDate')
   menu.addItem('Move past data to review', 'moveTripsToReview')
   menu.addItem('Add data to runs in review','addDataToRunsInReview')
   menu.addItem('Move reviewed data to archive', 'moveTripsToArchive')

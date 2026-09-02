@@ -54,6 +54,12 @@ const defaultDwellTimeInMinutes          = 10
 /** @type {number} Default padding time in minutes added per hour of estimated travel time. */
 const defaultTripPaddingPerHourInMinutes = 5
 
+// ─── Manifest Email ─────────────────────────────────────────────────────────
+/** @type {string} Subject line for driver manifest emails. Supports {Driver Name} and {Trip Date} placeholders. */
+const manifestEmailSubject = "Driver Manifest for {Driver Name} for {Trip Date}"
+/** @type {string} Body text for driver manifest emails. Supports {Driver Name}, {Trip Date}, and {h:mm am/pm} placeholders. */
+const manifestEmailBody    = "Driver manifest for {Driver Name} for {Trip Date}.\n\nGenerated at: {h:mm am/pm}"
+
 /**
  * The full list of sheet names expected in a standard RideSheet installation.
  * Used by setup and repair functions to detect or create missing sheets.
@@ -136,6 +142,11 @@ const defaultDocumentProperties = {
     type: "boolean",
     value: true,
     description: "When creating manifests, add Google Maps links to addresses?"
+  },
+  sendManifestToDriver: {
+    type: "boolean",
+    value: false,
+    description: "Automatically email each manifest to the driver as a PDF attachment when manifests are created?"
   },
   geocoderBoundNeLatitude: {
     type: "number",
