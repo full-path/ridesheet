@@ -552,12 +552,13 @@ function rebuildAllMetadata() {
 }
 
 /**
- * Repairs common sheet issues by restoring sheet names, number formatting,
- * and data validation rules from developer metadata.
+ * Repairs common sheet issues by restoring sheet names, header names/formulas,
+ * number formatting, and data validation rules from developer metadata.
  * Exposed as a menu item in the Settings submenu.
  */
 function repairSheets() {
   fixSheetNames()
+  fixAllHeaderNames()
   fixNumberFormatting()
   fixDataValidation()
   fixFrozenRows()
