@@ -4,7 +4,9 @@
  * The trip board is the interface a partner agency (Proudworks, in the ConOps
  * 5.1 demo) uses instead of reading the Trips sheet directly. It is opened with
  * `SpreadsheetApp.getUi().showModalDialog()` and rendered by
- * `nkadd_partner_ui.html`. It gives an agency dispatcher:
+ * `nkadd_trip_board.html`. (The view and its server code cannot share a base
+ * name: Apps Script file names must be unique across file types.) It gives an
+ * agency dispatcher:
  *
  * 1. A readable card per trip — no horizontal scrolling — with Google Maps
  *    links for the pickup, the drop-off, and the pickup-to-drop-off route,
@@ -87,7 +89,7 @@ const nkaddDefaultUiSettings = {
  */
 function showPartnerTripBoard() {
   try {
-    const html = HtmlService.createHtmlOutputFromFile("nkadd_partner_ui")
+    const html = HtmlService.createHtmlOutputFromFile("nkadd_trip_board")
       .setWidth(1000)
       .setHeight(680)
     SpreadsheetApp.getUi().showModalDialog(html, "Partner Agency Trip Board")

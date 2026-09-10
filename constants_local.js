@@ -52,7 +52,7 @@
  * ```
  *
  * See `nkadd_workflow.js` for the sheet-to-sheet moves and
- * `nkadd_partner_ui.js` / `nkadd_partner_ui.html` for the partner-agency
+ * `nkadd_partner_ui.js` / `nkadd_trip_board.html` for the partner-agency
  * trip board dialog.
  */
 
