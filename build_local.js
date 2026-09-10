@@ -19,6 +19,8 @@
  *   sets Agency and moves Status to "Offered" (`nkadd_workflow.js`).
  * - **Set up coordination sheets** — creates the Status/Agency columns, the
  *   Claimed Trips sheet, and the lookups they depend on (`nkadd_setup.js`).
+ * - **Load ConOps 5.1 demo trips** — the split round trip from the ConOps,
+ *   offered to OCPT and Proudworks (`nkadd_demo_data.js`).
  */
 function buildLocalMenus() {
   const ui = SpreadsheetApp.getUi()
@@ -27,5 +29,6 @@ function buildLocalMenus() {
     .addItem("Offer selected trips to an agency…", "nkaddOfferSelectedTrips")
     .addSeparator()
     .addItem("Set up coordination sheets", "setUpNkaddDemo")
+    .addItem("Load ConOps 5.1 demo trips…", "nkaddLoadDemoTrips")
     .addToUi()
 }
