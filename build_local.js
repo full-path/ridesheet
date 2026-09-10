@@ -7,13 +7,25 @@
  * core menu has been constructed, so `SpreadsheetApp.getUi()` and the
  * existing menu are already set up.
  *
- * Example:
- * ```js
- * function buildLocalMenus() {
- *   const ui = SpreadsheetApp.getUi()
- *   ui.createMenu('My Org').addItem('Custom action', 'myCustomFunction').addToUi()
- * }
- * ```
+ * This instance adds an "NKADD Coordination" menu for the regional trip
+ * coordination demo (see constants_local.js for the workflow overview).
  */
 
-function buildLocalMenus() {}
+/**
+ * Adds the NKADD Coordination menu:
+ * - **Partner agency trip board** — the modal dialog partner agencies use to
+ *   read, accept, decline, and copy trips (`nkadd_partner_ui.js`).
+ * - **Offer selected trips to an agency** — NKADD's side of the workflow;
+ *   sets Agency and moves Status to "Offered" (`nkadd_workflow.js`).
+ * - **Set up coordination sheets** — creates the Status/Agency columns, the
+ *   Claimed Trips sheet, and the lookups they depend on (`nkadd_setup.js`).
+ */
+function buildLocalMenus() {
+  const ui = SpreadsheetApp.getUi()
+  ui.createMenu("NKADD Coordination")
+    .addItem("Partner agency trip board…", "showPartnerTripBoard")
+    .addItem("Offer selected trips to an agency…", "nkaddOfferSelectedTrips")
+    .addSeparator()
+    .addItem("Set up coordination sheets", "setUpNkaddDemo")
+    .addToUi()
+}

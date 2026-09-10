@@ -41,9 +41,29 @@ const finalLocalSheetTriggers  = {}
 /**
  * Local cell-level triggers keyed by named range name (prefix `"localCode"`).
  * Each entry maps to a handler function and a `callOncePerRow` flag.
+ *
+ * NKADD coordination demo triggers (see nkadd_workflow.js):
+ * - `localCodeNkaddStatus`     → `nkaddStatusEditTrigger` — moves a trip between
+ *   the Trips, Claimed Trips, and Trip Archive sheets when its Status changes.
+ * - `localCodeNkaddTripResult` → `nkaddTripResultEditTrigger` — closes and
+ *   archives a claimed trip once an agency reports a result.
+ *
+ * The handlers are wrapped in arrow functions so the names resolve when the
+ * trigger fires rather than when this file is evaluated; Apps Script does not
+ * guarantee the evaluation order of project files.
+ *
  * @type {Object.<string, {functionCall: function(GoogleAppsScript.Spreadsheet.Range): void, callOncePerRow: boolean}>}
  */
-const rangeTriggersLocal = {}
+const rangeTriggersLocal = {
+  localCodeNkaddStatus: {
+    functionCall: (range) => nkaddStatusEditTrigger(range),
+    callOncePerRow: true
+  },
+  localCodeNkaddTripResult: {
+    functionCall: (range) => nkaddTripResultEditTrigger(range),
+    callOncePerRow: true
+  },
+}
 
 /**
  * Dispatches a sheet-level trigger from a local trigger map.

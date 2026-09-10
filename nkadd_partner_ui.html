@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    :root {
+      --ink: #202124;
+      --ink-soft: #5f6368;
+      --ink-faint: #80868b;
+      --line: #dadce0;
+      --surface: #ffffff;
+      --canvas: #f1f3f4;
+      --blue: #1a73e8;
+      --blue-dark: #1557b0;
+      --blue-wash: #e8f0fe;
+      --green: #188038;
+      --green-wash: #e6f4ea;
+      --amber-wash: #fef7e0;
+      --amber-ink: #b06000;
+      --red: #c5221f;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      font: 13px/1.5 "Google Sans", Roboto, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--canvas);
+      overflow: hidden;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    /* ===== Header ===== */
+
+    header {
+      flex: none;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 10px 16px 0;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .header-row label {
+      color: var(--ink-soft);
+      font-size: 12px;
+    }
+
+    .spacer { flex: 1; }
+
+    select, input[type="text"], textarea {
+      font: inherit;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 5px 8px;
+      background: var(--surface);
+    }
+
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tab {
+      appearance: none;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 8px 14px;
+      font: inherit;
+      font-weight: 500;
+      color: var(--ink-soft);
+      cursor: pointer;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .tab:hover { background: var(--canvas); }
+
+    .tab[aria-selected="true"] {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+    }
+
+    .tab .count {
+      display: inline-block;
+      min-width: 18px;
+      margin-left: 6px;
+      padding: 0 5px;
+      border-radius: 9px;
+      background: var(--canvas);
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .tab[aria-selected="true"] .count {
+      background: var(--blue-wash);
+      color: var(--blue-dark);
+    }
+
+    /* ===== Buttons ===== */
+
+    button {
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--blue);
+      font-weight: 500;
+      border-radius: 4px;
+      padding: 6px 14px;
+    }
+
+    .btn:hover { background: var(--blue-wash); }
+    .btn:disabled { color: var(--ink-faint); background: var(--canvas); cursor: default; }
+
+    .btn.primary {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    .btn.primary:hover { background: var(--blue-dark); }
+    .btn.primary:disabled { background: var(--line); border-color: var(--line); color: var(--surface); }
+
+    .btn.quiet {
+      border-color: transparent;
+      color: var(--ink-soft);
+    }
+
+    .btn.quiet:hover { background: var(--canvas); }
+
+    .btn.danger { color: var(--red); }
+    .btn.danger:hover { background: #fce8e6; }
+
+    /* ===== Layout ===== */
+
+    main {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    #list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px 24px;
+    }
+
+    #copy-panel {
+      flex: none;
+      width: 340px;
+      background: var(--surface);
+      border-left: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    #copy-panel.collapsed { display: none; }
+
+    /* ===== Trip cards ===== */
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0 12px;
+    }
+
+    .card.selected { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue-wash); }
+
+    .card-pick { padding-top: 2px; }
+
+    .card-body { min-width: 0; }
+
+    .card-top {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .when {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .when .day { color: var(--ink-soft); font-weight: 400; }
+
+    .times {
+      font-size: 14px;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .times .arrow { color: var(--ink-faint); margin: 0 4px; }
+
+    .rider {
+      margin-top: 2px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .pill.offered { background: var(--amber-wash); color: var(--amber-ink); }
+    .pill.open { background: var(--canvas); color: var(--ink-soft); }
+    .pill.claimed { background: var(--green-wash); color: var(--green); }
+
+    .legs {
+      margin: 8px 0 0;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 2px 8px;
+      align-items: baseline;
+    }
+
+    .leg-label {
+      color: var(--ink-faint);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+
+    .leg-address { color: var(--ink); }
+
+    .leg-city { color: var(--ink-faint); font-size: 12px; }
+
+    a.maplink {
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    a.maplink:hover { text-decoration: underline; }
+
+    .facts {
+      margin-top: 8px;
+      color: var(--ink-soft);
+      font-size: 12px;
+    }
+
+    .facts span + span::before {
+      content: "·";
+      margin: 0 6px;
+      color: var(--ink-faint);
+    }
+
+    .notes {
+      margin-top: 6px;
+      padding: 6px 8px;
+      background: var(--canvas);
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .actions .spacer { flex: 1; }
+
+    /* ===== Copy panel ===== */
+
+    .panel-head {
+      flex: none;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .panel-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px;
+      min-height: 0;
+    }
+
+    .field-group { margin-bottom: 14px; }
+
+    .field-group > label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--ink-faint);
+      margin-bottom: 5px;
+    }
+
+    .field-group select, .field-group textarea { width: 100%; }
+
+    .field-group textarea {
+      resize: vertical;
+      font-family: "Roboto Mono", Consolas, monospace;
+      font-size: 12px;
+      min-height: 76px;
+    }
+
+    .checkline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-top: 6px;
+    }
+
+    ol.picked {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      max-height: 190px;
+      overflow-y: auto;
+    }
+
+    ol.picked li {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 3px 4px 3px 8px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--canvas);
+    }
+
+    ol.picked li:last-child { border-bottom: none; }
+
+    ol.picked li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .icon-btn {
+      appearance: none;
+      border: none;
+      background: none;
+      color: var(--ink-faint);
+      padding: 2px 5px;
+      border-radius: 3px;
+      line-height: 1;
+      font-size: 12px;
+    }
+
+    .icon-btn:hover { background: var(--canvas); color: var(--ink); }
+    .icon-btn:disabled { opacity: .3; cursor: default; }
+    .icon-btn.remove:hover { color: var(--red); }
+
+    .hint {
+      font-size: 11px;
+      color: var(--ink-faint);
+      margin-top: 4px;
+    }
+
+    #preview {
+      width: 100%;
+      min-height: 130px;
+      resize: vertical;
+      font-family: "Roboto Mono", Consolas, monospace;
+      font-size: 11.5px;
+      white-space: pre;
+      overflow: auto;
+      background: var(--canvas);
+    }
+
+    .panel-foot {
+      flex: none;
+      padding: 10px 14px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ===== Misc ===== */
+
+    .empty {
+      text-align: center;
+      color: var(--ink-faint);
+      padding: 48px 24px;
+    }
+
+    .empty strong { display: block; color: var(--ink-soft); font-size: 14px; margin-bottom: 4px; }
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      background: #303134;
+      color: #fff;
+      padding: 9px 18px;
+      border-radius: 4px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+      max-width: 70%;
+      z-index: 10;
+    }
+
+    #toast.show { opacity: 1; }
+    #toast.error { background: var(--red); }
+
+    .working {
+      position: fixed;
+      inset: 0;
+      cursor: progress;
+      background: rgba(255,255,255,.6);
+      display: none;
+      z-index: 5;
+    }
+
+    body.busy .working { display: block; }
+  </style>
+</head>
+<body>
+  <div class="working"></div>
+
+  <div id="app">
+    <header>
+      <div class="header-row">
+        <label for="agency">Viewing as</label>
+        <select id="agency"></select>
+        <span class="spacer"></span>
+        <button class="btn quiet" id="refresh" title="Reload trips from the spreadsheet">Refresh</button>
+        <button class="btn quiet" id="toggle-panel">Hide copy panel</button>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-list="offered" aria-selected="true">
+          Offered to you <span class="count" data-count="offered">0</span>
+        </button>
+        <button class="tab" role="tab" data-list="open" aria-selected="false">
+          Open pool <span class="count" data-count="open">0</span>
+        </button>
+        <button class="tab" role="tab" data-list="claimed" aria-selected="false">
+          Your claimed trips <span class="count" data-count="claimed">0</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <div id="list"></div>
+
+      <aside id="copy-panel">
+        <div class="panel-head">
+          <h2>Copy trips</h2>
+          <span class="spacer"></span>
+          <button class="btn quiet" id="select-all">Select all</button>
+        </div>
+
+        <div class="panel-scroll">
+          <div class="field-group">
+            <label for="format">Format</label>
+            <select id="format">
+              <option value="labeled">Labeled lines (Field: value)</option>
+              <option value="tsv">Tab-separated (paste into a spreadsheet)</option>
+              <option value="csv">Comma-separated (CSV)</option>
+              <option value="template">Custom template</option>
+            </select>
+            <label class="checkline" id="header-line">
+              <input type="checkbox" id="include-header"> Include a header row
+            </label>
+          </div>
+
+          <div class="field-group" id="fields-group">
+            <label>Fields, in order</label>
+            <ol class="picked" id="picked"></ol>
+            <select id="add-field"></select>
+            <div class="hint">Reorder with the arrows; remove with ✕.</div>
+          </div>
+
+          <div class="field-group" id="template-group">
+            <label for="template">Template</label>
+            <textarea id="template" spellcheck="false"></textarea>
+            <div class="hint" id="template-hint"></div>
+          </div>
+
+          <div class="field-group">
+            <label for="preview">Preview <span id="preview-count"></span></label>
+            <textarea id="preview" spellcheck="false"></textarea>
+          </div>
+        </div>
+
+        <div class="panel-foot">
+          <button class="btn primary" id="copy">Copy to clipboard</button>
+          <span class="hint" id="copy-hint"></span>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    /**
+     * Partner Agency Trip Board — client script.
+     *
+     * State is a single `board` object fetched from `nkaddGetBoardData()`.
+     * Every action posts to the server and gets a fresh board back, so the
+     * dialog and the spreadsheet never drift apart. Copy text is built here
+     * from each trip's `fields` map, so changing format options re-renders
+     * instantly without another round trip.
+     */
+
+    var board = null;
+    var settings = null;
+    var activeList = 'offered';
+    var selected = {};   // Trip ID -> true, for the copy panel
+
+    // ---- helpers ----------------------------------------------------------
+
+    function el(id) { return document.getElementById(id); }
+
+    function esc(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function toast(message, isError) {
+      var node = el('toast');
+      node.textContent = message;
+      node.className = 'show' + (isError ? ' error' : '');
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(function () { node.className = ''; }, 4000);
+    }
+
+    function setBusy(isBusy) {
+      document.body.classList.toggle('busy', !!isBusy);
+    }
+
+    function trips(listName) {
+      return (board && board[listName]) || [];
+    }
+
+    function selectedTrips() {
+      // Selection follows the visible list so the preview always matches what
+      // the dispatcher is looking at.
+      return trips(activeList).filter(function (trip) { return selected[trip.id]; });
+    }
+
+    // ---- loading ----------------------------------------------------------
+
+    function load(agency) {
+      setBusy(true);
+      google.script.run
+        .withSuccessHandler(onBoard)
+        .withFailureHandler(function (err) {
+          setBusy(false);
+          toast(err && err.message ? err.message : 'Could not load trips.', true);
+        })
+        .nkaddGetBoardData(agency || null);
+    }
+
+    function onBoard(data) {
+      setBusy(false);
+      if (!data || data.error) {
+        el('list').innerHTML = '<div class="empty"><strong>Setup needed</strong>' +
+          esc(data && data.error ? data.error : 'No data returned.') + '</div>';
+        return;
+      }
+      board = data;
+      if (!settings) {
+        settings = data.settings;
+        applySettingsToControls();
+      }
+      settings.agency = data.agency;
+      renderAgencies();
+      renderCounts();
+      renderList();
+      renderCopyPanel();
+    }
+
+    // ---- header -----------------------------------------------------------
+
+    function renderAgencies() {
+      var select = el('agency');
+      select.innerHTML = board.agencies.map(function (name) {
+        return '<option value="' + esc(name) + '"' +
+          (name === board.agency ? ' selected' : '') + '>' + esc(name) + '</option>';
+      }).join('');
+    }
+
+    function renderCounts() {
+      ['offered', 'open', 'claimed'].forEach(function (name) {
+        document.querySelector('[data-count="' + name + '"]').textContent = trips(name).length;
+      });
+    }
+
+    // ---- trip list --------------------------------------------------------
+
+    var EMPTY_STATES = {
+      offered: ['Nothing offered to you right now',
+                'When NKADD offers your agency a trip it shows up here.'],
+      open: ['The open pool is empty',
+             'Trips NKADD has not assigned to an agency yet appear here.'],
+      claimed: ['You have no claimed trips',
+                'Accept a trip and it moves here until you report results.']
+    };
+
+    function renderList() {
+      var list = trips(activeList);
+      var container = el('list');
+      if (!list.length) {
+        var state = EMPTY_STATES[activeList];
+        container.innerHTML = '<div class="empty"><strong>' + esc(state[0]) + '</strong>' +
+          esc(state[1]) + '</div>';
+        return;
+      }
+      container.innerHTML = list.map(cardHtml).join('');
+      container.scrollTop = 0;
+    }
+
+    function cardHtml(trip) {
+      var isClaimed = activeList === 'claimed';
+      var pill = isClaimed ? 'claimed' : (activeList === 'offered' ? 'offered' : 'open');
+      var pillText = isClaimed ? (trip.status || 'Claimed') : (trip.status || '');
+
+      var facts = [];
+      if (trip.apptTime) facts.push('Appt ' + trip.apptTime);
+      if (trip.purpose) facts.push(trip.purpose);
+      if (trip.mobility) facts.push(trip.mobility);
+      if (trip.guests && trip.guests !== '0') facts.push(trip.guests + ' guest' + (trip.guests === '1' ? '' : 's'));
+      if (trip.estMiles) facts.push(trip.estMiles + ' mi');
+      if (trip.estHours) facts.push(trip.estHours + ' hr');
+      if (trip.serviceId) facts.push(trip.serviceId);
+
+      var window_ = '';
+      if (trip.earliestPuTime || trip.latestPuTime) {
+        window_ = 'Pickup window ' + (trip.earliestPuTime || '?') + '–' + (trip.latestPuTime || '?');
+      }
+
+      return '' +
+      '<div class="card' + (selected[trip.id] ? ' selected' : '') + '" data-id="' + esc(trip.id) + '">' +
+        '<div class="card-pick">' +
+          '<input type="checkbox" data-act="select" ' + (selected[trip.id] ? 'checked' : '') +
+            ' title="Include in the copy panel">' +
+        '</div>' +
+        '<div class="card-body">' +
+          '<div class="card-top">' +
+            '<span class="when"><span class="day">' + esc(trip.dayOfWeek) + '</span> ' + esc(trip.date) + '</span>' +
+            '<span class="times">' + esc(trip.puTime || '—') +
+              '<span class="arrow">→</span>' + esc(trip.doTime || '—') + '</span>' +
+            (pillText ? '<span class="pill ' + pill + '">' + esc(pillText) + '</span>' : '') +
+          '</div>' +
+          '<div class="rider">' + esc(trip.customer) + '</div>' +
+          '<div class="legs">' + legHtml('Pick up', trip.puAddress, trip.puCity, trip.puMapUrl) +
+            legHtml('Drop off', trip.doAddress, trip.doCity, trip.doMapUrl) + '</div>' +
+          (facts.length || window_ ?
+            '<div class="facts">' +
+              (window_ ? '<span>' + esc(window_) + '</span>' : '') +
+              facts.map(function (f) { return '<span>' + esc(f) + '</span>'; }).join('') +
+            '</div>' : '') +
+          (trip.notes ? '<div class="notes">' + esc(trip.notes) + '</div>' : '') +
+          (trip.agencyNotes ? '<div class="notes">Agency note: ' + esc(trip.agencyNotes) + '</div>' : '') +
+          (trip.declinedBy && !isClaimed ?
+            '<div class="facts"><span>Passed on by ' + esc(trip.declinedBy) + '</span></div>' : '') +
+          '<div class="actions">' +
+            (trip.directionsUrl ?
+              '<a class="btn" href="' + esc(trip.directionsUrl) + '" target="_blank" rel="noopener">' +
+                'Open route in Maps ↗</a>' : '') +
+            '<span class="spacer"></span>' +
+            actionsHtml(trip, isClaimed) +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function legHtml(label, address, city, url) {
+      if (!address) {
+        return '<div class="leg-label">' + esc(label) + '</div>' +
+               '<div class="leg-address leg-city">Not set</div><div></div>';
+      }
+      return '<div class="leg-label">' + esc(label) + '</div>' +
+             '<div class="leg-address">' + esc(address) +
+               (city ? ' <span class="leg-city">(' + esc(city) + ')</span>' : '') + '</div>' +
+             '<div>' + (url ? '<a class="maplink" href="' + esc(url) +
+               '" target="_blank" rel="noopener">Map ↗</a>' : '') + '</div>';
+    }
+
+    function actionsHtml(trip, isClaimed) {
+      if (isClaimed) {
+        var options = (board.tripResults || []).map(function (result) {
+          return '<option value="' + esc(result) + '">' + esc(result) + '</option>';
+        }).join('');
+        return '<button class="btn quiet" data-act="return">Give back</button>' +
+          (options ?
+            '<select data-act="result-choice"><option value="">Report result…</option>' + options + '</select>' +
+            '<button class="btn" data-act="report">Save result</button>' : '');
+      }
+      return '<button class="btn danger" data-act="decline">Decline</button>' +
+             '<button class="btn primary" data-act="accept">Accept trip</button>';
+    }
+
+    // ---- actions ----------------------------------------------------------
+
+    function runAction(name, args) {
+      setBusy(true);
+      var runner = google.script.run
+        .withSuccessHandler(function (response) {
+          setBusy(false);
+          if (!response) { toast('No response from the spreadsheet.', true); return; }
+          toast(response.message, !response.ok);
+          if (response.board) onBoard(response.board);
+        })
+        .withFailureHandler(function (err) {
+          setBusy(false);
+          toast(err && err.message ? err.message : 'That action failed.', true);
+        });
+      runner[name].apply(runner, args);
+    }
+
+    el('list').addEventListener('click', function (event) {
+      var target = event.target.closest('[data-act]');
+      if (!target) return;
+      var card = event.target.closest('.card');
+      if (!card) return;
+      var id = card.getAttribute('data-id');
+      var act = target.getAttribute('data-act');
+
+      if (act === 'accept') {
+        runAction('nkaddUiClaim', [id, board.agency, null]);
+      } else if (act === 'decline') {
+        var reason = window.prompt('Optional: why is ' + board.agency + ' passing on this trip?', '');
+        if (reason === null) return;
+        runAction('nkaddUiDecline', [id, board.agency, reason]);
+      } else if (act === 'return') {
+        if (!window.confirm('Give this trip back to NKADD so another agency can take it?')) return;
+        runAction('nkaddUiReturn', [id, board.agency]);
+      } else if (act === 'report') {
+        var choice = card.querySelector('[data-act="result-choice"]');
+        if (!choice || !choice.value) { toast('Choose a trip result first.', true); return; }
+        runAction('nkaddUiReportResults', [id, board.agency, choice.value]);
+      }
+    });
+
+    el('list').addEventListener('change', function (event) {
+      if (event.target.getAttribute('data-act') !== 'select') return;
+      var card = event.target.closest('.card');
+      var id = card.getAttribute('data-id');
+      if (event.target.checked) { selected[id] = true; } else { delete selected[id]; }
+      card.classList.toggle('selected', !!selected[id]);
+      renderPreview();
+    });
+
+    document.querySelectorAll('.tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        document.querySelectorAll('.tab').forEach(function (other) {
+          other.setAttribute('aria-selected', String(other === tab));
+        });
+        activeList = tab.getAttribute('data-list');
+        renderList();
+        renderPreview();
+      });
+    });
+
+    el('agency').addEventListener('change', function () {
+      selected = {};
+      saveSettings({agency: this.value});
+      load(this.value);
+    });
+
+    el('refresh').addEventListener('click', function () { load(board ? board.agency : null); });
+
+    el('toggle-panel').addEventListener('click', function () {
+      var panel = el('copy-panel');
+      panel.classList.toggle('collapsed');
+      this.textContent = panel.classList.contains('collapsed') ? 'Show copy panel' : 'Hide copy panel';
+    });
+
+    el('select-all').addEventListener('click', function () {
+      var list = trips(activeList);
+      var allOn = list.length && list.every(function (trip) { return selected[trip.id]; });
+      list.forEach(function (trip) {
+        if (allOn) { delete selected[trip.id]; } else { selected[trip.id] = true; }
+      });
+      renderList();
+      renderPreview();
+    });
+
+    // ---- copy panel -------------------------------------------------------
+
+    function applySettingsToControls() {
+      el('format').value = settings.format;
+      el('include-header').checked = !!settings.includeHeader;
+      el('template').value = settings.template || '';
+    }
+
+    function renderCopyPanel() {
+      var isDelimited = settings.format === 'tsv' || settings.format === 'csv';
+      var isTemplate = settings.format === 'template';
+      el('header-line').style.display = isDelimited ? 'flex' : 'none';
+      el('fields-group').style.display = isTemplate ? 'none' : 'block';
+      el('template-group').style.display = isTemplate ? 'block' : 'none';
+      el('template-hint').textContent = 'Tokens: ' +
+        (board.exportFields || []).map(function (name) { return '{' + name + '}'; }).join(' ');
+      renderPickedFields();
+      renderPreview();
+    }
+
+    function renderPickedFields() {
+      var picked = settings.fields.filter(function (name) {
+        return (board.exportFields || []).indexOf(name) !== -1;
+      });
+      settings.fields = picked;
+
+      el('picked').innerHTML = picked.map(function (name, index) {
+        return '<li>' +
+          '<span title="' + esc(name) + '">' + esc(name) + '</span>' +
+          '<button class="icon-btn" data-move="-1" data-index="' + index + '"' +
+            (index === 0 ? ' disabled' : '') + ' title="Move up">▲</button>' +
+          '<button class="icon-btn" data-move="1" data-index="' + index + '"' +
+            (index === picked.length - 1 ? ' disabled' : '') + ' title="Move down">▼</button>' +
+          '<button class="icon-btn remove" data-remove="' + index + '" title="Remove">✕</button>' +
+        '</li>';
+      }).join('') || '<li><span style="color:#80868b">No fields chosen yet.</span></li>';
+
+      var available = (board.exportFields || []).filter(function (name) {
+        return picked.indexOf(name) === -1;
+      });
+      el('add-field').innerHTML = '<option value="">Add a field…</option>' +
+        available.map(function (name) {
+          return '<option value="' + esc(name) + '">' + esc(name) + '</option>';
+        }).join('');
+      el('add-field').disabled = !available.length;
+    }
+
+    el('picked').addEventListener('click', function (event) {
+      var button = event.target.closest('button');
+      if (!button) return;
+      if (button.hasAttribute('data-remove')) {
+        settings.fields.splice(Number(button.getAttribute('data-remove')), 1);
+      } else if (button.hasAttribute('data-move')) {
+        var from = Number(button.getAttribute('data-index'));
+        var to = from + Number(button.getAttribute('data-move'));
+        var moved = settings.fields.splice(from, 1)[0];
+        settings.fields.splice(to, 0, moved);
+      } else {
+        return;
+      }
+      saveSettings({fields: settings.fields});
+      renderPickedFields();
+      renderPreview();
+    });
+
+    el('add-field').addEventListener('change', function () {
+      if (!this.value) return;
+      settings.fields.push(this.value);
+      saveSettings({fields: settings.fields});
+      renderPickedFields();
+      renderPreview();
+    });
+
+    el('format').addEventListener('change', function () {
+      settings.format = this.value;
+      saveSettings({format: settings.format});
+      renderCopyPanel();
+    });
+
+    el('include-header').addEventListener('change', function () {
+      settings.includeHeader = this.checked;
+      saveSettings({includeHeader: settings.includeHeader});
+      renderPreview();
+    });
+
+    el('template').addEventListener('input', function () {
+      settings.template = this.value;
+      renderPreview();
+    });
+
+    el('template').addEventListener('change', function () {
+      saveSettings({template: settings.template});
+    });
+
+    function saveSettings(patch) {
+      google.script.run
+        .withFailureHandler(function () { /* preferences are best-effort */ })
+        .nkaddSaveUiSettings(patch);
+    }
+
+    // ---- export text ------------------------------------------------------
+
+    function renderPreview() {
+      var chosen = selectedTrips();
+      el('preview-count').textContent = chosen.length
+        ? '(' + chosen.length + ' trip' + (chosen.length === 1 ? '' : 's') + ')'
+        : '(no trips selected)';
+      el('preview').value = chosen.length
+        ? buildExportText(chosen)
+        : 'Tick the box on a trip card to add it here.';
+      el('copy').disabled = !chosen.length;
+      el('copy-hint').textContent = '';
+    }
+
+    function buildExportText(chosen) {
+      if (settings.format === 'template') {
+        return chosen.map(function (trip) {
+          return applyTemplate(settings.template || '', trip.fields);
+        }).join('\n\n');
+      }
+      var fields = settings.fields;
+      if (!fields.length) return 'Add at least one field.';
+
+      if (settings.format === 'labeled') {
+        return chosen.map(function (trip) {
+          return fields.map(function (name) {
+            return name + ': ' + (trip.fields[name] || '');
+          }).join('\n');
+        }).join('\n\n');
+      }
+
+      var isCsv = settings.format === 'csv';
+      var separator = isCsv ? ',' : '\t';
+      var rows = [];
+      if (settings.includeHeader) {
+        rows.push(fields.map(function (name) { return cell(name, isCsv); }).join(separator));
+      }
+      chosen.forEach(function (trip) {
+        rows.push(fields.map(function (name) {
+          return cell(trip.fields[name] || '', isCsv);
+        }).join(separator));
+      });
+      return rows.join('\n');
+    }
+
+    function cell(value, isCsv) {
+      value = String(value);
+      if (isCsv) {
+        return /[",\n\r]/.test(value) ? '"' + value.replace(/"/g, '""') + '"' : value;
+      }
+      // A tab or newline inside a value would break the column alignment of a
+      // pasted TSV block, so flatten them to spaces.
+      return value.replace(/[\t\r\n]+/g, ' ');
+    }
+
+    function applyTemplate(template, fields) {
+      return template.replace(/\{([^{}]+)\}/g, function (match, name) {
+        return Object.prototype.hasOwnProperty.call(fields, name) ? fields[name] : '';
+      });
+    }
+
+    // ---- clipboard --------------------------------------------------------
+
+    el('copy').addEventListener('click', function () {
+      var preview = el('preview');
+      var text = preview.value;
+      preview.focus();
+      preview.setSelectionRange(0, text.length);
+
+      // execCommand is tried first: the Clipboard API is frequently blocked by
+      // the permissions policy on the sandboxed iframe an Apps Script dialog
+      // runs in, whereas execCommand works from this user gesture.
+      var copied = false;
+      try { copied = document.execCommand('copy'); } catch (err) { copied = false; }
+
+      if (copied) {
+        finishCopy(true);
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { finishCopy(true); },
+                                                 function () { finishCopy(false); });
+      } else {
+        finishCopy(false);
+      }
+    });
+
+    function finishCopy(ok) {
+      el('copy-hint').textContent = ok
+        ? 'Copied.'
+        : 'Copy blocked — the text is selected, press Ctrl+C (⌘C).';
+      toast(ok ? 'Trips copied to the clipboard.' : 'Press Ctrl+C (⌘C) to copy the selected text.', !ok);
+    }
+
+    // ---- go ---------------------------------------------------------------
+
+    load(null);
+  </script>
+</body>
+</html>
