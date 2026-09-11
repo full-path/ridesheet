@@ -242,7 +242,7 @@ function nkaddTripSortKey(row) {
  * @returns {string} A display-ready string; empty when the cell is blank.
  */
 function nkaddFormatFieldValue(fieldName, value, timeZone) {
-  if (isBlankCell(value)) return ""
+  if (value === undefined || isBlankCell(value)) return ""
   if (isValidDate(value)) {
     if (/\bdate\b/i.test(fieldName)) return formatDate(value, timeZone, "M/d/yyyy")
     if (/\btime\b/i.test(fieldName)) return formatDate(value, timeZone, "h:mm a")
