@@ -11,7 +11,8 @@
  * 1. A readable card per trip — no horizontal scrolling — with Google Maps
  *    links for the pickup, the drop-off, and the pickup-to-drop-off route,
  *    each opening in a new browser tab.
- * 2. Accept and Decline buttons per trip, which move the trip between the
+ * 2. Accept and Decline buttons per trip, plus "Accept selected" and
+ *    "Decline selected" for checked trips, which move trips between the
  *    Trips and Claimed Trips sheets via `nkadd_workflow.js`.
  * 3. A copy panel that renders claimed trips in a configurable format (TSV,
  *    CSV, labeled block, or a custom `{Field}` template) for pasting into the
@@ -359,6 +360,54 @@ function nkaddUiClaim(tripId, agency, notes) {
 function nkaddUiDecline(tripId, agency, reason) {
   const result = nkaddDeclineTrip(tripId, agency, reason)
   return {...result, board: nkaddGetBoardData(agency)}
+}
+
+/**
+ * Claims several trips for an agency in one call, then returns fresh board
+ * data. Trips are processed one at a time so a single failure (say, a trip
+ * another agency grabbed first) does not stop the rest.
+ * @param {string[]} tripIds - The Trip IDs to claim.
+ * @param {string} agency - The claiming agency.
+ * @returns {Object} `{ok, message, board}`. `ok` is `true` when every trip succeeded.
+ */
+function nkaddUiClaimMany(tripIds, agency) {
+  const summary = nkaddRunForEach(tripIds, tripId => nkaddClaimTrip(tripId, agency, null), "claimed")
+  return {...summary, board: nkaddGetBoardData(agency)}
+}
+
+/**
+ * Declines several trips on an agency's behalf in one call and returns fresh
+ * board data.
+ * @param {string[]} tripIds - The Trip IDs being declined.
+ * @param {string} agency - The declining agency.
+ * @param {string} [reason] - Optional reason, appended to each trip's Notes.
+ * @returns {Object} `{ok, message, board}`. `ok` is `true` when every trip succeeded.
+ */
+function nkaddUiDeclineMany(tripIds, agency, reason) {
+  const summary = nkaddRunForEach(tripIds, tripId => nkaddDeclineTrip(tripId, agency, reason), "declined")
+  return {...summary, board: nkaddGetBoardData(agency)}
+}
+
+/**
+ * Applies a per-trip action to each ID and rolls the individual results up
+ * into one `{ok, message}` for the dialog's toast.
+ * @param {string[]} tripIds - Trip IDs to act on.
+ * @param {function(string): {ok: boolean, message: string}} action - The per-trip action.
+ * @param {string} verb - Past-tense verb for the summary message ("claimed", "declined").
+ * @returns {{ok: boolean, message: string}}
+ */
+function nkaddRunForEach(tripIds, action, verb) {
+  const ids = Array.isArray(tripIds) ? tripIds : []
+  if (!ids.length) return {ok: false, message: "No trips were selected."}
+  const failures = ids.map(tripId => ({tripId, result: action(tripId)})).filter(r => !r.result.ok)
+  const succeeded = ids.length - failures.length
+  const count = n => `${n} trip${n === 1 ? "" : "s"}`
+  if (!failures.length) return {ok: true, message: `${count(succeeded)} ${verb}.`}
+  return {
+    ok: false,
+    message: `${count(succeeded)} ${verb}; ${count(failures.length)} could not be: ` +
+      failures.map(f => f.tripId).join(", ") + ". " + failures[0].result.message,
+  }
 }
 
 /**

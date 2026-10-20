@@ -168,6 +168,26 @@
       min-height: 0;
     }
 
+    #list-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    #bulk-bar {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+
+    #bulk-bar .hint { margin: 0; }
+
     #list {
       flex: 1;
       overflow-y: auto;
@@ -480,7 +500,7 @@
         <select id="agency"></select>
         <span class="spacer"></span>
         <button class="btn quiet" id="refresh" title="Reload trips from the spreadsheet">Refresh</button>
-        <button class="btn quiet" id="toggle-panel">Hide copy panel</button>
+        <button class="btn quiet" id="toggle-panel">Show copy panel</button>
       </div>
       <div class="tabs" role="tablist">
         <button class="tab" role="tab" data-list="offered" aria-selected="true">
@@ -496,13 +516,20 @@
     </header>
 
     <main>
-      <div id="list"></div>
+      <div id="list-pane">
+        <div id="bulk-bar">
+          <button class="btn quiet" id="select-all">Select all</button>
+          <span class="hint" id="selected-count"></span>
+          <span class="spacer"></span>
+          <button class="btn danger" id="decline-selected">Decline selected</button>
+          <button class="btn primary" id="accept-selected">Accept selected</button>
+        </div>
+        <div id="list"></div>
+      </div>
 
-      <aside id="copy-panel">
+      <aside id="copy-panel" class="collapsed">
         <div class="panel-head">
           <h2>Copy trips</h2>
-          <span class="spacer"></span>
-          <button class="btn quiet" id="select-all">Select all</button>
         </div>
 
         <div class="panel-scroll">
@@ -562,7 +589,7 @@
     var board = null;
     var settings = null;
     var activeList = 'offered';
-    var selected = {};   // Trip ID -> true, for the copy panel
+    var selected = {};   // Trip ID -> true; drives bulk actions and the copy panel
 
     // ---- helpers ----------------------------------------------------------
 
@@ -625,6 +652,7 @@
       renderAgencies();
       renderCounts();
       renderList();
+      renderBulkBar();
       renderCopyPanel();
     }
 
@@ -668,6 +696,23 @@
       container.scrollTop = 0;
     }
 
+    function renderBulkBar() {
+      var list = trips(activeList);
+      var chosen = selectedTrips();
+      var canAct = activeList !== 'claimed';
+      var allOn = list.length && list.every(function (trip) { return selected[trip.id]; });
+      el('select-all').textContent = allOn ? 'Clear selection' : 'Select all';
+      el('select-all').disabled = !list.length;
+      el('selected-count').textContent = chosen.length
+        ? chosen.length + ' of ' + list.length + ' selected' : '';
+      ['accept-selected', 'decline-selected'].forEach(function (id) {
+        el(id).style.display = canAct ? '' : 'none';
+        el(id).disabled = !chosen.length;
+      });
+      el('accept-selected').textContent = 'Accept selected' + (chosen.length ? ' (' + chosen.length + ')' : '');
+      el('decline-selected').textContent = 'Decline selected' + (chosen.length ? ' (' + chosen.length + ')' : '');
+    }
+
     function cardHtml(trip) {
       var isClaimed = activeList === 'claimed';
       var pill = isClaimed ? 'claimed' : (activeList === 'offered' ? 'offered' : 'open');
@@ -691,7 +736,7 @@
       '<div class="card' + (selected[trip.id] ? ' selected' : '') + '" data-id="' + esc(trip.id) + '">' +
         '<div class="card-pick">' +
           '<input type="checkbox" data-act="select" ' + (selected[trip.id] ? 'checked' : '') +
-            ' title="Include in the copy panel">' +
+            ' title="Select this trip for a bulk action or the copy panel">' +
         '</div>' +
         '<div class="card-body">' +
           '<div class="card-top">' +
@@ -797,7 +842,25 @@
       var id = card.getAttribute('data-id');
       if (event.target.checked) { selected[id] = true; } else { delete selected[id]; }
       card.classList.toggle('selected', !!selected[id]);
+      renderBulkBar();
       renderPreview();
+    });
+
+    el('accept-selected').addEventListener('click', function () {
+      var ids = selectedTrips().map(function (trip) { return trip.id; });
+      if (!ids.length) return;
+      if (!window.confirm('Accept ' + ids.length + ' trip' + (ids.length === 1 ? '' : 's') +
+                          ' for ' + board.agency + '?')) return;
+      runAction('nkaddUiClaimMany', [ids, board.agency]);
+    });
+
+    el('decline-selected').addEventListener('click', function () {
+      var ids = selectedTrips().map(function (trip) { return trip.id; });
+      if (!ids.length) return;
+      var reason = window.prompt('Declining ' + ids.length + ' trip' + (ids.length === 1 ? '' : 's') +
+                                 '. Optional: why is ' + board.agency + ' passing on them?', '');
+      if (reason === null) return;
+      runAction('nkaddUiDeclineMany', [ids, board.agency, reason]);
     });
 
     document.querySelectorAll('.tab').forEach(function (tab) {
@@ -807,6 +870,7 @@
         });
         activeList = tab.getAttribute('data-list');
         renderList();
+        renderBulkBar();
         renderPreview();
       });
     });
@@ -832,6 +896,7 @@
         if (allOn) { delete selected[trip.id]; } else { selected[trip.id] = true; }
       });
       renderList();
+      renderBulkBar();
       renderPreview();
     });
 

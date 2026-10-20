@@ -27,5 +27,5 @@
     "https://www.googleapis.com/auth/script.external_request",
     "https://www.googleapis.com/auth/script.send_mail"
   ],
-  "timeZone": "America/Los_Angeles"
+  "timeZone": "America/New_York"
 }

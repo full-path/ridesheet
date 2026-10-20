@@ -203,8 +203,11 @@ function nkaddClaimTrip(tripId, agency, agencyNotes) {
 
 /**
  * Declines a trip on behalf of an agency. The trip stays on the Trips sheet
- * with `Status` set to `"Declined"`, `Agency` cleared, and the declining
- * agency appended to `"Declined By"` so NKADD can offer it elsewhere.
+ * with `Agency` cleared and the declining agency appended to `"Declined By"`
+ * so NKADD can offer it elsewhere. A trip that was offered to the agency
+ * becomes `"Declined"`; an open-pool trip that was never assigned keeps its
+ * `"Needs Agency"` status, since nothing about its state has changed except
+ * that one more agency has passed on it.
  * @param {string} tripId - The `"Trip ID"` of the trip being declined.
  * @param {string} agency - The declining agency.
  * @param {string} [reason] - Optional reason, appended to the trip's Notes.
@@ -218,8 +221,9 @@ function nkaddDeclineTrip(tripId, agency, reason) {
       return {ok: false, message: "That trip is no longer on the Trips sheet. Another agency may have claimed it."}
     }
     const trip = getRangeValuesAsTable(tripRow, {includeFormulaValues: false})[0]
+    const keepsStatus = trip["Status"] === nkaddStatusNeedsAgency
     let valuesToChange = {
-      "Status": nkaddStatusDeclined,
+      "Status": keepsStatus ? nkaddStatusNeedsAgency : nkaddStatusDeclined,
       "Agency": null,
       "Declined By": nkaddAddToDeclinedBy(trip["Declined By"], agency),
     }
