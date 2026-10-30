@@ -1,46 +1,10 @@
-/**
- * @fileoverview Build and repair utilities for the RideSheet spreadsheet environment.
- *
- * Handles five areas of responsibility:
- *
- * 1. **Menu construction** — builds the RideSheet menu and Settings submenu
- *    (`buildMenus()`), with hooks for local additions via `buildLocalMenus()`.
- *
- * 2. **Named ranges** — creates and repairs named ranges that drive cell triggers
- *    and data validation lookups (`buildNamedRanges()`, `buildNamedRange()`).
- *    The active set of named ranges is the union of `defaultNamedRanges` and
- *    `localNamedRanges`, minus any listed in `localNamedRangesToRemove`.
- *
- * 3. **Document properties** — initializes properties from the Document Properties
- *    sheet (`buildDocumentPropertiesFromSheet()`), adds properties that are missing
- *    because of code updates (`buildDocumentPropertiesFromDefaults()`), and removes
- *    obsolete properties (`purgeOldDocumentProperties()`).
- *
- * 4. **Developer metadata** — stores column configuration (header names, number
- *    formats, data validation rules) as spreadsheet developer metadata so that
- *    column-level settings survive sheet edits and can be used to repair the sheet
- *    (`buildMetadata()`, `fixSheetNames()`, `fixHeaderNames()`,
- *    `fixNumberFormatting()`, `fixDataValidation()`).
- *
- * 5. **Installation wizard** — interactive first-run setup that collects folder
- *    locations, creates the manifest template document, and seeds document
- *    properties (`setupNewInstall()`, `runFirstOpenTasks()`).
- */
-
-/**
- * Builds the RideSheet application menu and the Settings submenu.
- * The "Generate weekly runs from template" item is included only when
- * `createRunMode` is `"default"`. Calls `buildLocalMenus()` at the end so
- * org-specific forks can add their own menu items.
- */
 function buildMenus() {
   const ui = SpreadsheetApp.getUi()
   const menu = ui.createMenu('RideSheet')
   menu.addItem('Add return trip', 'createReturnTrip')
   menu.addItem('Add stop', 'addStop')
   menu.addItem('Create manifests for day', 'createManifestsByRunForDate')
-  menu.addItem('Create manifests for selected trips', 'createSelectedManifestsByRun')
-  menu.addItem('Email driver manifests', 'emailManifestsByRunForDate')
+  menu.addItem('Create manifests for selected items', 'createSelectedManifestsByRun')
   menu.addItem('Move past data to review', 'moveTripsToReview')
   menu.addItem('Add data to runs in review','addDataToRunsInReview')
   menu.addItem('Move reviewed data to archive', 'moveTripsToArchive')
@@ -54,27 +18,12 @@ function buildMenus() {
   settingsMenu.addItem('Rebuild metadata', 'rebuildAllMetadata')
   settingsMenu.addItem('Show metadata as column header notes', 'showColumnMetadata')
   settingsMenu.addItem('Clear metadata notes', 'clearHeaderNotes')
-  settingsMenu.addItem('Set up new installation', 'setupNewInstall')
+  settingsMenu.addItem('Setup new installation', 'setupNewInstall')
   menu.addSubMenu(settingsMenu)
   menu.addToUi()
   buildLocalMenus()
 }
 
-/**
- * Creates and repairs all configured named ranges in the spreadsheet.
- *
- * The effective set of named ranges is computed by starting with
- * `defaultNamedRanges`, removing any entries listed in
- * `localNamedRangesToRemove`, and then merging in `localNamedRanges`.
- *
- * For each already-existing named range:
- * - If it is in `localNamedRangesToRemove`, it is deleted.
- * - If it exists in the effective config but its bounds are out of date
- *   (wrong start row or does not extend far enough), it is rebuilt.
- *
- * Any named range in the effective config that does not yet exist is created.
- * Named ranges whose sheet is in `localSheetsToRemove` are skipped.
- */
 function buildNamedRanges() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const existingNamedRanges = ss.getNamedRanges()
@@ -116,33 +65,6 @@ function buildNamedRanges() {
   })
 }
 
-/**
- * Creates or updates a single named range in the spreadsheet.
- *
- * The range bounds are determined by the properties of `rangeConfigObj`
- * (exactly one strategy must match):
- * - **`headerName`**: column whose header matches this name; range starts at
- *   row 2 (skipping the header row).
- * - **`column`**: explicit column letter (e.g. `"A"`); range starts at row 1.
- * - **`startHeaderName` + `endHeaderName`**: multi-column span. The range
- *   starts at row 1 if `headerOnly` or `allRows` is set, otherwise row 2.
- *   The range ends at row 1 if `headerOnly` is set.
- *
- * All ranges extend to `sheet.getMaxRows() + 1000` (unless `headerOnly`)
- * to accommodate future rows without requiring a rebuild.
- * Does nothing if the target sheet does not exist.
- *
- * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} ss - The active spreadsheet.
- * @param {string} rangeName - The name to assign to the named range.
- * @param {Object} rangeConfigObj - Configuration for the range.
- * @param {string} rangeConfigObj.sheetName - The sheet the range lives on.
- * @param {string} [rangeConfigObj.headerName] - Header name identifying the column.
- * @param {string} [rangeConfigObj.column] - Explicit column letter.
- * @param {string} [rangeConfigObj.startHeaderName] - Start column header for a multi-column range.
- * @param {string} [rangeConfigObj.endHeaderName] - End column header for a multi-column range.
- * @param {boolean} [rangeConfigObj.headerOnly] - Limit the range to the header row only.
- * @param {boolean} [rangeConfigObj.allRows] - Start the range at row 1 (includes the header).
- */
 function buildNamedRange(ss, rangeName, rangeConfigObj) {
   const sheet = ss.getSheetByName(rangeConfigObj.sheetName)
   if (sheet) {
@@ -173,239 +95,34 @@ function buildNamedRange(ss, rangeName, rangeConfigObj) {
   }
 }
 
-/**
- * Runs tasks that should execute on first open or after a copy is made.
- *
- * Detects a new copy by checking whether any document properties exist. If
- * this is a new copy:
- * - Sets the `showNewInstallMenu` property to `TRUE` so the install menu
- *   persists across subsequent opens.
- * - Shows a "NEW INSTALL" menu entry with a shortcut to `setupNewInstall()`.
- * - Shows a welcome alert directing the user to the installation guide.
- *
- * If `showNewInstallMenu` is `TRUE` (but this is not the first open), shows
- * the new install menu without the welcome alert.
- */
-function runFirstOpenTasks() {
-  try {
-    const ui = safeGetUi()
-    if (ui) {
-      if (isNewCopy() || getDocProp("showNewInstallMenu")) {
-        const menu = ui.createMenu('⭐️NEW INSTALL⭐️')
-        menu.addItem('Set up new installation', "setupNewInstall")
-        menu.addToUi()
-      }
-      if (isNewCopy()) {
-        const ss = SpreadsheetApp.getActiveSpreadsheet()
-        const ui = safeGetUi()
-        const propSheet = ss.getSheetByName("Document Properties")
-        const propSheetDataRange = propSheet.getDataRange()
-        const propSheetData = propSheetDataRange.getValues()
-        updatePropertyRange(propSheetData, "showNewInstallMenu", "TRUE")
-        propSheetDataRange.setValues(propSheetData)
-        buildDocumentPropertiesFromSheet()
-        const msg = `
-          It looks like you have a fresh copy of RideSheet.\n
-          If you would like to set up its environment,
-          select "Set up new installation" from the "NEW INSTALL" menu,
-          and then grant RideSheet's permission request by clicking
-          "Select all" then scrolling down and clicking "Continue".\n
-          To learn more about installing RideSheet, visit https://docs.ridesheet.org/technical-guide/installing-ridesheet/
-        `
-        ui.alert("Welcome to RideSheet!", msg, ui.ButtonSet.OK)
-      }
-    }
-  } catch(e) { logError(e) }
-}
-
-/**
- * Returns `true` if no document properties have been set yet, which is the
- * case immediately after a spreadsheet copy is made before any setup has run.
- * @returns {boolean}
- */
-function isNewCopy() {
-  const propCount = PropertiesService.getDocumentProperties().getProperties()
-  return Object.keys(propCount).length === 0
-}
-
-/**
- * Interactive installation wizard run from the "NEW INSTALL" menu.
- *
- * Guides the user through two prompts to collect Google Drive folder URLs:
- * 1. The folder where driver manifests will be saved.
- * 2. The folder where the manifest template document will be stored.
- *
- * For each folder, access is verified by creating and immediately trashing a
- * test file. If either step fails or the user cancels, setup is aborted.
- *
- * On success:
- * - Creates the manifest template document from the `manifest_template` HTML
- *   file, moves the page header and footer elements into place, and removes
- *   the placeholder body elements.
- * - Writes `driverManifestFolderId`, `driverManifestTemplateDocId`, and
- *   `showNewInstallMenu` to the Document Properties sheet and reloads
- *   document properties.
- */
-function setupNewInstall() {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
-    const ui = safeGetUi()
-
-    // Instructions
-    const manifestsResponse = ui.prompt(
-      'New Install Step 1: Set Folder Where Driver Manifests Will Be Saved',
-      'RideSheet needs to know where driver manifests will be saved.\n\n' +
-      'We recommend that the folder be named "RideSheet Driver Manifests" and\n' +
-      'that it be located in the same folder as RideSheet itself.\n\n' +
-      'Create the folder now in another browser window, double-click into it, ' +
-      'copy its address from the browser address bar, and enter that address below.',
-      ui.ButtonSet.OK_CANCEL
-    )
-    if (manifestsResponse.getSelectedButton() !== ui.Button.OK) {
-        ss.toast("New installation cancelled.")
-        return
-      }
-    const manifestsFolderId = extractFolderId(manifestsResponse.getResponseText())
-
-    // Make sure we can truly put a file in the manifest folder
-    try {
-      const testDocId = createDoc("Test File", manifestsFolderId, "Just testing", "text/plain")
-      Drive.Files.update({ trashed: true }, testDocId, null, { supportsAllDrives: true })
-    } catch(e) {
-      ui.alert("Error Testing Access to Driver Manifest Folder",
-        'Check that the folder location is correct.\n\n' +
-        'New installation cancelled.', ui.ButtonSet.OK)
-      return
-    }
-
-    // Get Settings folder ID
-    const settingsResponse = ui.prompt(
-      'New Install Step 2: Set Folder Where The Driver Manifest Template Will Be Saved',
-      'RideSheet needs to know where to save the driver manifest template.\n\n' +
-      'We recommend that the folder be named "RideSheet Settings" and\n' +
-      'that it be located in the same folder as RideSheet itself.\n\n' +
-      'Create the folder now in another browser window, double-click into it, ' +
-      'copy its address from the browser address bar, and enter that address below.',
-      ui.ButtonSet.OK_CANCEL
-    )
-    if (settingsResponse.getSelectedButton() !== ui.Button.OK) {
-      ss.toast("Setup cancelled.")
-      return
-    }
-    const settingsFolderId = extractFolderId(settingsResponse.getResponseText())
-
-    // Do the same testing with the settings folder
-    try {
-      const testDocId = createDoc("Test File", settingsFolderId, "Just testing", "text/plain")
-      Drive.Files.update({ trashed: true }, testDocId, null, { supportsAllDrives: true })
-    } catch(e) {
-      ui.alert("Error Testing Access to Settings Folder",
-        'Check that the folder location is correct.\n\n' +
-        'New installation cancelled.', ui.ButtonSet.OK)
-      return
-    }
-
-    // Create the driver manifest template via an import from HTML
-    // Imports from HTML cannot set the page header or footer
-    const templateSourceHtml = HtmlService.createHtmlOutputFromFile('manifest_template').getContent()
-    const templateDocId = createDoc("RideSheet Manifest Template", settingsFolderId, templateSourceHtml, "text/html")
-
-    // Open up the doc and put the page header and footer into place
-    prepareTemplate(templateDocId)
-    const doc = DocumentApp.openById(templateDocId)
-    appendTemplateRange(doc.getNamedRanges("PAGE_HEADER")[0].getRange(), doc.addHeader())
-    appendTemplateRange(doc.getNamedRanges("PAGE_FOOTER")[0].getRange(), doc.addFooter())
-
-    // Now delete the body elements that held the page header and footer text
-    // This text wouldn't break anything, but it would be confusing to the user
-    const rangeNamesToRemove = ["OUTER_PAGE_HEADER","OUTER_PAGE_FOOTER"]
-    rangeNamesToRemove.forEach(namedRangeName => {
-      const namedRange = doc.getNamedRanges(namedRangeName)[0].getRange()
-      const rangeElements = namedRange.getRangeElements()
-      rangeElements.forEach(rangeElement => {
-        const element = rangeElement.getElement()
-        element.removeFromParent()
-      })
-    })
-
-    const propSheet = ss.getSheetByName("Document Properties")
-    const propSheetDataRange = propSheet.getDataRange()
-    const propSheetData = propSheetDataRange.getValues()
-    updatePropertyRange(propSheetData, "driverManifestFolderId",      manifestsFolderId)
-    updatePropertyRange(propSheetData, "driverManifestTemplateDocId", templateDocId)
-    updatePropertyRange(propSheetData, "showNewInstallMenu",          "FALSE")
-    propSheetDataRange.setValues(propSheetData)
-    buildDocumentPropertiesFromSheet()
-
-    ui.alert("Installation Complete",
-      "You can now generate driver manifests. Go to the settings folder you entered to view the manifest template and tailor it to your needs.\n\n" +
-      "For more details about using RideSheet, visit https://docs.ridesheet.org.", ui.ButtonSet.OK
-    )
-  } catch(e) {
-    safeGetUi()?.alert(e.name + ': ' + e.message)
-    logError(e)
-  }
-}
-
-/**
- * Seeds document properties from the Document Properties sheet if no
- * properties have been set yet (i.e. this is a new copy).
- * Returns `true` if properties were built, `undefined` otherwise.
- * @returns {boolean|undefined}
- */
-function buildDocumentPropertiesIfEmpty() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const propSheet = ss.getSheetByName("Document Properties")
-  if (isNewCopy() && propSheet) {
-    buildDocumentPropertiesFromSheet()
-    return true
-  }
-}
-
-/**
- * Reads the Document Properties sheet and writes all recognized property
- * values to script document properties via `setDocProps()`.
- *
- * Only rows whose property name appears in `defaultDocumentProperties` are
- * processed; unrecognized rows are silently ignored. Values are coerced to
- * the type declared in `defaultDocumentProperties` before being stored.
- * Calls `updatePropertiesSheet()` after writing to keep the sheet in sync.
- */
+// Document properties don't pass on to copied sheets.
+// This recreates the ones put into the properties sheet.
 function buildDocumentPropertiesFromSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const propSheet = ss.getSheetByName("Document Properties")
-  let propsGrid = propSheet.getDataRange().getValues()
-  propsGrid.shift() // Remove the header row from the array
-  let defaultPropNames = Object.keys(defaultDocumentProperties)
-  let newProps = []
-  propsGrid.forEach(row => {
-    if (defaultPropNames.indexOf(row[0]) !== -1) {
-      let prop = {}
-      prop.name = row[0]
-      prop.value = coerceValue(row[1], defaultDocumentProperties[row[0]].type)
-      prop.description = row[2]
-      newProps.push(prop)
-    }
-  })
-  setDocProps(newProps)
-  updatePropertiesSheet()
+  let docProps = PropertiesService.getDocumentProperties().getProperties()
+  if (Object.keys(docProps).length === 0 && propSheet) {
+    let propsGrid = propSheet.getDataRange().getValues()
+    propsGrid.shift() // Remove the header row from the array
+    let defaultPropNames = Object.keys(defaultDocumentProperties)
+    let newProps = []
+    propsGrid.forEach(row => {
+      if (defaultPropNames.indexOf(row[0]) !== -1) {
+        let prop = {}
+        prop.name = row[0]
+        prop.value = coerceValue(row[1], defaultDocumentProperties[row[0]].type)
+        prop.description = row[2]
+        newProps.push(prop)
+      }
+    })
+    setDocProps(newProps)
+    updatePropertiesSheet()
+  }
 }
 
-/**
- * Adds any default document properties that are missing from the current
- * document properties, and syncs descriptions that are out of date.
- *
- * Called on every open, so new properties introduced by code updates are
- * automatically added without requiring a manual re-import from the sheet.
- *
- * A property is (re)written if:
- * - It is absent from document properties entirely, or
- * - Its stored type differs from the type declared in `defaultDocumentProperties`.
- *
- * A description-only entry is written if the stored description does not
- * match the default description. Only calls `setDocProps()` and
- * `updatePropertiesSheet()` when there is actually something to update.
- */
+// If there are any default document properties that are missing from the actual
+// document properties for this sheet, this adds them.
+// This is useful for code updates that involve creating new document properties.
 function buildDocumentPropertiesFromDefaults() {
   let docProps = PropertiesService.getDocumentProperties().getProperties()
   let newProps = []
@@ -429,18 +146,6 @@ function buildDocumentPropertiesFromDefaults() {
   }
 }
 
-/**
- * Compares the actual column headers on each sheet against the configured
- * columns and returns a diagnostic report.
- *
- * @returns {Object.<string, {defaultPresent: string[], defaultMissing: string[], configPresent: string[], configMissing: string[], notTracked: string[]}>}
- *   An object keyed by sheet name, where each value has:
- *   - `defaultPresent` — configured default columns that exist on the sheet.
- *   - `defaultMissing` — configured default columns absent from the sheet.
- *   - `configPresent` — extra (local) columns that exist on the sheet.
- *   - `configMissing` — extra (local) columns absent from the sheet.
- *   - `notTracked` — columns present on the sheet but not in any config.
- */
 function assessMetadata() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -466,22 +171,6 @@ function assessMetadata() {
   } catch(e) { logError(e) }
 }
 
-/**
- * Writes developer metadata to all configured sheets and their columns.
- *
- * For each configured sheet, adds two sheet-level metadata entries:
- * - `"sheetName"` — the canonical sheet name.
- * - `"hasHeader"` — `"true"` or `"false"` depending on whether the sheet
- *   appears in `sheetsWithHeaders`.
- *
- * For each column in a sheet with headers whose name appears in
- * `defaultColumns`, adds column-level metadata for `"headerName"` plus any
- * additional keys defined in the column settings (e.g. `"numberFormat"`,
- * `"dataValidation"`).
- *
- * This metadata is used by `fixSheetNames()`, `fixHeaderNames()`,
- * `fixNumberFormatting()`, and `fixDataValidation()` to repair the sheet.
- */
 function buildMetadata() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -525,11 +214,6 @@ function buildMetadata() {
   }
 }
 
-/**
- * Removes all developer metadata from the spreadsheet.
- * Typically called before `buildMetadata()` to perform a clean rebuild
- * via `rebuildAllMetadata()`.
- */
 function clearMetadata() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -540,10 +224,6 @@ function clearMetadata() {
   } catch(e) { logError(e) }
 }
 
-/**
- * Clears all developer metadata and rebuilds it from the current column
- * configuration. Exposed as a menu item in the Settings submenu.
- */
 function rebuildAllMetadata() {
   try {
     clearMetadata()
@@ -551,23 +231,12 @@ function rebuildAllMetadata() {
   } catch(e) { logError(e) }
 }
 
-/**
- * Repairs common sheet issues by restoring sheet names, header names/formulas,
- * number formatting, and data validation rules from developer metadata.
- * Exposed as a menu item in the Settings submenu.
- */
 function repairSheets() {
   fixSheetNames()
-  fixAllHeaderNames()
   fixNumberFormatting()
   fixDataValidation()
-  fixFrozenRows()
 }
 
-/**
- * Restores any sheet names that have drifted from their canonical values
- * stored in `"sheetName"` developer metadata. Logs each rename.
- */
 function fixSheetNames() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -584,14 +253,6 @@ function fixSheetNames() {
   } catch(e) { logError(e) }
 }
 
-/**
- * Returns all column-type developer metadata entries within `scope` that
- * match the given key.
- * @param {GoogleAppsScript.Spreadsheet.Spreadsheet|GoogleAppsScript.Spreadsheet.Sheet} scope
- *   The spreadsheet or sheet to search.
- * @param {string} key - The metadata key to look up (e.g. `"dataValidation"`, `"numberFormat"`).
- * @returns {GoogleAppsScript.Spreadsheet.DeveloperMetadata[]}
- */
 function getColumnMetadata(scope, key) {
   let mds = scope.createDeveloperMetadataFinder()
     .withLocationType(SpreadsheetApp.DeveloperMetadataLocationType.COLUMN)
@@ -600,12 +261,6 @@ function getColumnMetadata(scope, key) {
   return mds
 }
 
-/**
- * Applies column data-validation rules from developer metadata to every
- * column in a single row. Used when a new row is inserted to ensure it
- * immediately has the correct validation.
- * @param {GoogleAppsScript.Spreadsheet.Range} range - A single-row range.
- */
 function fixRowDataValidation(range) {
   let sheet = range.getSheet()
   let mds = getColumnMetadata(sheet, 'dataValidation')
@@ -619,27 +274,6 @@ function fixRowDataValidation(range) {
   })
 }
 
-/**
- * Builds a `DataValidationRule` from a JSON attribute object stored in
- * column developer metadata. Supports three criteria strategies:
- * - **`VALUE_IN_RANGE`** — looks up a named range by `ruleAttributes.namedRange`
- *   and trims it to actual sheet bounds before creating the rule.
- * - **`VALUE_IN_LIST`** — uses an explicit list of values.
- * - **`CHECKBOX`** — supports custom checked/unchecked values or plain checkbox.
- * - **Other** — passes `ruleAttributes.args` directly as criteria arguments.
- *
- * @param {Object} ruleAttributes - Parsed JSON from column developer metadata.
- * @param {string} ruleAttributes.criteriaType - A `DataValidationCriteria` key name.
- * @param {boolean} [ruleAttributes.allowInvalid] - Allow values that fail validation.
- * @param {string} [ruleAttributes.namedRange] - Named range for `VALUE_IN_RANGE`.
- * @param {boolean} [ruleAttributes.showDropdown] - Show dropdown for list/range criteria.
- * @param {Array} [ruleAttributes.values] - Values for `VALUE_IN_LIST`.
- * @param {*} [ruleAttributes.checkedValue] - Checked value for `CHECKBOX`.
- * @param {*} [ruleAttributes.uncheckedValue] - Unchecked value for `CHECKBOX`.
- * @param {Array} [ruleAttributes.args] - Arguments for other criteria types.
- * @param {string} [ruleAttributes.helpText] - Help text shown on validation failure.
- * @returns {GoogleAppsScript.Spreadsheet.DataValidation|undefined}
- */
 function getValidationRule(ruleAttributes) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -685,13 +319,6 @@ function getValidationRule(ruleAttributes) {
   } catch(e) { logError(e) }
 }
 
-/**
- * Applies data-validation rules from developer metadata to all data rows
- * (skipping row 1) in the given sheet, or across the entire spreadsheet
- * if no sheet is specified.
- * @param {GoogleAppsScript.Spreadsheet.Sheet|string|null} [sheet=null] - A sheet
- *   object, a sheet name, or `null` to apply across all sheets.
- */
 function fixDataValidation(sheet=null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   let scope = ss
@@ -713,13 +340,6 @@ function fixDataValidation(sheet=null) {
   })
 }
 
-/**
- * Applies number formats from developer metadata to all data rows
- * (skipping row 1) in the given sheet, or across the entire spreadsheet
- * if no sheet is specified.
- * @param {GoogleAppsScript.Spreadsheet.Sheet|string|null} [sheet=null] - A sheet
- *   object, a sheet name, or `null` to apply across all sheets.
- */
 function fixNumberFormatting(sheet=null) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   let scope = ss
@@ -740,11 +360,6 @@ function fixNumberFormatting(sheet=null) {
   })
 }
 
-/**
- * Applies column number formats from developer metadata to every column
- * in a single row. Used when a new row is inserted.
- * @param {GoogleAppsScript.Spreadsheet.Range} range - A single-row range.
- */
 function fixRowNumberFormatting(range) {
     let sheet = range.getSheet()
     let mds = getColumnMetadata(sheet, 'numberFormat')
@@ -757,18 +372,6 @@ function fixRowNumberFormatting(range) {
     })
 }
 
-/**
- * Restores header row values that have drifted from their canonical values
- * stored in column developer metadata.
- *
- * For each column in `rangeIn`, looks up the `"headerFormula"` or
- * `"headerName"` metadata key. If the current cell value or formula does
- * not match the stored value, it is overwritten. All out-of-sync columns
- * are corrected in a single `setValues()` call.
- *
- * @param {GoogleAppsScript.Spreadsheet.Range} rangeIn - The header row range
- *   (or a portion of it) to inspect and repair.
- */
 function fixHeaderNames(rangeIn) {
   try {
     const headerMetadata = rangeIn.createDeveloperMetadataFinder().
@@ -817,10 +420,6 @@ function fixHeaderNames(rangeIn) {
   } catch(e) { logError(e) }
 }
 
-/**
- * Runs `fixHeaderNames()` for all sheets that have developer metadata
- * indicating they have a header row (`hasHeader = true`).
- */
 function fixAllHeaderNames() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const mds = ss.createDeveloperMetadataFinder()
@@ -835,25 +434,6 @@ function fixAllHeaderNames() {
   })
 }
 
-/**
- * Ensures every configured sheet with a header row has exactly one frozen row.
- * Called by `repairSheets()` and `onOpen()`.
- */
-function fixFrozenRows() {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
-    getConfiguredSheetsWithHeaders().forEach(sheetName => {
-      const sheet = ss.getSheetByName(sheetName)
-      if (sheet && sheet.getFrozenRows() !== 1) sheet.setFrozenRows(1)
-    })
-  } catch(e) { logError(e) }
-}
-
-/**
- * Logs all column-level `"headerName"` metadata entries to the script log.
- * Useful for debugging metadata configuration.
- * @private
- */
 function logMetadata() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -867,27 +447,75 @@ function logMetadata() {
   } catch(e) { logError(e) }
 }
 
+// Sets up a new instance of RideSheet
+function buildRideSheetInstall(destFolderId, sourceRideSheetFileId, namePrefix) {
+  const manifestTemplateName = "Manifest Template"
+  const reportFileName = "Monthly Reporting"
+
+  const sourceRideSheetFile = DriveApp.getFileById(sourceRideSheetFileId)
+  const sourceFolder = sourceRideSheetFile.getParents().next()
+  const sourceTemplateFile = sourceFolder.getFoldersByName("Settings").next().
+    getFilesByName(manifestTemplateName).next()
+  const sourceReportFile = sourceFolder.getFoldersByName("Reports").next().
+    getFilesByName(reportFileName).next()
+
+  const destFolder = DriveApp.getFolderById(destFolderId)
+  const newManifestFolder = destFolder.createFolder("Manifests")
+  const newReportsFolder = destFolder.createFolder("Reports")
+  const newSettingsFolder = destFolder.createFolder("Settings")
+  const newRideSheetFile = sourceRideSheetFile.makeCopy(destFolder).setName(namePrefix + " RideSheet")
+  const newTemplateFile = sourceTemplateFile.makeCopy(newSettingsFolder).setName(manifestTemplateName)
+  const newReportFile = sourceReportFile.makeCopy(newReportsFolder).setName(reportFileName)
+
+  const newRideSheet = SpreadsheetApp.open(newRideSheetFile)
+  const propSheet = newRideSheet.getSheetByName("Document Properties")
+  const propSheetDataRange = propSheet.getDataRange()
+  const propSheetData = propSheetDataRange.getValues()
+  updatePropertyRange(propSheetData,"driverManifestFolderId",newManifestFolder.getId())
+  updatePropertyRange(propSheetData,"driverManifestTemplateDocId",newTemplateFile.getId())
+  updatePropertyRange(propSheetData,"configFolderId",newSettingsFolder.getId())
+  propSheetDataRange.setValues(propSheetData)
+}
+
 /**
- * Updates a property value in an in-memory grid of Document Properties sheet
- * data before it is written back to the sheet. Mutates `dataRange` in place.
- * @param {Array<Array<*>>} dataRange - The full sheet data as a 2D array
- *   (rows × columns), where column 0 is the property name and column 1 is
- *   the value.
- * @param {string} propName - The property name to find and update.
- * @param {*} newPropValue - The new value to set.
+ * Sets up a new RideSheet installation by:
+ * - Building document properties from the properties sheet
+ * - Creating Manifests and Templates folders in the parent directory
+ * - Copying the manifest template from RideSheet Public Sample to the Templates folder
+ * - Updating document properties with new folder and template IDs
+ * @throws {Error} If any step of the setup process fails
  */
+function setupNewInstall() {
+  try {
+    buildDocumentPropertiesFromSheet()
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const currentFile = DriveApp.getFileById(ss.getId())
+    const parentFolder = currentFile.getParents().next()
+    const manifestsFolder = parentFolder.createFolder("Manifests")
+    const templatesFolder = parentFolder.createFolder("Settings")
+    const sourceTemplateId = "1-E-gxHgS3h5gr9Fh4VfdZkAwcN5kjJ7_hqx69Cs1BmY"
+    const sourceTemplate = DriveApp.getFileById(sourceTemplateId)
+    const newTemplate = sourceTemplate.makeCopy(templatesFolder)
+    const propSheet = ss.getSheetByName("Document Properties")
+    const propSheetDataRange = propSheet.getDataRange()
+    const propSheetData = propSheetDataRange.getValues()
+
+    updatePropertyRange(propSheetData, "driverManifestFolderId", manifestsFolder.getId())
+    updatePropertyRange(propSheetData, "driverManifestTemplateDocId", newTemplate.getId())
+    propSheetDataRange.setValues(propSheetData)
+  } catch(e) {
+    logError(e)
+  }
+}
+
 function updatePropertyRange(dataRange, propName, newPropValue) {
   dataRange.forEach(row => {
     if (row[0] === propName) { row[1] = newPropValue }
   })
 }
 
-/**
- * Writes all column-level developer metadata as notes on the header row cells
- * of each sheet. Existing header notes are cleared first.
- * Exposed as a menu item in the Settings submenu. Useful for inspecting
- * column configuration without using the Apps Script editor.
- */
+// Take spreadsheet's column-type metadata and put in a note in the top
+// cell of the associated column. Useful for testing configurations.
 function showColumnMetadata() {
   try {
     clearHeaderNotes()
@@ -923,11 +551,8 @@ function showColumnMetadata() {
   } catch(e) { logError(e) }
 }
 
-/**
- * Clears the notes from the header row of every configured sheet that has
- * headers. Used to undo the notes added by `showColumnMetadata()`.
- * Exposed as a menu item in the Settings submenu.
- */
+// Clears out the notes fields of the top row of sheets.
+// Useful for clearing out the notes put in place by showColumnMetadata()
 function clearHeaderNotes() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -943,13 +568,6 @@ function clearHeaderNotes() {
   } catch(e) { logError(e) }
 }
 
-/**
- * Returns the effective column configuration by merging `defaultColumns` with
- * `localColumns`, after removing any sheets listed in `localSheetsToRemove`
- * and any columns listed in `localColumnsToRemove`.
- * @returns {Object.<string, Object.<string, Object>>} An object keyed by sheet
- *   name, whose values are objects keyed by column header name.
- */
 function getConfiguredColumns() {
   // Initial configuration based on defaultColumns, excluding removed sheets and columns
   const baseConfig = Object.keys(defaultColumns).reduce((sheetAcc, sheetName) => {
@@ -972,57 +590,17 @@ function getConfiguredColumns() {
   }, baseConfig)
 }
 
-/**
- * Returns the effective list of sheet names, combining `defaultSheets`
- * (minus any in `localSheetsToRemove`) with `localSheets`.
- * @returns {string[]}
- */
 function getConfiguredSheets() {
   return [...defaultSheets.filter((sheetName) => !localSheetsToRemove.includes(sheetName)),...localSheets]
 }
 
-/**
- * Returns the effective list of sheet names that have header rows, combining
- * `sheetsWithHeaders` (minus any in `localSheetsToRemove`) with
- * `localSheetsWithHeaders`.
- * @returns {string[]}
- */
 function getConfiguredSheetsWithHeaders() {
   return [...sheetsWithHeaders.filter((sheetName) => !localSheetsToRemove.includes(sheetName)),...localSheetsWithHeaders]
 }
 
-/**
- * Returns a copy of `range` trimmed to the actual row bounds of its sheet,
- * so that over-extended named ranges (which go beyond `getMaxRows()`) can
- * be used safely where in-bounds ranges are required (e.g. data validation).
- * @param {GoogleAppsScript.Spreadsheet.Range} range - The range to trim.
- * @returns {GoogleAppsScript.Spreadsheet.Range}
- */
 function getInBoundsRange(range) {
   const sheet = range.getSheet()
   const sheetLastRow = sheet.getMaxRows()
   const newRowCount = range.getLastRow() > sheetLastRow ? sheetLastRow - range.getRow() + 1 : range.getNumRows()
   return sheet.getRange(range.getRow(),range.getColumn(), newRowCount,range.getNumColumns())
-}
-
-/**
- * Extracts a Google Drive folder ID from a full Drive URL or returns the
- * input as-is if it appears to already be a bare folder ID.
- * Throws if `input` is empty.
- * @param {string} input - A Drive folder URL or bare folder ID.
- * @returns {string} The extracted folder ID.
- */
-function extractFolderId(input) {
-  if (!input) {
-    throw new Error('No folder ID provided')
-  }
-  input = input.trim()
-  // Try to extract from full URL
-  // https://drive.google.com/drive/folders/FOLDER_ID
-  const urlMatch = input.match(/\/folders\/([a-zA-Z0-9_-]+)/)
-  if (urlMatch) {
-    return urlMatch[1]
-  }
-  // Assume it's already just the ID
-  return input
 }

@@ -1,70 +1,21 @@
-/**
- * @fileoverview Application-wide constants and default configuration for RideSheet.
- *
- * This file defines:
- * - Version and feature flags
- * - UI color constants
- * - Default geocoding bounds and timing values
- * - `defaultSheets` and `sheetsWithHeaders`: the expected sheet inventory
- * - `defaultDocumentProperties`: configurable per-installation settings, their
- *   types, default values, and descriptions (surfaced via the "Document Properties" sheet)
- * - `defaultColumns`: per-sheet column definitions including number formats and
- *   data validation rules (used by `applySheetFormatsAndValidation()` in sheets.js)
- * - `defaultNamedRanges`: named range configurations (used by `buildNamedRanges()` in build.js)
- *
- * The `_local` counterparts in `constants_local.js` allow forks to add or override
- * these defaults without modifying this file.
- */
-
-/** @type {string} The current version of RideSheet. */
-const SCRIPT_VERSION = "1.1.0"
-
-/** @type {boolean} Set to true to log timing information to the Debug Log sheet on each onEdit call. */
 const debugLogging                       = false
-/** @type {boolean} Set to true to allow editing property descriptions in the Document Properties sheet. */
 const allowPropDescriptionEdits          = false
 
-// ─── UI Color Constants ─────────────────────────────────────────────────────
-/** @type {string} Background color applied to cells with data errors. */
 const errorBackgroundColor               = "#f4cccc"
-/** @type {string} Default cell background color. */
 const defaultBackgroundColor             = "#ffffff"
-/** @type {string} Background color for header rows. */
 const headerBackgroundColor              = "#fff2cc"
-/** @type {string} Background color for highlighted cells. */
 const highlightBackgroundColor           = "#ffff00"
 
-// ─── Default Geocoder Bounds and Timing ─────────────────────────────────────
-// These values default to the state of Oregon and serve as fallbacks when the
-// corresponding document properties have not been set. Live values are stored as
-// document properties and can be customized per installation.
-/** @type {string} Default IANA time zone identifier. */
+// Config for the state of Oregon
 const defaultLocalTimeZone               = "America/Los_Angeles"
-/** @type {number} South latitude of the geocoder bounding box (degrees). */
 const defaultGeocoderBoundSwLatitude     = 41.997013
-/** @type {number} West longitude of the geocoder bounding box (degrees). */
 const defaultGeocoderBoundSwLongitude    = -124.560974
-/** @type {number} North latitude of the geocoder bounding box (degrees). */
 const defaultGeocoderBoundNeLatitude     = 46.299097
-/** @type {number} East longitude of the geocoder bounding box (degrees). */
 const defaultGeocoderBoundNeLongitude    = -116.463363
 
-/** @type {number} Default time in minutes added to each trip for pick-up and drop-off. */
 const defaultDwellTimeInMinutes          = 10
-/** @type {number} Default padding time in minutes added per hour of estimated travel time. */
 const defaultTripPaddingPerHourInMinutes = 5
 
-// ─── Manifest Email ─────────────────────────────────────────────────────────
-/** @type {string} Subject line for driver manifest emails. Supports {Driver Name} and {Trip Date} placeholders. */
-const manifestEmailSubject = "Driver Manifest for {Driver Name} for {Trip Date}"
-/** @type {string} Body text for driver manifest emails. Supports {Driver Name}, {Trip Date}, and {h:mm am/pm} placeholders. */
-const manifestEmailBody    = "Driver manifest for {Driver Name} for {Trip Date}.\n\nGenerated at: {h:mm am/pm}"
-
-/**
- * The full list of sheet names expected in a standard RideSheet installation.
- * Used by setup and repair functions to detect or create missing sheets.
- * @type {string[]}
- */
 const defaultSheets = [
   "Customers",
   "Trips",
@@ -82,11 +33,6 @@ const defaultSheets = [
   "Addresses"
 ]
 
-/**
- * The subset of `defaultSheets` that have a header row in row 1.
- * Used to restrict formatting, data validation, and metadata operations to data rows only.
- * @type {string[]}
- */
 const sheetsWithHeaders = [
   "Customers",
   "Trips",
@@ -103,20 +49,10 @@ const sheetsWithHeaders = [
 ]
 
 const defaultDocumentProperties = {
-  manifestTemplateLastUpdated_: {
-    type: "number",
-    value: 0,
-    description: "The date the driver manifest template was last updated, formatted as a numerical JavaScipt timestamp"
-  },
   lastCustomerID_: {
     type: "number",
     value: 0,
     description: "The value of the last set customer ID."
-  },
-  showNewInstallMenu: {
-    type: "boolean",
-    value: false,
-    description: "Show the new install menu? This keeps the menu in place until a new install is fully complete."
   },
   driverManifestFolderId: {
     type: "string",
@@ -127,26 +63,6 @@ const defaultDocumentProperties = {
     type: "string",
     value: "Enter ID here",
     description: "The document ID of the Google Doc you'll be using as your manifest template."
-  },
-  createManifestPdf: {
-    type: "boolean",
-    value: true,
-    description: "When creating manifests, create them as PDFs?"
-  },
-  keepManifestDoc: {
-    type: "boolean",
-    value: true,
-    description: "When creating manifests, keep the Google Docs version?"
-  },
-  addManifestAddressLinks: {
-    type: "boolean",
-    value: true,
-    description: "When creating manifests, add Google Maps links to addresses?"
-  },
-  sendManifestToDriver: {
-    type: "boolean",
-    value: false,
-    description: "Automatically email each manifest to the driver as a PDF attachment when manifests are created?"
   },
   geocoderBoundNeLatitude: {
     type: "number",
@@ -200,12 +116,12 @@ const defaultDocumentProperties = {
   },
   runUserReviewRequiredFields: {
     type: "array",
-    value: ["Run Date","Driver ID","Vehicle ID"],
+    value: [],
     description: "The names of run columns that must have data in them in order to for RideSheet to calculate deadhead or other run information."
   },
   runFullReviewRequiredFields: {
     type: "array",
-    value: ["Run Date","Driver ID","Vehicle ID","Scheduled Start Time","Scheduled End Time","Actual Start Time","Actual End Time","Break Time in Minutes","Odometer Start","Odometer End","Starting Deadhead Miles","Ending Deadhead Miles","Starting Deadhead Hours","Ending Deadhead Hours","Vehicle Garage Address","First PU Address","Last DO Address"],
+    value: [],
     description: "The names of run columns that must have data in them in order to be archived."
   },
   providerName: {
@@ -230,27 +146,6 @@ const defaultDocumentProperties = {
   }
 }
 
-/**
- * Default column definitions for each sheet, consumed by `applySheetFormatsAndValidation()`
- * in sheets.js and `buildMetadata()` in build.js.
- *
- * Each top-level key is a sheet name. Each nested key is a column header name. The column
- * configuration object supports these optional properties:
- * - `numberFormat` {string}   - A Sheets number format string (e.g. `"M/d/yyyy"`, `'h":"mm am/pm'`).
- * - `dataValidation` {Object} - Validation rule definition (see `getValidationRule()` in sheets.js):
- *   - `criteriaType` {string}   - The `SpreadsheetApp.DataValidationCriteria` enum name.
- *   - `namedRange` {string}     - (VALUE_IN_RANGE) Named range supplying the dropdown list.
- *   - `values` {Array}          - (VALUE_IN_LIST) Explicit list of allowed values.
- *   - `args` {Array}            - Additional arguments required by some criteria types.
- *   - `showDropdown` {boolean}  - Whether to render a dropdown arrow in the cell.
- *   - `allowInvalid` {boolean}  - Whether to permit values outside the validation list.
- *   - `helpText` {string}       - Tooltip shown when the cell is selected or validation fails.
- * - `headerFormula` {string}  - A Sheets array formula placed in the header cell to compute
- *   an entire column. These columns are read-only; their header names are wrapped in `|pipes|`
- *   as a signal to `setValuesByHeaderNames()` not to overwrite formula output.
- *
- * @type {Object.<string, Object.<string, {numberFormat?: string, dataValidation?: Object, headerFormula?: string}>>}
- */
 const defaultColumns = {
   "Customers": {
     "Customer Name and ID": {},
@@ -392,23 +287,7 @@ const defaultColumns = {
         helpText: "Value must be a valid time.",
       },
     },
-    "|PU|": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupAddressShortNames",
-        showDropdown: false,
-        allowInvalid: false
-      },
-    },
     "PU Address": {},
-    "|DO|": {
-      dataValidation: {
-        criteriaType: "VALUE_IN_RANGE",
-        namedRange: "lookupAddressShortNames",
-        showDropdown: false,
-        allowInvalid: false
-      },
-    },
     "DO Address": {},
     "Driver ID": {
       dataValidation: {
@@ -1098,9 +977,6 @@ const defaultColumns = {
     "Address": {},
   },
   "Lookups": {
-    "Address Short Names": {
-      headerFormula: `={"Address Short Names";QUERY(queryAddresses,"SELECT Col1 WHERE Col1 IS NOT NULL ORDER BY Col1",0)}`,
-    },
     "Customer Names and IDs": {
       headerFormula: `={"Customer Names and IDs";QUERY({queryCustomerNameAndId,queryCustomerEndDate},"SELECT Col1 WHERE Col1 IS NOT NULL AND Col2 IS NULL ORDER BY Col1",0)}`
     },
@@ -1117,39 +993,7 @@ const defaultColumns = {
   }
 }
 
-/**
- * Default named range definitions, consumed by `buildNamedRanges()` in build.js.
- *
- * Each key is the named range name. The value is a configuration object with:
- * - `sheetName` {string}       - The sheet the named range lives on.
- * - `headerName` {string}      - (optional) Column header to derive a single-column range.
- *                                The range spans from row 2 to the sheet's last row + 1000.
- * - `startHeaderName` {string} - (optional, pair with `endHeaderName`) First column of a multi-column range.
- * - `endHeaderName` {string}   - (optional, pair with `startHeaderName`) Last column of a multi-column range.
- * - `headerOnly` {boolean}     - (optional) If true, the range covers only row 1.
- * - `allRows` {boolean}        - (optional) If true, the range starts from row 1 instead of row 2.
- *
- * Named range name prefixes indicate their role:
- * - `code*`    — Cell-based edit trigger zones. Edits within these ranges invoke the
- *                corresponding handler defined in `rangeTriggers` (see on_edit.js).
- * - `lookup*`  — Source lists for data-validation dropdowns in cells.
- * - `query*`   — Single-column references used as QUERY formula arguments.
- * - `formula*` — Column or block references used in spreadsheet array formula arguments.
- *
- * Local forks can extend this set via `localNamedRanges` in constants_local.js,
- * or remove entries via `localNamedRangesToRemove`.
- *
- * @type {Object.<string, {sheetName: string, headerName?: string, startHeaderName?: string, endHeaderName?: string, headerOnly?: boolean, allRows?: boolean}>}
- */
 const defaultNamedRanges = {
-  "codeExpandAddress1": {
-    "sheetName":"Trips",
-    "headerName":"|PU|"
-  },
-  "codeExpandAddress2": {
-    "sheetName":"Trips",
-    "headerName":"|DO|"
-  },
   "codeFillHoursAndMiles1": {
     "sheetName":"Trips",
     "headerName":"PU Address"
@@ -1224,7 +1068,11 @@ const defaultNamedRanges = {
   },
   "codeTripActionButton1": {
     "sheetName":"Trips",
-    "headerName":"|Go|"
+    "headerName":"Go"
+  },
+  "codeUpdateTripVehicle": {
+    "sheetName":"Trips",
+    "headerName":"Driver ID"
   },
   "codeUpdateTripTimes1": {
     "sheetName":"Trips",
@@ -1237,10 +1085,6 @@ const defaultNamedRanges = {
   "codeUpdateTripTimes3":{
     "sheetName":"Trips",
     "headerName":"Appt Time"
-  },
-  "lookupAddressShortNames": {
-    "sheetName":"Lookups",
-    "headerName":"Address Short Names"
   },
   "lookupCustomerNames": {
     "sheetName":"Lookups",
@@ -1265,10 +1109,6 @@ const defaultNamedRanges = {
   "lookupTripResults": {
     "sheetName":"Lookups",
     "headerName":"Trip Results"
-  },
-  "queryAddresses": {
-    "sheetName":"Addresses",
-    "headerName":"Short Name"
   },
   "queryCustomerNameAndId": {
     "sheetName":"Customers",
