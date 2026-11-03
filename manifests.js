@@ -177,8 +177,10 @@ function emailManifestsByRunForDate() {
 function emailManifests(templateDocId, groupedManifestData, fileNameFunction) {
   try {
     const manifestFolderId = getDocProp("driverManifestFolderId")
-    const templateDoc = DocumentApp.openById(templateDocId)
+    // Must prepare (and save/close) the template before opening the handle used below,
+    // since re-saving it elsewhere invalidates any already-open handle to the same doc.
     prepareTemplate(templateDocId)
+    const templateDoc = DocumentApp.openById(templateDocId)
 
     let manifestCount = 0
     groupedManifestData.forEach(manifestGroup => {
@@ -254,8 +256,10 @@ function createSelectedManifestsByRun() {
 function createManifests(templateDocId, groupedManifestData, fileNameFunction) {
   try {
     const manifestFolderId = getDocProp("driverManifestFolderId")
-    const templateDoc = DocumentApp.openById(templateDocId)
+    // Must prepare (and save/close) the template before opening the handle used below,
+    // since re-saving it elsewhere invalidates any already-open handle to the same doc.
     prepareTemplate(templateDocId)
+    const templateDoc = DocumentApp.openById(templateDocId)
 
     let manifestCount = 0
     groupedManifestData.forEach(manifestGroup => {
