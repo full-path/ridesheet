@@ -2,11 +2,6 @@
   "dependencies": {
     "enabledAdvancedServices": [
       {
-        "userSymbol": "Sheets",
-        "serviceId": "sheets",
-        "version": "v4"
-      },
-      {
         "userSymbol": "Drive",
         "version": "v3",
         "serviceId": "drive"

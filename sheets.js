@@ -250,27 +250,24 @@ function createRow(destSheet, data) {
 }
 
 /**
- * Deletes multiple rows from a sheet in a single batch using the Advanced Sheets
- * API v4 (`Sheets.Spreadsheets.batchUpdate`), processing deletions in reverse
- * order to avoid row-index shifting. Before deleting, ensures the sheet retains
- * at least one row beyond the last data row so the sheet is never left empty.
+ * Deletes multiple rows from a sheet using `sheet.deleteRow()`, processing
+ * deletions in descending row-position order to avoid row-index shifting.
+ * Uses only `SpreadsheetApp` (no Advanced Sheets Service), so it only requires
+ * the restricted `spreadsheets.currentonly` scope. Before deleting, ensures
+ * the sheet retains at least one row beyond the last data row so the sheet is
+ * never left empty.
  * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet - The sheet to delete rows from.
  * @param {Object[]} data - Array of row objects as returned by `getRangeValuesAsTable()`.
- *   Each object must have a `_rowIndex` property (0-based index within the queried range).
+ *   Each object must have a `_rowPosition` property (1-based spreadsheet row number).
  */
 function safelyDeleteRows(sheet, data) {
   if (data.length < 1) { return }
-  let ss = SpreadsheetApp.getActive()
-  let sheetId = sheet.getSheetId()
   let lastRowPosition = sheet.getLastRow()
   if (sheet.getMaxRows() === lastRowPosition) {
     sheet.insertRowAfter(lastRowPosition)
   }
-  let rowsToDelete = data.map(row => {
-    let offset = row._rowIndex + 1
-    return { deleteDimension: { range: { sheetId, startIndex: offset, endIndex: offset + 1, dimension: "ROWS"}}}
-    }).reverse()
-  Sheets.Spreadsheets.batchUpdate({requests: rowsToDelete}, ss.getId())
+  let rowPositions = data.map(row => row._rowPosition).sort((a, b) => b - a)
+  rowPositions.forEach(rowPosition => sheet.deleteRow(rowPosition))
 }
 
 /**
