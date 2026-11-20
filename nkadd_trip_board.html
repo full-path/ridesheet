@@ -457,6 +457,28 @@
     }
 
     .empty strong { display: block; color: var(--ink-soft); font-size: 14px; margin-bottom: 4px; }
+    .empty .help { max-width: 480px; margin: 0 auto; }
+    .empty .btn { margin-top: 14px; }
+
+    #notice {
+      flex: none;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #fce8e6;
+      border-bottom: 1px solid #f4c7c3;
+    }
+
+    #notice[hidden] { display: none; }
+    #notice .notice-body { flex: 1; }
+    #notice strong { display: block; color: var(--red); }
+
+    .details {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--ink-faint);
+    }
 
     #toast {
       position: fixed;
@@ -517,6 +539,14 @@
 
     <main>
       <div id="list-pane">
+        <div id="notice" role="alert" hidden>
+          <div class="notice-body">
+            <strong id="notice-title"></strong>
+            <div id="notice-message"></div>
+            <div class="details" id="notice-details"></div>
+          </div>
+          <button class="btn quiet" id="notice-close" title="Dismiss">✕</button>
+        </div>
         <div id="bulk-bar">
           <button class="btn quiet" id="select-all">Select all</button>
           <span class="hint" id="selected-count"></span>
@@ -590,6 +620,7 @@
     var settings = null;
     var activeList = 'offered';
     var selected = {};   // Trip ID -> true; drives bulk actions and the copy panel
+    var loadFailed = false;
 
     // ---- helpers ----------------------------------------------------------
 
@@ -607,6 +638,52 @@
       node.className = 'show' + (isError ? ' error' : '');
       clearTimeout(toast.timer);
       toast.timer = setTimeout(function () { node.className = ''; }, 4000);
+    }
+
+    // ---- errors -----------------------------------------------------------
+
+    // google.script.run sends requests as the browser's default Google
+    // account. When someone is signed into several accounts and that default
+    // one can't open this spreadsheet, the call fails before it reaches the
+    // server with "a server error occurred while reading from storage. Error
+    // code PERMISSION_DENIED."
+    var accountMixupTitle = "Google couldn't confirm which account you're using";
+    var accountMixupHelp = "This usually happens when you're signed into more than one Google " +
+      "account in this browser. To fix it, open this spreadsheet in a Chrome profile that's " +
+      "signed into only the account that has access to it. A private (incognito) window " +
+      "signed into just that account also works.";
+
+    function errorText(err) {
+      return String(err && err.message ? err.message : err || '');
+    }
+
+    function isAccountMixup(err) {
+      var text = errorText(err);
+      return /PERMISSION_DENIED/.test(text) && /reading from storage/i.test(text);
+    }
+
+    function showNotice(title, message, details) {
+      el('notice-title').textContent = title;
+      el('notice-message').textContent = message;
+      el('notice-details').textContent = details ? 'Details: ' + details : '';
+      el('notice').hidden = false;
+    }
+
+    function hideNotice() {
+      el('notice').hidden = true;
+    }
+
+    function showLoadError(err, agency) {
+      var mixup = isAccountMixup(err);
+      var title = mixup ? accountMixupTitle : "Couldn't load trips";
+      var help = mixup ? accountMixupHelp : (errorText(err) || 'Something went wrong while reading the spreadsheet.');
+      loadFailed = true;
+      hideNotice();   // the list explains it; a banner would repeat it
+      el('list').innerHTML = '<div class="empty"><strong>' + esc(title) + '</strong>' +
+        '<div class="help">' + esc(help) + '</div>' +
+        (mixup ? '<div class="details">Details: ' + esc(errorText(err)) + '</div>' : '') +
+        '<button class="btn" id="retry-load">Try again</button></div>';
+      el('retry-load').addEventListener('click', function () { load(agency); });
     }
 
     function setBusy(isBusy) {
@@ -627,17 +704,19 @@
 
     function load(agency) {
       setBusy(true);
+      hideNotice();
       google.script.run
         .withSuccessHandler(onBoard)
         .withFailureHandler(function (err) {
           setBusy(false);
-          toast(err && err.message ? err.message : 'Could not load trips.', true);
+          showLoadError(err, agency);
         })
         .nkaddGetBoardData(agency || null);
     }
 
     function onBoard(data) {
       setBusy(false);
+      loadFailed = false;
       if (!data || data.error) {
         el('list').innerHTML = '<div class="empty"><strong>Setup needed</strong>' +
           esc(data && data.error ? data.error : 'No data returned.') + '</div>';
@@ -798,6 +877,7 @@
 
     function runAction(name, args) {
       setBusy(true);
+      hideNotice();
       var runner = google.script.run
         .withSuccessHandler(function (response) {
           setBusy(false);
@@ -807,7 +887,14 @@
         })
         .withFailureHandler(function (err) {
           setBusy(false);
-          toast(err && err.message ? err.message : 'That action failed.', true);
+          if (isAccountMixup(err)) {
+            // The request never reached the spreadsheet, so nothing moved.
+            showNotice(accountMixupTitle, 'No trips were changed. ' + accountMixupHelp, errorText(err));
+          } else {
+            // A bulk action may have failed partway, so don't promise nothing changed.
+            showNotice('That action failed',
+              (errorText(err) || 'Something went wrong.') + ' Refresh to see the current state of these trips.');
+          }
         });
       runner[name].apply(runner, args);
     }
@@ -882,6 +969,8 @@
     });
 
     el('refresh').addEventListener('click', function () { load(board ? board.agency : null); });
+
+    el('notice-close').addEventListener('click', hideNotice);
 
     el('toggle-panel').addEventListener('click', function () {
       var panel = el('copy-panel');
@@ -996,7 +1085,14 @@
 
     function saveSettings(patch) {
       google.script.run
-        .withFailureHandler(function () { /* preferences are best-effort */ })
+        .withFailureHandler(function (err) {
+          // Preferences are best-effort, but say once why they aren't sticking
+          // when the account mix-up is the cause, unless the list already does.
+          if (!isAccountMixup(err) || loadFailed || saveSettings.warned) return;
+          saveSettings.warned = true;
+          showNotice(accountMixupTitle, "Your copy-format choices won't be saved. " + accountMixupHelp,
+                     errorText(err));
+        })
         .nkaddSaveUiSettings(patch);
     }
 
